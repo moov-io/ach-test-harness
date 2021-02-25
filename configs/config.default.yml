@@ -1,26 +1,12 @@
 # generated-from:e09dee96ebf4666ccbcec622d28d1772a2c1f53310b3395b4114a1fce494a91f DO NOT REMOVE, DO UPDATE
 
-ACH Test Harness:
+ACHTestHarness:
   Servers:
-    Public:
-      Bind:
-        Address: ":2222"
+    FTP:
+      RootPath: "./storage/ftp/"
+      Hostname: "localhost"
+      Port: 2222
     Admin:
       Bind:
         Address: ":3333"
-  Database:
-    DatabaseName: "ach-test-harness"
-    MySQL:
-      Address: "tcp(localhost:0)"
-      User: "ach-test-harness"
-      Password: "ach-test-harness"
-  Gateway:
-    ServiceName: "ach-test-harness"
-    # Examples of how to set up this config.
-    # keys:
-    #   http:
-    #    urls:
-    #    - http://tumbler:8204/.well-known/jwks.json
-    #   file:
-    #     paths: 
-    #     - ./configs/gateway-jwks-sig-pub.json
+  Responses: []

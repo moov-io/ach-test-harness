@@ -3,32 +3,24 @@
 package service
 
 import (
-	"context"
-	"database/sql"
-	"net/http"
-	"time"
+	ftp "goftp.io/server/core"
 
-	"github.com/gorilla/mux"
 	"github.com/moov-io/base/config"
-	"github.com/moov-io/base/database"
 	"github.com/moov-io/base/log"
 	"github.com/moov-io/base/stime"
-	"github.com/moovfinancial/go-zero-trust/pkg/middleware"
 
 	_ "github.com/moov-io/ach-test-harness"
 )
 
 // Environment - Contains everything thats been instantiated for this service.
 type Environment struct {
-	Logger              log.Logger
-	Config              *Config
-	TimeService         stime.TimeService
-	ZeroTrustMiddleware mux.MiddlewareFunc
-	DB                  *sql.DB
-	InternalClient      *http.Client
+	Logger      log.Logger
+	Config      *Config
+	TimeService stime.TimeService
 
-	PublicRouter *mux.Router
-	Shutdown     func()
+	// ftp or sftp server
+	FTPServer *ftp.Server
+	Shutdown  func()
 }
 
 // NewEnvironment - Generates a new default environment. Overrides can be specified via configs.
@@ -52,48 +44,9 @@ func NewEnvironment(env *Environment) (*Environment, error) {
 		env.Config = cfg
 	}
 
-	// db setup
-	if env.DB == nil {
-		db, close, err := initializeDatabase(env.Logger, env.Config.Database)
-		if err != nil {
-			close()
-			return nil, err
-		}
-		env.DB = db
-
-		// Add DB closing to the Shutdown call for the Environment
-		prev := env.Shutdown
-		env.Shutdown = func() {
-			prev()
-			close()
-		}
-	}
-
-	if env.InternalClient == nil {
-		env.InternalClient = NewInternalClient(env.Logger, env.Config.Clients, "internal-client")
-	}
-
 	if env.TimeService == nil {
 		env.TimeService = stime.NewSystemTimeService()
 	}
-
-	if env.ZeroTrustMiddleware == nil {
-		// auth middleware for the tokens coming from the gateway
-		gatewayMiddleware, err := middleware.NewServerFromConfig(env.Logger, env.TimeService, env.Config.Gateway)
-		if err != nil {
-			return nil, env.Logger.Fatal().LogErrorf("failed to startup Gateway middleware: %w", err).Err()
-		}
-		env.ZeroTrustMiddleware = gatewayMiddleware.Handler
-	}
-
-	// router
-	if env.PublicRouter == nil {
-		env.PublicRouter = mux.NewRouter()
-
-		// @TODO add controller connections here
-	}
-
-	env.PublicRouter.Use(env.ZeroTrustMiddleware)
 
 	return env, nil
 }
@@ -109,36 +62,4 @@ func LoadConfig(logger log.Logger) (*Config, error) {
 	cfg := &global.ACHTestHarness
 
 	return cfg, nil
-}
-
-func initializeDatabase(logger log.Logger, config database.DatabaseConfig) (*sql.DB, func(), error) {
-	ctx, cancelFunc := context.WithCancel(context.Background())
-
-	// connect to the database and keep retrying
-	db, err := database.New(ctx, logger, config)
-	for i := 0; err != nil && i < 22; i++ {
-		logger.Info().Log("attempting to connect to database again")
-		time.Sleep(time.Second * 5)
-		db, err = database.New(ctx, logger, config)
-	}
-	if err != nil {
-		return nil, cancelFunc, logger.Fatal().LogErrorf("Error creating database: %w", err).Err()
-	}
-
-	shutdown := func() {
-		logger.Info().Log("Shutting down the db")
-		cancelFunc()
-		if err := db.Close(); err != nil {
-			logger.Fatal().LogErrorf("Error closing DB", err)
-		}
-	}
-
-	// Run the migrations
-	if err := database.RunMigrations(logger, config); err != nil {
-		return nil, shutdown, logger.Fatal().LogErrorf("Error running migrations: %w", err).Err()
-	}
-
-	logger.Info().Log("finished initializing db")
-
-	return db, shutdown, err
 }

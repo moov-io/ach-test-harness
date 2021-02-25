@@ -35,4 +35,7 @@ pkger*
 pkged.go
 cover.out
 
+/storage/ftp/*
+!/storage/ftp/.keep
+
 /vendor/

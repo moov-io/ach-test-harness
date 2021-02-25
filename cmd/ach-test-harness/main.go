@@ -6,6 +6,7 @@ import (
 	"os"
 
 	achtestharness "github.com/moov-io/ach-test-harness"
+	"github.com/moov-io/ach-test-harness/pkg/response"
 	"github.com/moov-io/ach-test-harness/pkg/service"
 	"github.com/moov-io/base/log"
 )
@@ -27,5 +28,9 @@ func main() {
 	stopServers := env.RunServers(termListener)
 	defer stopServers()
 
+	// Initialize our responders
+	response.Setup(env.Config.Responses, env.FTPServer)
+
+	// Block for a signal to shutdown
 	service.AwaitTermination(env.Logger, termListener)
 }
