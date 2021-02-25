@@ -13,7 +13,7 @@ import (
 	"github.com/moov-io/base/admin"
 	"github.com/moov-io/base/log"
 
-	_ "github.com/moovfinancial/ach-test-harness"
+	_ "github.com/moov-io/ach-test-harness"
 
 	"github.com/moovfinancial/go-observability/pkg/observe"
 )

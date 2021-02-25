@@ -9,7 +9,7 @@ import (
 	"github.com/moov-io/base/log"
 	"github.com/stretchr/testify/require"
 
-	"github.com/moovfinancial/ach-test-harness/pkg/service"
+	"github.com/moov-io/ach-test-harness/pkg/service"
 )
 
 func Test_ConfigLoading(t *testing.T) {

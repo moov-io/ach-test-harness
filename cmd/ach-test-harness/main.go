@@ -5,15 +5,14 @@ package main
 import (
 	"os"
 
+	achtestharness "github.com/moov-io/ach-test-harness"
+	"github.com/moov-io/ach-test-harness/pkg/service"
 	"github.com/moov-io/base/log"
-
-	"github.com/moovfinancial/ach-test-harness"
-	"github.com/moovfinancial/ach-test-harness/pkg/service"
 )
 
 func main() {
 	env := &service.Environment{
-		Logger: log.NewDefaultLogger().Set("app", log.String("ach-test-harness")).Set("version", log.String(ach-test-harness.Version)),
+		Logger: log.NewDefaultLogger().Set("app", log.String("ach-test-harness")).Set("version", log.String(achtestharness.Version)),
 	}
 
 	env, err := service.NewEnvironment(env)
