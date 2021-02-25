@@ -1,0 +1,8 @@
+# generated-from:2f7b7d433d2cd236e94e49422001120582b39d3b0038448d93f833eda0c440ec DO NOT REMOVE, DO UPDATE
+
+# This is a comment.
+# Each line is a file pattern followed by one or more owners.
+
+# These owners will be the default owners for everything in
+# the repo. Unless a later match takes precedence,
+*             @adamdecaf
