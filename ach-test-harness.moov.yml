@@ -1,0 +1,21 @@
+ProjectPath: "."
+
+Project:
+  # Github project id
+  ProjectID: "ach-test-harness"
+  # Github org
+  OrgID: "moov-io"
+  # Human descriptive name for the project
+  ProjectName: "ACH Test Harness"
+  Description: |
+    A configurable FTP/SFTP server and Go library to interactively test ACH scenarios to replicate real world originations, returns, changes, prenotes, and transfers.
+  CodeOwners: "@adamdecaf"
+
+Templates:
+  MoovProject:
+    Run: true
+  GoService:
+    ServicePort: 2222
+    HealthPort: 3333
+  GoGithubActionsPublic:
+    - Executable: ach-test-harness
