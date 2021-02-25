@@ -14,7 +14,7 @@ DEV_VERSION := dev-${COMMIT_HASH}
 USERID := $(shell id -u $$USER)
 GROUPID:= $(shell id -g $$USER)
 
-export GOPRIVATE=github.com/moovfinancial
+export GOPRIVATE=github.com/moov-io
 
 all: install update build
 
@@ -27,15 +27,15 @@ update:
 	pkger -include /migrations -include /configs/config.default.yml
 	go mod vendor
 
-build: 
-	go build -mod=vendor -ldflags "-X github.com/moovfinancial/ach-test-harness.Version=${VERSION}" -o bin/ach-test-harness github.com/moovfinancial/ach-test-harness/cmd/ach-test-harness
+build:
+	go build -mod=vendor -ldflags "-X github.com/{{.OrgID}}/ach-test-harness.Version=${VERSION}" -o bin/ach-test-harness github.com/{{.OrgID}}/ach-test-harness/cmd/ach-test-harness
 
 .PHONY: setup
 setup:
 	docker-compose up -d --force-recreate --remove-orphans
 
 .PHONY: check
-check: 
+check:
 ifeq ($(OS),Windows_NT)
 	@echo "Skipping checks on Windows, currently unsupported."
 else
@@ -49,25 +49,25 @@ teardown:
 	-docker-compose down --remove-orphans
 
 docker: update
-	docker build --pull --build-arg VERSION=${VERSION} -t moovfinancial/ach-test-harness:${VERSION} -f Dockerfile .
-	docker tag moovfinancial/ach-test-harness:${VERSION} moovfinancial/ach-test-harness:latest
-	docker tag moovfinancial/ach-test-harness:${VERSION} moov/ach-test-harness:${VERSION}
-	docker tag moovfinancial/ach-test-harness:${VERSION} moov/ach-test-harness:latest
+	docker build --pull --build-arg VERSION=${VERSION} -t {{.OrgID}}/ach-test-harness:${VERSION} -f Dockerfile .
+	docker tag {{.OrgID}}/ach-test-harness:${VERSION} {{.OrgID}}/ach-test-harness:latest
+	docker tag {{.OrgID}}/ach-test-harness:${VERSION} moov/ach-test-harness:${VERSION}
+	docker tag {{.OrgID}}/ach-test-harness:${VERSION} moov/ach-test-harness:latest
 
 docker-push:
-	docker push moovfinancial/ach-test-harness:${VERSION}
-	docker push moovfinancial/ach-test-harness:latest
+	docker push {{.OrgID}}/ach-test-harness:${VERSION}
+	docker push {{.OrgID}}/ach-test-harness:latest
 	docker push moov/ach-test-harness:${VERSION}
 	docker push moov/ach-test-harness:latest
 
 .PHONY: dev-docker
 dev-docker: update
-	docker build --pull --build-arg VERSION=${DEV_VERSION} -t moovfinancial/ach-test-harness:${DEV_VERSION} -f Dockerfile .
-	docker tag moovfinancial/ach-test-harness:${DEV_VERSION} moov/ach-test-harness:${DEV_VERSION}
+	docker build --pull --build-arg VERSION=${DEV_VERSION} -t {{.OrgID}}/ach-test-harness:${DEV_VERSION} -f Dockerfile .
+	docker tag {{.OrgID}}/ach-test-harness:${DEV_VERSION} moov/ach-test-harness:${DEV_VERSION}
 
 .PHONY: dev-push
 dev-push:
-	docker push moovfinancial/ach-test-harness:${DEV_VERSION}
+	docker push {{.OrgID}}/ach-test-harness:${DEV_VERSION}
 	docker push moov/ach-test-harness:${DEV_VERSION}
 
 # Extra utilities not needed for building
@@ -76,10 +76,10 @@ run: update build
 	./bin/ach-test-harness
 
 docker-run:
-	docker run -v ${PWD}/data:/data -v ${PWD}/configs:/configs --env APP_CONFIG="/configs/config.yml" -it --rm moovfinancial/ach-test-harness:${VERSION}
+	docker run -v ${PWD}/data:/data -v ${PWD}/configs:/configs --env APP_CONFIG="/configs/config.yml" -it --rm {{.OrgID}}/ach-test-harness:${VERSION}
 
 test:
-	go test -cover github.com/moovfinancial/ach-test-harness/...
+	go test -cover github.com/{{.OrgID}}/ach-test-harness/...
 
 .PHONY: clean
 clean:
@@ -105,4 +105,3 @@ ifeq ($(OS),Windows_NT)
 else
 	CGO_ENABLED=1 GOOS=$(PLATFORM) go build -o bin/ach-test-harness-$(PLATFORM)-amd64 cmd/ach-test-harness/*
 endif
-
