@@ -5,11 +5,11 @@ package service_test
 import (
 	"testing"
 
+	"github.com/moov-io/ach-test-harness/pkg/service"
 	"github.com/moov-io/base/config"
 	"github.com/moov-io/base/log"
-	"github.com/stretchr/testify/require"
 
-	"github.com/moov-io/ach-test-harness/pkg/service"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_ConfigLoading(t *testing.T) {

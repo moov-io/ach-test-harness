@@ -2,6 +2,12 @@
 
 package service
 
+import (
+	"fmt"
+
+	"github.com/moov-io/ach"
+)
+
 type GlobalConfig struct {
 	ACHTestHarness Config
 }
@@ -20,9 +26,26 @@ type ServerConfig struct {
 
 // FTPConfig configuration for running an FTP server
 type FTPConfig struct {
-	RootPath string
-	Hostname string
-	Port     int
+	RootPath     string
+	Hostname     string
+	Auth         FTPAuth
+	Port         int
+	PassivePorts string
+	Paths        Paths
+}
+
+type FTPAuth struct {
+	Username string
+	Password string
+}
+
+type Paths struct {
+	// Incoming Files
+	Files string
+
+	// Outgoing Files
+	Correction string
+	Return     string
 }
 
 // HTTPConfig configuration for running an http server
@@ -36,5 +59,45 @@ type BindAddress struct {
 }
 
 type Response struct {
-	// TODO(adam):
+	Match  Match
+	Action Action
+}
+
+type Match struct {
+	AccountNumber string
+	Amount        *Amount
+	Debit         *Debit
+	TraceNumber   string
+}
+
+type Amount struct {
+	Value int
+	Min   int
+	Max   int
+}
+
+type Debit struct{}
+
+type Action struct {
+	Correction Correction
+	Return     Return
+}
+
+type Correction struct {
+	Code string
+	Data string
+}
+
+type Return struct {
+	Code string
+}
+
+func (r Return) Validate() error {
+	if r.Code == "" {
+		return nil
+	}
+	if code := ach.LookupReturnCode(r.Code); code != nil {
+		return nil
+	}
+	return fmt.Errorf("unexpected return code %s", r.Code)
 }

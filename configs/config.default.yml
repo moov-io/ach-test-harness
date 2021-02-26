@@ -6,7 +6,42 @@ ACHTestHarness:
       RootPath: "./storage/ftp/"
       Hostname: "localhost"
       Port: 2222
+      Auth:
+        Username: "admin"
+        Password: "secret"
+      PassivePorts: "30000-30009"
+      Paths:
+        # Incoming Files
+        Files: "" # Path to look for uploaded files
+        # Outgoing Files
+        Bar: "" # TODO(adam):
     Admin:
       Bind:
         Address: ":3333"
-  Responses: []
+  Responses:
+    - match:
+        traceNumber: "123456789012345"
+      action:
+        return:
+          code: "R03"
+    - match:
+        debit:
+        amount:
+          min: 100000 # $1,000
+          # "max <number>" # optional value
+      action:
+        return:
+          code: "R01"
+    - match:
+        accountNumber: "987654321"
+        amount:
+          value: 45121 # $451.21
+      action:
+        return:
+          code: "R01"
+    - match:
+        accountNumber: "333333"
+      action:
+        correction:
+          code: "C01"
+          data: "444444"
