@@ -20,7 +20,8 @@ ACHTestHarness:
         Address: ":3333"
   Responses:
     - match:
-        traceNumber: "123456789012345"
+        accountNumber: "12345678"
+        traceNumber: "121042880000001"
       action:
         return:
           code: "R03"
@@ -28,7 +29,7 @@ ACHTestHarness:
         debit:
         amount:
           min: 100000 # $1,000
-          # "max <number>" # optional value
+          min: 120000 # $1,200
       action:
         return:
           code: "R01"

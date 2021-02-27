@@ -79,8 +79,8 @@ type Amount struct {
 type Debit struct{}
 
 type Action struct {
-	Correction Correction
-	Return     Return
+	Correction *Correction
+	Return     *Return
 }
 
 type Correction struct {

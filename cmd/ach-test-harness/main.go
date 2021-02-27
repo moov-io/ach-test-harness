@@ -29,7 +29,9 @@ func main() {
 	defer stopServers()
 
 	// Initialize our responders
-	response.Setup(env.Config.Responses, env.FTPServer)
+	fileWriter := response.NewFileWriter(env.Config.Servers, env.FTPServer)
+	fileTransformer := response.NewFileTransformer(env.Config, env.Config.Responses, fileWriter)
+	response.Register(env.Logger, env.FTPServer, fileTransformer)
 
 	// Block for a signal to shutdown
 	service.AwaitTermination(env.Logger, termListener)

@@ -1,6 +1,9 @@
 package response
 
 import (
+	"bytes"
+	"fmt"
+
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/service"
 
@@ -26,6 +29,20 @@ type FTPFileWriter struct {
 	server *ftp.Server
 }
 
-func (w *FTPFileWriter) Write(filename string, file *ach.File) error {
+func (w *FTPFileWriter) Write(filepath string, file *ach.File) error {
+	var buf bytes.Buffer
+	if err := ach.NewWriter(&buf).Write(file); err != nil {
+		return fmt.Errorf("write %s: %v", filepath, err)
+	}
+
+	driver, err := w.server.Factory.NewDriver()
+	if err != nil {
+		return fmt.Errorf("get driver to write %s: %v", filepath, err)
+	}
+
+	if _, err := driver.PutFile(filepath, &buf, false); err != nil {
+		return fmt.Errorf("PUT %s: %v", filepath, err)
+	}
+
 	return nil
 }
