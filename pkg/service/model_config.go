@@ -44,8 +44,7 @@ type Paths struct {
 	Files string
 
 	// Outgoing Files
-	Correction string
-	Return     string
+	Return string
 }
 
 // HTTPConfig configuration for running an http server

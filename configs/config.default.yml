@@ -3,8 +3,8 @@
 ACHTestHarness:
   Servers:
     FTP:
-      RootPath: "./storage/ftp/"
-      Hostname: "localhost"
+      RootPath: "./data"
+      Hostname: "0.0.0.0"
       Port: 2222
       Auth:
         Username: "admin"
@@ -12,9 +12,9 @@ ACHTestHarness:
       PassivePorts: "30000-30009"
       Paths:
         # Incoming Files
-        Files: "" # Path to look for uploaded files
+        Files: "./inbound/"
         # Outgoing Files
-        Bar: "" # TODO(adam):
+        Bar: "./outbound/"
     Admin:
       Bind:
         Address: ":3333"

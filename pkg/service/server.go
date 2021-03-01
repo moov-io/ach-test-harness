@@ -4,6 +4,7 @@ package service
 
 import (
 	"fmt"
+	"os"
 
 	ftp "goftp.io/server/core"
 	"goftp.io/server/driver/file"
@@ -32,6 +33,10 @@ func (env *Environment) RunServers(terminationListener chan error) func() {
 }
 
 func bootFTPServer(errs chan<- error, logger log.Logger, cfg *FTPConfig) (*ftp.Server, func()) {
+	// Setup data directory
+	createDataDirectories(errs, logger, cfg)
+
+	// Start the FTP server
 	fileDriver := &file.DriverFactory{
 		RootPath: cfg.RootPath,
 		Perm:     ftp.NewSimplePerm("user", "group"),
@@ -59,6 +64,20 @@ func bootFTPServer(errs chan<- error, logger log.Logger, cfg *FTPConfig) (*ftp.S
 	}
 
 	return server, shutdown
+}
+
+func createDataDirectories(errs chan<- error, logger log.Logger, cfg *FTPConfig) {
+	// Create the root path
+	if err := os.MkdirAll(cfg.RootPath, 0777); err != nil {
+		errs <- logger.Fatal().LogErrorf("problem creating %s: %v", cfg.RootPath, err).Err()
+	}
+	// Create sub-paths
+	if err := os.MkdirAll(cfg.Paths.Files, 0777); err != nil {
+		errs <- logger.Fatal().LogErrorf("problem creating %s: %v", cfg.Paths.Files, err).Err()
+	}
+	if err := os.MkdirAll(cfg.Paths.Return, 0777); err != nil {
+		errs <- logger.Fatal().LogErrorf("problem creating %s: %v", cfg.Paths.Return, err).Err()
+	}
 }
 
 func bootAdminServer(errs chan<- error, logger log.Logger, config HTTPConfig) *admin.Server {
