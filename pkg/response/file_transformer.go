@@ -2,6 +2,7 @@ package response
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/service"
@@ -11,10 +12,12 @@ type FileTransfomer struct {
 	Matcher Matcher
 	Entry   EntryTransformers
 	Writer  FileWriter
+
+	returnPath string
 }
 
 func NewFileTransformer(cfg *service.Config, responses []service.Response, writer FileWriter) *FileTransfomer {
-	return &FileTransfomer{
+	xform := &FileTransfomer{
 		Matcher: Matcher{
 			Responses: cfg.Responses,
 		},
@@ -24,6 +27,10 @@ func NewFileTransformer(cfg *service.Config, responses []service.Response, write
 		}),
 		Writer: writer,
 	}
+	if cfg.Servers.FTP != nil {
+		xform.returnPath = cfg.Servers.FTP.Paths.Return
+	}
+	return xform
 }
 
 func (ft *FileTransfomer) Transform(file *ach.File) error {
@@ -57,7 +64,7 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 			return fmt.Errorf("transform out create: %v", err)
 		}
 		if err := out.Validate(); err == nil {
-			filepath := "RETURN_12345.ach"
+			filepath := filepath.Join(ft.returnPath, "RETURN_12345.ach")
 			if err := ft.Writer.Write(filepath, out); err != nil {
 				return fmt.Errorf("transform write %s: %v", filepath, err)
 			}

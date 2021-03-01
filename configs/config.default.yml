@@ -11,10 +11,8 @@ ACHTestHarness:
         Password: "secret"
       PassivePorts: "30000-30009"
       Paths:
-        # Incoming Files
-        Files: "./inbound/"
-        # Outgoing Files
-        Bar: "./outbound/"
+        Files: "/outbound/"
+        Return: "/returned/"
     Admin:
       Bind:
         Address: ":3333"

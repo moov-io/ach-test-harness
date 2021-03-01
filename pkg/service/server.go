@@ -5,6 +5,7 @@ package service
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	ftp "goftp.io/server/core"
 	"goftp.io/server/driver/file"
@@ -69,14 +70,17 @@ func bootFTPServer(errs chan<- error, logger log.Logger, cfg *FTPConfig) (*ftp.S
 func createDataDirectories(errs chan<- error, logger log.Logger, cfg *FTPConfig) {
 	// Create the root path
 	if err := os.MkdirAll(cfg.RootPath, 0777); err != nil {
-		errs <- logger.Fatal().LogErrorf("problem creating %s: %v", cfg.RootPath, err).Err()
+		errs <- logger.Fatal().LogErrorf("problem creating root directory '%s': %v", cfg.RootPath, err).Err()
 	}
+
 	// Create sub-paths
-	if err := os.MkdirAll(cfg.Paths.Files, 0777); err != nil {
-		errs <- logger.Fatal().LogErrorf("problem creating %s: %v", cfg.Paths.Files, err).Err()
+	path := filepath.Join(cfg.RootPath, cfg.Paths.Files)
+	if err := os.MkdirAll(path, 0777); err != nil {
+		errs <- logger.Fatal().LogErrorf("problem creating files directory: %v", err).Err()
 	}
-	if err := os.MkdirAll(cfg.Paths.Return, 0777); err != nil {
-		errs <- logger.Fatal().LogErrorf("problem creating %s: %v", cfg.Paths.Return, err).Err()
+	path = filepath.Join(cfg.RootPath, cfg.Paths.Return)
+	if err := os.MkdirAll(path, 0777); err != nil {
+		errs <- logger.Fatal().LogErrorf("problem creating return directory: %v", err).Err()
 	}
 }
 
