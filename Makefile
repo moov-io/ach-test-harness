@@ -24,7 +24,7 @@ install:
 	go install -mod=vendor github.com/markbates/pkger
 
 update:
-	pkger -include /configs/config.default.yml
+	${GOPATH}/bin/pkger -include /configs/config.default.yml
 	go mod vendor
 
 build:
@@ -51,12 +51,8 @@ teardown:
 docker: update
 	docker build --pull --build-arg VERSION=${VERSION} -t moov/ach-test-harness:${VERSION} -f Dockerfile .
 	docker tag moov/ach-test-harness:${VERSION} moov/ach-test-harness:latest
-	docker tag moov/ach-test-harness:${VERSION} moov/ach-test-harness:${VERSION}
-	docker tag moov/ach-test-harness:${VERSION} moov/ach-test-harness:latest
 
 docker-push:
-	docker push moov/ach-test-harness:${VERSION}
-	docker push moov/ach-test-harness:latest
 	docker push moov/ach-test-harness:${VERSION}
 	docker push moov/ach-test-harness:latest
 
