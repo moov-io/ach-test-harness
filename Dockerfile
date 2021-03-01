@@ -15,7 +15,7 @@ LABEL maintainer="Moov <support@moov.io>"
 
 WORKDIR /
 
-RUN apt-get update && apt-get install -y ca-certificates curl \
+RUN apt-get update && apt-get install -y ca-certificates \
 	&& rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /src/bin/ach-test-harness /app/
@@ -25,9 +25,6 @@ ENV HEALTH_PORT=3333
 
 EXPOSE ${HTTP_PORT}/tcp
 EXPOSE ${HEALTH_PORT}/tcp
-
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-	CMD curl -f http://localhost:${HEALTH_PORT}/live || exit 1
 
 VOLUME [ "/data", "/configs" ]
 
