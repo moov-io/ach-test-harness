@@ -3,5 +3,16 @@
 version: '3'
 
 services:
+  harness:
+    image: moov/ach-test-harness:latest
+    networks:
+      - intranet
+    ports:
+      - "2222:2222"
+      - "3333:3333"
+      - "30000-30009:30000-30009"
+    volumes:
+      - "./configs:/configs"
+
 networks:
-    intranet:
+  intranet:

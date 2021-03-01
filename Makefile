@@ -49,25 +49,25 @@ teardown:
 	-docker-compose down --remove-orphans
 
 docker: update
-	docker build --pull --build-arg VERSION=${VERSION} -t moov-io/ach-test-harness:${VERSION} -f Dockerfile .
-	docker tag moov-io/ach-test-harness:${VERSION} moov-io/ach-test-harness:latest
-	docker tag moov-io/ach-test-harness:${VERSION} moov/ach-test-harness:${VERSION}
-	docker tag moov-io/ach-test-harness:${VERSION} moov/ach-test-harness:latest
+	docker build --pull --build-arg VERSION=${VERSION} -t moov/ach-test-harness:${VERSION} -f Dockerfile .
+	docker tag moov/ach-test-harness:${VERSION} moov/ach-test-harness:latest
+	docker tag moov/ach-test-harness:${VERSION} moov/ach-test-harness:${VERSION}
+	docker tag moov/ach-test-harness:${VERSION} moov/ach-test-harness:latest
 
 docker-push:
-	docker push moov-io/ach-test-harness:${VERSION}
-	docker push moov-io/ach-test-harness:latest
+	docker push moov/ach-test-harness:${VERSION}
+	docker push moov/ach-test-harness:latest
 	docker push moov/ach-test-harness:${VERSION}
 	docker push moov/ach-test-harness:latest
 
 .PHONY: dev-docker
 dev-docker: update
-	docker build --pull --build-arg VERSION=${DEV_VERSION} -t moov-io/ach-test-harness:${DEV_VERSION} -f Dockerfile .
-	docker tag moov-io/ach-test-harness:${DEV_VERSION} moov/ach-test-harness:${DEV_VERSION}
+	docker build --pull --build-arg VERSION=${DEV_VERSION} -t moov/ach-test-harness:${DEV_VERSION} -f Dockerfile .
+	docker tag moov/ach-test-harness:${DEV_VERSION} moov/ach-test-harness:${DEV_VERSION}
 
 .PHONY: dev-push
 dev-push:
-	docker push moov-io/ach-test-harness:${DEV_VERSION}
+	docker push moov/ach-test-harness:${DEV_VERSION}
 	docker push moov/ach-test-harness:${DEV_VERSION}
 
 # Extra utilities not needed for building
@@ -76,7 +76,7 @@ run: update build
 	./bin/ach-test-harness
 
 docker-run:
-	docker run -v ${PWD}/data:/data -v ${PWD}/configs:/configs --env APP_CONFIG="/configs/config.yml" -it --rm moov-io/ach-test-harness:${VERSION}
+	docker run -v ${PWD}/data:/data -v ${PWD}/configs:/configs --env APP_CONFIG="/configs/config.yml" -it --rm moov/ach-test-harness:${VERSION}
 
 test:
 	go test -cover github.com/moov-io/ach-test-harness/...
