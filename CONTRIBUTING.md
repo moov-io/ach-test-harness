@@ -10,7 +10,7 @@ Stability is the hallmark of any good software. If you find an edge case that is
 
 Have a use case that we don't handle; or handle well! Start the discussion on our Google Group or open a GitHub Issue. We want to make the project meet the needs of the community and keeps you using our code.
 
-Please review our [Code of Conduct](https://github.com/{{.OrgID}}/ach/blob/master/CODE_OF_CONDUCT.md) to ensure you agree with the values of this project.
+Please review our [Code of Conduct](https://github.com/moov-io/ach/blob/master/CODE_OF_CONDUCT.md) to ensure you agree with the values of this project.
 
 We use GitHub to manage reviews of pull requests.
 
@@ -28,22 +28,22 @@ We use GitHub to manage reviews of pull requests.
 
 Before starting please make sure you have Go setup and can build our projects from source.
 
-This project uses [Go Modules](https://github.com/golang/go/wiki/Modules) and uses Go 1.14 or higher. See [Golang's install instructions](https://golang.org/doc/install) for help setting up Go. You can download the source code and we offer [tagged and released versions](https://github.com/{{.OrgID}}/ach-test-harness/releases/latest) as well. We highly recommend you use a tagged release for production.
+This project uses [Go Modules](https://github.com/golang/go/wiki/Modules) and uses Go 1.14 or higher. See [Golang's install instructions](https://golang.org/doc/install) for help setting up Go. You can download the source code and we offer [tagged and released versions](https://github.com/moov-io/ach-test-harness/releases/latest) as well. We highly recommend you use a tagged release for production.
 
 You can pull a working repository of our code code with git:
 
 ```
-$ midir -p $GOPATH/src/github.com/{{.OrgID}}/
-$ cd $GOPATH/src/github.com/{{.OrgID}}/
-$ git clone git@github.com:{{.OrgID}}/ach-test-harness.git
+$ midir -p $GOPATH/src/github.com/moov-io/
+$ cd $GOPATH/src/github.com/moov-io/
+$ git clone git@github.com:moov-io/ach-test-harness.git
 ```
 
 We recommend using additional git remote's for pushing/pulling code. This allows you to use the same repository for submitting patches as tracking our code.
 
-First, [Fork our project](https://github.com/{{.OrgID}}/ach-test-harness) somewhere and after that's done add the remote:
+First, [Fork our project](https://github.com/moov-io/ach-test-harness) somewhere and after that's done add the remote:
 
 ```
-$ cd $GOPATH/src/github.com/{{.OrgID}}/ach-test-harness # Whereever this project's source code is
+$ cd $GOPATH/src/github.com/moov-io/ach-test-harness # Whereever this project's source code is
 
 $ git remote add $user git@github.com:$user/ach-test-harness.git # After
 
@@ -70,4 +70,4 @@ A good quality PR will have the following characteristics:
 
 A good PR should be able to flow through a peer review system easily and quickly.
 
-Our Build pipeline utilizes [Github Actions](https://github.com/{{.OrgID}}/ach-test-harness/actions) to enforce many tools that you should add to your editor before issuing a pull request.
+Our Build pipeline utilizes [Github Actions](https://github.com/moov-io/ach-test-harness/actions) to enforce many tools that you should add to your editor before issuing a pull request.
