@@ -24,7 +24,7 @@ install:
 	go install -mod=vendor github.com/markbates/pkger
 
 update:
-	pkger -include /migrations -include /configs/config.default.yml
+	pkger -include /configs/config.default.yml
 	go mod vendor
 
 build:
