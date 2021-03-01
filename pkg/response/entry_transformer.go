@@ -14,15 +14,14 @@ type EntryTransformer interface {
 type EntryTransformers []EntryTransformer
 
 func (et EntryTransformers) MorphEntry(ed *ach.EntryDetail, action service.Action) (*ach.EntryDetail, error) {
-	out := &(*ed) // make a copy
 	var err error
 	for i := range et {
-		out, err = et[i].MorphEntry(out, action)
+		ed, err = et[i].MorphEntry(ed, action)
 		if err != nil {
-			return out, fmt.Errorf("%T: %v", et, err)
+			return ed, fmt.Errorf("%T: %v", et, err)
 		}
 	}
-	return out, nil
+	return ed, nil
 }
 
 type CorrectionTransformer struct{}
@@ -31,6 +30,7 @@ func (t *CorrectionTransformer) MorphEntry(ed *ach.EntryDetail, action service.A
 	if action.Correction == nil {
 		return ed, nil
 	}
+	// TODO(adam): COR transform
 	// fmt.Printf("  COR: %#v\n", ed)
 	return ed, nil
 }

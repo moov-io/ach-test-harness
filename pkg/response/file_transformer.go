@@ -2,7 +2,6 @@ package response
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/service"
@@ -31,12 +30,10 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 	out := ach.NewFile()
 	out.Header = file.Header
 
-	fmt.Printf("\n\nfile=%#v\n\n", file)
-
 	for i := range file.Batches {
 		batch, err := ach.NewBatch(file.Batches[i].GetHeader())
 		if err != nil {
-			log.Printf("ERROR0: %v\n", err)
+			return fmt.Errorf("transform batch[%d] problem creating Batch: %v", i, err)
 		}
 		entries := file.Batches[i].GetEntries()
 		for j := range entries {
@@ -45,27 +42,27 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 			if action != nil {
 				entry, err := ft.Entry.MorphEntry(entries[j], *action)
 				if err != nil {
-					return err
+					return fmt.Errorf("transform batch[%d] morph entry[%d] error: %v", i, j, err)
 				}
 				batch.AddEntry(entry)
 			}
 		}
 		if err := batch.Create(); err != nil {
-			log.Printf("ERROR1: %v\n", err)
+			return fmt.Errorf("transform batch[%d] create error: %v", i, err)
 		}
 		out.AddBatch(batch)
 	}
 	if out != nil {
 		if err := out.Create(); err != nil {
-			log.Printf("ERROR2: %v\n", err)
+			return fmt.Errorf("transform out create: %v", err)
 		}
 		if err := out.Validate(); err == nil {
-			if err := ft.Writer.Write("RETURN_12345.ach", out); err != nil {
-				// TODO(adam): do something
+			filepath := "RETURN_12345.ach"
+			if err := ft.Writer.Write(filepath, out); err != nil {
+				return fmt.Errorf("transform write %s: %v", filepath, err)
 			}
 		} else {
-			// TODO(adam): do something
-			fmt.Printf("\n\n\nERROR:\n%v\n\n\n", err)
+			return fmt.Errorf("transform validate out file: %v", err)
 		}
 	}
 

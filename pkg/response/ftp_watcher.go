@@ -1,42 +1,61 @@
 package response
 
 import (
+	"fmt"
+
 	"github.com/moov-io/ach"
+	"github.com/moov-io/base/log"
+
 	ftp "goftp.io/server/core"
 )
+
+func Register(
+	logger log.Logger,
+	ftpServer *ftp.Server,
+	transformer *FileTransfomer,
+) {
+	if ftpServer != nil && transformer != nil {
+		ftpServer.RegisterNotifer(&FTPWatcher{
+			logger:      logger,
+			transformer: transformer,
+		})
+	} else {
+		logger.Info().Log("unable to register transformer")
+	}
+}
 
 type FTPWatcher struct {
 	ftp.NullNotifier
 
+	logger      log.Logger
 	transformer *FileTransfomer
 }
 
 func (notify *FTPWatcher) AfterFilePut(conn *ftp.Conn, dstPath string, size int64, err error) {
-	// fmt.Printf("PUT %s (bytes:%d)\n", dstPath, size)
-	// fmt.Printf("  conn: %#v\n", conn)
+	notify.logger.Info().Log(fmt.Sprintf("accepting file at %s", dstPath))
+
+	if err != nil {
+		notify.logger.Error().Log(fmt.Sprintf("error with file %s: %v", dstPath, err))
+	}
 
 	// Grab a file descriptor
 	driver, err := conn.ServerOpts().Factory.NewDriver()
 	if err != nil {
-		return // TODO(adam): log, or something
+		notify.logger.Info().Log(fmt.Sprintf("ftp: error getting driver for file %s: %v", dstPath, err))
 	}
 	_, fd, err := driver.GetFile(dstPath, 0)
 	if err != nil {
-		return // TODO(adam): log, or something
+		notify.logger.Info().Log(fmt.Sprintf("ftp: error reading file %s: %v", dstPath, err))
 	}
 	// Read the file that was uploaded
 	file, err := ach.NewReader(fd).Read()
 	if err != nil {
-		// TODO(adam): log, or something
+		notify.logger.Info().Log(fmt.Sprintf("ftp: error reading ACH file %s: %v", dstPath, err))
 	}
 	if err := file.Create(); err != nil {
-		// TODO(adam): log, or something
+		notify.logger.Info().Log(fmt.Sprintf("ftp: error creating file %s: %v", dstPath, err))
 	}
 	if err := notify.transformer.Transform(&file); err != nil {
-		// TODO(adam): log, or something
+		notify.logger.Info().Log(fmt.Sprintf("ftp: error transforming file %s: %v", dstPath, err))
 	}
 }
-
-// TODO(adam): steps
-// 1. match the incoming file, call all Responders.Process
-// 2. have responders write output files

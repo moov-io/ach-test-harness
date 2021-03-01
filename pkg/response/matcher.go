@@ -17,35 +17,23 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 		matcher := m.Responses[i].Match
 
 		// Trace Number
-		if matcher.TraceNumber != "" {
-			matched = (ed.TraceNumber == matcher.TraceNumber)
+		if matchesTraceNumber(matcher, ed) {
+			matched = true
 		}
 
 		// Account Number
-		if matcher.AccountNumber != "" {
-			matched = (strings.TrimSpace(ed.DFIAccountNumber) == matcher.AccountNumber)
+		if matchesAccountNumber(matcher, ed) {
+			matched = true
 		}
 
 		// Check if the Amount matches
-		if amt := m.Responses[i].Match.Amount; amt != nil {
-			var inner bool
-			if amt.Value != 0 {
-				inner = (ed.Amount == amt.Value)
-			}
-			if amt.Min > 0 && amt.Max > 0 {
-				inner = inner && (amt.Min <= ed.Amount && amt.Max >= ed.Amount)
-			}
-			matched = inner
+		if matchedAmount(matcher, ed) {
+			matched = true
 		}
 
 		// Check if this Entry is a debit
-		if matcher.Debit != nil {
-			switch ed.TransactionCode {
-			case ach.CheckingDebit, ach.SavingsDebit, ach.GLDebit, ach.LoanDebit:
-				matched = matched && true
-			default:
-				matched = false
-			}
+		if matchedDebit(matcher, ed) {
+			matched = true
 		}
 
 		// Return the Action if we've still matched
@@ -54,4 +42,36 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 		}
 	}
 	return nil
+}
+
+func matchesTraceNumber(m service.Match, ed *ach.EntryDetail) bool {
+	return (m.TraceNumber != "") && (ed.TraceNumber == m.TraceNumber)
+}
+
+func matchesAccountNumber(m service.Match, ed *ach.EntryDetail) bool {
+	return (m.AccountNumber != "") && (strings.TrimSpace(ed.DFIAccountNumber) == m.AccountNumber)
+}
+
+func matchedAmount(m service.Match, ed *ach.EntryDetail) bool {
+	if m.Amount != nil {
+		var inner bool
+		if m.Amount.Value != 0 {
+			inner = (ed.Amount == m.Amount.Value)
+		}
+		if m.Amount.Min > 0 && m.Amount.Max > 0 {
+			inner = inner && (m.Amount.Min <= ed.Amount && m.Amount.Max >= ed.Amount)
+		}
+		return inner
+	}
+	return false
+}
+
+func matchedDebit(m service.Match, ed *ach.EntryDetail) bool {
+	if m.Debit != nil {
+		switch ed.TransactionCode {
+		case ach.CheckingDebit, ach.SavingsDebit, ach.GLDebit, ach.LoanDebit:
+			return true
+		}
+	}
+	return false
 }
