@@ -61,7 +61,7 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 		}
 		if err := out.Validate(); err == nil {
 			if err := ft.Writer.Write("RETURN_12345.ach", out); err != nil {
-				// TODO(adam): do somethign
+				// TODO(adam): do something
 			}
 		} else {
 			// TODO(adam): do something
