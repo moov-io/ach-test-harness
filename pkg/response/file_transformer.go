@@ -81,12 +81,14 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 				}
 			}
 		}
-		if err := batch.Create(); err != nil {
-			return fmt.Errorf("transform batch[%d] create error: %v", i, err)
+		if entries := batch.GetEntries(); len(entries) > 0 {
+			if err := batch.Create(); err != nil {
+				return fmt.Errorf("transform batch[%d] create error: %v", i, err)
+			}
+			out.AddBatch(batch)
 		}
-		out.AddBatch(batch)
 	}
-	if out != nil {
+	if out != nil && len(out.Batches) > 0 {
 		if err := out.Create(); err != nil {
 			return fmt.Errorf("transform out create: %v", err)
 		}
