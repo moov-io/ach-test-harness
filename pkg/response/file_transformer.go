@@ -2,6 +2,7 @@ package response
 
 import (
 	"fmt"
+	"math/rand"
 	"path/filepath"
 	"time"
 
@@ -64,7 +65,20 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 				if err != nil {
 					return fmt.Errorf("transform batch[%d] morph entry[%d] error: %v", i, j, err)
 				}
-				batch.AddEntry(entry)
+				// When the entry is corrected we need to change the SEC code
+				if entry.Category == ach.CategoryNOC {
+					bh := batch.GetHeader()
+					bh.StandardEntryClassCode = ach.COR
+					if b, err := ach.NewBatch(bh); b != nil {
+						batch = b // replace entire Batch
+					} else {
+						return fmt.Errorf("transform batch[%d] NOC entry[%d] error: %v", i, j, err)
+					}
+				}
+				// Add the transformed entry onto the batch
+				if entry != nil {
+					batch.AddEntry(entry)
+				}
 			}
 		}
 		if err := batch.Create(); err != nil {
@@ -77,7 +91,7 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 			return fmt.Errorf("transform out create: %v", err)
 		}
 		if err := out.Validate(); err == nil {
-			filepath := filepath.Join(ft.returnPath, "RETURN_12345.ach")
+			filepath := filepath.Join(ft.returnPath, generateFilename(out))
 			if err := ft.Writer.Write(filepath, out); err != nil {
 				return fmt.Errorf("transform write %s: %v", filepath, err)
 			}
@@ -87,4 +101,21 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 	}
 
 	return nil
+}
+
+var (
+	randomFilenameSource = rand.NewSource(time.Now().Unix())
+)
+
+func generateFilename(file *ach.File) string {
+	if file == nil {
+		return fmt.Sprintf("MISSING_%d.ach", randomFilenameSource.Int63())
+	}
+	for i := range file.Batches {
+		bh := file.Batches[i].GetHeader()
+		if bh.StandardEntryClassCode == ach.COR {
+			return fmt.Sprintf("CORRECTION_%d.ach", randomFilenameSource.Int63())
+		}
+	}
+	return fmt.Sprintf("RETURN_%d.ach", randomFilenameSource.Int63())
 }

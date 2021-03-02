@@ -32,9 +32,54 @@ func (t *CorrectionTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetai
 		return ed, nil
 	}
 
-	// TODO(adam): COR transform
-	// fmt.Printf("  COR: %#v\n", ed)
-	return ed, nil
+	out := ach.NewEntryDetail()
+
+	// Set the TransactionCode from the EntryDetail
+	switch ed.TransactionCode {
+	case ach.CheckingCredit, ach.CheckingDebit, ach.SavingsCredit, ach.SavingsDebit:
+		out.TransactionCode = ed.TransactionCode - 1
+	}
+
+	// Set the fields from the original EntryDetail
+	out.RDFIIdentification = achx.ABA8(fh.ImmediateDestination)
+	out.CheckDigit = achx.ABACheckDigit(fh.ImmediateDestination)
+	out.DFIAccountNumber = ed.DFIAccountNumber
+	out.Amount = 0 // NOC's are always zero-dollar Entries
+	out.IdentificationNumber = ed.IdentificationNumber
+	out.IndividualName = ed.IndividualName
+	out.DiscretionaryData = ed.DiscretionaryData
+	out.AddendaRecordIndicator = 1
+	out.TraceNumber = achx.TraceNumber(fh.ImmediateDestination)
+	out.Category = ach.CategoryNOC
+
+	// Create the NOC addenda
+	addenda98 := ach.NewAddenda98()
+	addenda98.ChangeCode = action.Correction.Code
+	addenda98.OriginalTrace = ed.TraceNumber
+	addenda98.OriginalDFI = fh.ImmediateDestination
+	addenda98.CorrectedData = generateCorrectedData(action.Correction)
+	addenda98.TraceNumber = out.TraceNumber
+
+	if err := addenda98.Validate(); err != nil {
+		return out, fmt.Errorf("addenda98 validate: %#v", addenda98)
+	}
+
+	// Add the Addenda98/NOC on the return EntryDetail
+	out.Addenda98 = addenda98
+
+	if err := out.Validate(); err != nil {
+		return out, fmt.Errorf("entry detail validate: %v", out)
+	}
+
+	return out, nil
+}
+
+func generateCorrectedData(cor *service.Correction) string {
+	if cor != nil && cor.Data != "" {
+		return cor.Data
+	}
+	// TODO(adam): can we generate some data with 'ach.WriteCorrectionData(code, data)'
+	return "missing data"
 }
 
 type ReturnTransformer struct{}

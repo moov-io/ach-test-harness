@@ -18,6 +18,7 @@ ACHTestHarness:
         Address: ":3333"
   Responses:
     - match:
+        # This matches ./examples/ppd-debit.ach
         accountNumber: "12345678"
         traceNumber: "121042880000001"
       action:
@@ -39,8 +40,9 @@ ACHTestHarness:
         return:
           code: "R01"
     - match:
-        accountNumber: "333333"
+        # This matches ./examples/utility-bill.ach
+        accountNumber: "744-5678-99"
       action:
         correction:
           code: "C01"
-          data: "444444"
+          data: "744567899"
