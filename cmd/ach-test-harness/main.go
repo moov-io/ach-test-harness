@@ -29,7 +29,7 @@ func main() {
 	defer stopServers()
 
 	// Initialize our responders
-	fileWriter := response.NewFileWriter(env.Config.Servers, env.FTPServer)
+	fileWriter := response.NewFileWriter(env.Logger, env.Config.Servers, env.FTPServer)
 	fileTransformer := response.NewFileTransformer(env.Config, env.Config.Responses, fileWriter)
 	response.Register(env.Logger, env.FTPServer, fileTransformer)
 

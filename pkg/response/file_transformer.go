@@ -3,6 +3,7 @@ package response
 import (
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/service"
@@ -35,7 +36,19 @@ func NewFileTransformer(cfg *service.Config, responses []service.Response, write
 
 func (ft *FileTransfomer) Transform(file *ach.File) error {
 	out := ach.NewFile()
-	out.Header = file.Header
+
+	out.Header = ach.NewFileHeader()
+	out.Header.ImmediateDestination = file.Header.ImmediateOrigin
+	out.Header.ImmediateDestinationName = file.Header.ImmediateOriginName
+	out.Header.ImmediateOrigin = file.Header.ImmediateDestination
+	out.Header.ImmediateOriginName = file.Header.ImmediateDestinationName
+	out.Header.FileCreationDate = time.Now().Format("060102")
+	out.Header.FileCreationTime = time.Now().Format("1504")
+	out.Header.FileIDModifier = "A"
+
+	if err := out.Header.Validate(); err != nil {
+		return fmt.Errorf("file transform: header validate: %v", err)
+	}
 
 	for i := range file.Batches {
 		batch, err := ach.NewBatch(file.Batches[i].GetHeader())
@@ -47,7 +60,7 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 			// Check if there's a matching Action and perform it
 			action := ft.Matcher.FindAction(entries[j])
 			if action != nil {
-				entry, err := ft.Entry.MorphEntry(entries[j], *action)
+				entry, err := ft.Entry.MorphEntry(file.Header, entries[j], *action)
 				if err != nil {
 					return fmt.Errorf("transform batch[%d] morph entry[%d] error: %v", i, j, err)
 				}
