@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/moov-io/ach"
+	"github.com/moov-io/ach-test-harness/internal/achx"
 	"github.com/moov-io/ach-test-harness/pkg/service"
-	"github.com/moov-io/paygate/pkg/achx"
 )
 
 type EntryTransformer interface {
