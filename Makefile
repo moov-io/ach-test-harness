@@ -20,8 +20,8 @@ all: install update build
 
 .PHONY: install
 install:
+	go install github.com/markbates/pkger/cmd/pkger
 	go mod vendor
-	go install -mod=vendor github.com/markbates/pkger
 
 update:
 	pkger -include /configs/config.default.yml
