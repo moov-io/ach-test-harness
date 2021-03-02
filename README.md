@@ -10,7 +10,6 @@ moov-io/ach-test-harness
 
 A configurable FTP/SFTP server and Go library to interactively test ACH scenarios to replicate real world originations, returns, changes, prenotes, and transfers.
 
-
 Docs: [docs](https://moov-io.github.io/ach-test-harness/) | [open api specification](api/api.yml)
 
 ## Project Status
@@ -19,16 +18,76 @@ This project is currently under development and could introduce breaking changes
 
 ## Getting Started
 
-Read through the [project docs](docs/README.md) over here to get an understanding of the purpose of this project and how to run it.
+We publish a [public Docker image `moov/ach-test-harness`](https://hub.docker.com/r/moov/ach-test-harness/) from Docker Hub or use this repository. No configuration is required to serve on `:2222` and metrics at `:3333/metrics` in Prometheus format. <!-- We also have Docker images for [OpenShift](https://quay.io/repository/moov/ach-test-harness?tab=tags) published as `quay.io/moov/ach-test-harness`. -->
+
+Pull & start the Docker image:
+```
+docker pull moov/ach-test-harness:latest
+docker run -p 2222:2222 -p 3333:3333 moov/ach-test-harness:latest
+```
+
+Inspect your configuration file and setup some scenarios to match uploaded files.
+
+```yaml
+ACHTestHarness:
+  Servers:
+    FTP:
+      RootPath: "./data"
+      Hostname: "0.0.0.0"
+      Port: 2222
+      Auth:
+        Username: "admin"
+        Password: "secret"
+      PassivePorts: "30000-30009"
+      Paths:
+        Files: "/outbound/"
+        Return: "/returned/"
+    Admin:
+      Bind:
+        Address: ":3333"
+  Responses:
+    # Entries that match both the DFIAccountNumber and TraceNumber will be returned with a R03 return code.
+    - match:
+        accountNumber: "12345678"
+        traceNumber: "121042880000001"
+      action:
+        return:
+          code: "R03"
+```
+
+The full config for Responses is below:
+
+```yaml
+# All populated fields must match for the action to be applied to the EntryDetail
+match:
+  # Match the DFIAccountNumber on the EntryDetail
+  accountNumber: <string>
+  amount:
+    min: <integer>
+    max: <integer>
+    value: <integer>    # Either min AND max OR value is used
+  debit: <object>       # Include this to only match on debits
+  traceNumber: <string> # Exact match of TraceNumber
+
+action:
+  # Send the EntryDetail back with the following ACH change code
+  correction:
+    code: <string>
+    data: <string>
+
+  # Send the EntryDetail back with the following ACH return code
+  return:
+    code: <string>
+```
 
 ## Getting Help
 
  channel | info
  ------- | -------
- [Project Documentation](docs/README.md) | Our project documentation available online.
+[Project Documentation](docs/README.md) | Our project documentation available online.
 Twitter [@moov_io](https://twitter.com/moov_io)	| You can follow Moov.IO's Twitter feed to get updates on our project(s). You can also tweet us questions or just share blogs or stories.
 [GitHub Issue](https://github.com/moov-io/ach-test-harness/issues) | If you are able to reproduce a problem please open a GitHub Issue under the specific project that caused the error.
-[moov-io slack](https://slack.moov.io/) | Join our slack channel (`#ach-test-harness`) to have an interactive discussion about the development of the project.
+[moov-io slack](https://slack.moov.io/) | Join our slack channel (`#ach`) to have an interactive discussion about the development of the project.
 
 ## Supported and Tested Platforms
 
