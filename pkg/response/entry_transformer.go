@@ -72,14 +72,14 @@ func (t *ReturnTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, a
 	addenda99.TraceNumber = out.TraceNumber
 
 	if err := addenda99.Validate(); err != nil {
-		return out, fmt.Errorf("Addenda99 validate: %#v\n", addenda99)
+		return out, fmt.Errorf("addenda99 validate: %#v", addenda99)
 	}
 
 	// Add the Addenda99 on the return EntryDetail
 	out.Addenda99 = addenda99
 
 	if err := out.Validate(); err != nil {
-		return out, fmt.Errorf("OUT EntryDetail validate: %v\n", out)
+		return out, fmt.Errorf("entry detail validate: %v", out)
 	}
 
 	return out, nil
