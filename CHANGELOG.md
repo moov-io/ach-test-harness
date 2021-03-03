@@ -1,3 +1,14 @@
+## v0.2.0 (Released 2021-03-03)
+
+ADDITIONS
+
+- response: include matcher for IndividualName
+
+IMPROVEMENTS
+
+- response: add Matcher tests
+- response: add MorphEntry transform tests
+
 ## v0.1.2 (Released 2021-03-02)
 
 BUG FIXES
