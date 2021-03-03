@@ -36,6 +36,10 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 			matched = matchedDebit(matcher, ed)
 		}
 
+		if matcher.IndividualName != "" {
+			matched = matchedIndividualName(matcher, ed)
+		}
+
 		// Return the Action if we've still matched
 		if matched {
 			return &m.Responses[i].Action
@@ -69,4 +73,8 @@ func matchedDebit(m service.Match, ed *ach.EntryDetail) bool {
 		return true
 	}
 	return false
+}
+
+func matchedIndividualName(m service.Match, ed *ach.EntryDetail) bool {
+	return ed.IndividualName == m.IndividualName
 }
