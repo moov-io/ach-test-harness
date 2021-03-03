@@ -63,10 +63,11 @@ type Response struct {
 }
 
 type Match struct {
-	AccountNumber string
-	Amount        *Amount
-	Debit         *Debit
-	TraceNumber   string
+	AccountNumber  string
+	Amount         *Amount
+	Debit          *Debit
+	IndividualName string
+	TraceNumber    string
 }
 
 type Amount struct {
