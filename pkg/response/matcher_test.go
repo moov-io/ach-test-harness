@@ -1,6 +1,7 @@
 package response
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/moov-io/ach"
@@ -73,4 +74,48 @@ func TestMatchTraceNumber(t *testing.T) {
 	// negative match
 	ed.TraceNumber = "9876543201234"
 	require.False(t, matchesTraceNumber(m, ed))
+}
+
+func TestMultiMatch(t *testing.T) {
+	matcher := Matcher{
+		Responses: []service.Response{
+			{
+				Match: service.Match{
+					Amount: &service.Amount{
+						Min: 500000,  // $5,000.00
+						Max: 1000000, // $10,000.00
+					},
+					Debit: &service.Debit{},
+				},
+				Action: service.Action{
+					Return: &service.Return{
+						Code: "R01",
+					},
+				},
+			},
+			{
+				Match: service.Match{
+					IndividualName: "Incorrect Name",
+				},
+				Action: service.Action{
+					Correction: &service.Correction{
+						Code: "C04",
+						Data: "Correct Name",
+					},
+				},
+			},
+		},
+	}
+
+	// Read our test file
+	file, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20210308-1806-071000301.ach"))
+	require.NoError(t, err)
+	entries := file.Batches[0].GetEntries()
+
+	action := matcher.FindAction(entries[0])
+	require.Nil(t, action)
+
+	// Find our Action
+	action = matcher.FindAction(entries[1])
+	require.Equal(t, action.Correction.Code, "C04")
 }

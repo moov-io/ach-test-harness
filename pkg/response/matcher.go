@@ -13,35 +13,55 @@ type Matcher struct {
 
 func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 	for i := range m.Responses {
-		var matched bool // Matcher are AND'd together
+		positive, negative := 0, 0 // Matchers are AND'd together
 		matcher := m.Responses[i].Match
 
 		// Trace Number
 		if matcher.TraceNumber != "" {
-			matched = matchesTraceNumber(matcher, ed)
+			if matchesTraceNumber(matcher, ed) {
+				positive++
+			} else {
+				negative++
+			}
 		}
 
 		// Account Number
 		if matcher.AccountNumber != "" {
-			matched = matchesAccountNumber(matcher, ed)
+			if matchesAccountNumber(matcher, ed) {
+				positive++
+			} else {
+				negative++
+			}
 		}
 
 		// Check if the Amount matches
 		if matcher.Amount != nil {
-			matched = matchedAmount(matcher, ed)
+			if matchedAmount(matcher, ed) {
+				positive++
+			} else {
+				negative++
+			}
 		}
 
 		// Check if this Entry is a debit
 		if matcher.Debit != nil {
-			matched = matchedDebit(matcher, ed)
+			if matchedDebit(matcher, ed) {
+				positive++
+			} else {
+				negative++
+			}
 		}
 
 		if matcher.IndividualName != "" {
-			matched = matchedIndividualName(matcher, ed)
+			if matchedIndividualName(matcher, ed) {
+				positive++
+			} else {
+				negative++
+			}
 		}
 
 		// Return the Action if we've still matched
-		if matched {
+		if negative == 0 && positive > 0 {
 			return &m.Responses[i].Action
 		}
 	}
@@ -76,5 +96,5 @@ func matchedDebit(m service.Match, ed *ach.EntryDetail) bool {
 }
 
 func matchedIndividualName(m service.Match, ed *ach.EntryDetail) bool {
-	return ed.IndividualName == m.IndividualName
+	return strings.TrimSpace(ed.IndividualName) == m.IndividualName
 }
