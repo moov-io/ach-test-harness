@@ -1,3 +1,9 @@
+## v0.2.1 (Released 2021-03-08)
+
+BUG FIXES
+
+- response: count positive/negative matches for complex Action selection
+
 ## v0.2.0 (Released 2021-03-03)
 
 ADDITIONS
