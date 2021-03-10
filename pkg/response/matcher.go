@@ -72,10 +72,10 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 		// Check if this Entry is a debit
 		if matcher.Debit != nil {
 			if matchedDebit(matcher, ed) {
-				m.debugLog(fmt.Sprintf("EntryDetail.TransactionCode debit positive match", ed.Amount))
+				m.debugLog(fmt.Sprintf("EntryDetail.TransactionCode=%d debit positive match", ed.TransactionCode))
 				positive++
 			} else {
-				m.debugLog(fmt.Sprintf("EntryDetail.TransactionCode debit negative match", ed.Amount))
+				m.debugLog(fmt.Sprintf("EntryDetail.TransactionCode=%d debit negative match", ed.TransactionCode))
 				negative++
 			}
 		}
