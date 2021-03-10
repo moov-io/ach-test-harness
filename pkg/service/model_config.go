@@ -15,6 +15,7 @@ type GlobalConfig struct {
 // Config defines all the configuration for the app
 type Config struct {
 	Servers   ServerConfig
+	Matching  Matching
 	Responses []Response
 }
 
@@ -55,6 +56,10 @@ type HTTPConfig struct {
 // BindAddress specifies where the http server should bind to.
 type BindAddress struct {
 	Address string
+}
+
+type Matching struct {
+	Debug bool
 }
 
 type Response struct {

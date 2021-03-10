@@ -30,7 +30,7 @@ func main() {
 
 	// Initialize our responders
 	fileWriter := response.NewFileWriter(env.Logger, env.Config.Servers, env.FTPServer)
-	fileTransformer := response.NewFileTransformer(env.Config, env.Config.Responses, fileWriter)
+	fileTransformer := response.NewFileTransformer(env.Logger, env.Config, env.Config.Responses, fileWriter)
 	response.Register(env.Logger, env.FTPServer, fileTransformer)
 
 	// Block for a signal to shutdown

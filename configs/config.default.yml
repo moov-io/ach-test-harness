@@ -16,6 +16,8 @@ ACHTestHarness:
     Admin:
       Bind:
         Address: ":3333"
+  Matching:
+    Debug: false
   Responses:
     - match:
         # This matches ./examples/ppd-debit.ach
