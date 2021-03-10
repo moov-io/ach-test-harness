@@ -113,7 +113,7 @@ func matchedAmount(m service.Match, ed *ach.EntryDetail) bool {
 		inner = (ed.Amount == m.Amount.Value)
 	}
 	if m.Amount.Min > 0 && m.Amount.Max > 0 {
-		inner = inner && (m.Amount.Min <= ed.Amount && m.Amount.Max >= ed.Amount)
+		inner = (m.Amount.Min <= ed.Amount && m.Amount.Max >= ed.Amount)
 	}
 	return inner
 }
