@@ -1,3 +1,14 @@
+## v0.2.2 (Released 2021-03-10)
+
+BUG FIXES
+
+- response/matcher: fix strict match on amounts
+- response/matcher: fix sprintf logs in matcher
+
+IMPROVEMENTS
+
+- response: include debug logging in matching
+
 ## v0.2.1 (Released 2021-03-08)
 
 BUG FIXES
