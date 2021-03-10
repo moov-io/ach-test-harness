@@ -406,8 +406,6 @@ github.com/modern-go/reflect2 v1.0.1/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3Rllmb
 github.com/moov-io/ach v1.6.2 h1:uMPFL0kN3t8rjfOyXY5uVu9TWpvYhMAm8e25JfDFyy0=
 github.com/moov-io/ach v1.6.2/go.mod h1:6iaj9DeDVgOnMBfz9AFjaTqna/aoeYzMIArEtLfD6Bg=
 github.com/moov-io/base v0.15.4/go.mod h1:oZd7yveRERNu1kGgW9KAevUNlz45Qfc9Slax3vWR544=
-github.com/moov-io/base v0.16.0 h1:R0k+q2X+TR33YenhDEHckIWR7kcHaEU7PvR9dDseR7o=
-github.com/moov-io/base v0.16.0/go.mod h1:ShJrBLiHy1yfK+/34bq9eteAAs5VvAgdDbRuPjsOxLo=
 github.com/moov-io/base v0.17.0 h1:8SQmQXYEJgnQHAead1tZcgUWNBv/ZveonXQ22T2wUlk=
 github.com/moov-io/base v0.17.0/go.mod h1:ShJrBLiHy1yfK+/34bq9eteAAs5VvAgdDbRuPjsOxLo=
 github.com/morikuni/aec v1.0.0/go.mod h1:BbKIizmSmc5MMPqRYbxO4ZU0S0+P200+tUnFx7PXmsc=

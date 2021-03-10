@@ -8,6 +8,7 @@ import (
 
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/service"
+	"github.com/moov-io/base/log"
 )
 
 type FileTransfomer struct {
@@ -18,11 +19,9 @@ type FileTransfomer struct {
 	returnPath string
 }
 
-func NewFileTransformer(cfg *service.Config, responses []service.Response, writer FileWriter) *FileTransfomer {
+func NewFileTransformer(logger log.Logger, cfg *service.Config, responses []service.Response, writer FileWriter) *FileTransfomer {
 	xform := &FileTransfomer{
-		Matcher: Matcher{
-			Responses: cfg.Responses,
-		},
+		Matcher: NewMatcher(logger, cfg.Matching, responses),
 		Entry: EntryTransformers([]EntryTransformer{
 			&CorrectionTransformer{},
 			&ReturnTransformer{},
