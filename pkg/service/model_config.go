@@ -72,6 +72,7 @@ type Match struct {
 	Amount         *Amount
 	Debit          *Debit
 	IndividualName string
+	RoutingNumber  string
 	TraceNumber    string
 }
 

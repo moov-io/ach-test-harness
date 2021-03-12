@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/moov-io/ach"
+	"github.com/moov-io/ach-test-harness/internal/achx"
 	"github.com/moov-io/ach-test-harness/pkg/service"
 	"github.com/moov-io/base/log"
 )
@@ -58,6 +59,17 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 			}
 		}
 
+		// Routing Number
+		if matcher.RoutingNumber != "" {
+			if matchesRoutingNumber(matcher, ed) {
+				m.debugLog(fmt.Sprintf("EntryDetail.RDFIIdentification=%s positive match", ed.RDFIIdentification))
+				positive++
+			} else {
+				m.debugLog(fmt.Sprintf("EntryDetail=%s negative match", ed.RDFIIdentification))
+				negative++
+			}
+		}
+
 		// Check if the Amount matches
 		if matcher.Amount != nil {
 			if matchedAmount(matcher, ed) {
@@ -105,6 +117,12 @@ func matchesTraceNumber(m service.Match, ed *ach.EntryDetail) bool {
 
 func matchesAccountNumber(m service.Match, ed *ach.EntryDetail) bool {
 	return strings.TrimSpace(ed.DFIAccountNumber) == m.AccountNumber
+}
+
+func matchesRoutingNumber(m service.Match, ed *ach.EntryDetail) bool {
+	aba8 := achx.ABA8(m.RoutingNumber) == ed.RDFIIdentification
+	check := achx.ABACheckDigit(m.RoutingNumber) == ed.CheckDigit
+	return aba8 && check
 }
 
 func matchedAmount(m service.Match, ed *ach.EntryDetail) bool {
