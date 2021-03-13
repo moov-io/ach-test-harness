@@ -23,7 +23,7 @@ type batchMirror struct {
 func newBatchMirror(w FileWriter, b ach.Batcher) *batchMirror {
 	return &batchMirror{
 		header:  b.GetHeader(),
-		entries: make(map[string][]*ach.EntryDetail, 0),
+		entries: make(map[string][]*ach.EntryDetail),
 		control: b.GetControl(),
 		writer:  w,
 	}
