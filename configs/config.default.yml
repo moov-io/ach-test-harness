@@ -48,3 +48,8 @@ ACHTestHarness:
         correction:
           code: "C01"
           data: "744567899"
+    - match:
+        routingNumber: "111222337"
+      action:
+        copy:
+          path: "/reconciliation/"

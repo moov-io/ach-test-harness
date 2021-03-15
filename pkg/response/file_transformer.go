@@ -51,6 +51,7 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 	}
 
 	for i := range file.Batches {
+		mirror := newBatchMirror(ft.Writer, file.Batches[i])
 		batch, err := ach.NewBatch(file.Batches[i].GetHeader())
 		if err != nil {
 			return fmt.Errorf("transform batch[%d] problem creating Batch: %v", i, err)
@@ -64,6 +65,7 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 				if err != nil {
 					return fmt.Errorf("transform batch[%d] morph entry[%d] error: %v", i, j, err)
 				}
+
 				// When the entry is corrected we need to change the SEC code
 				if entry.Category == ach.CategoryNOC {
 					bh := batch.GetHeader()
@@ -74,12 +76,23 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 						return fmt.Errorf("transform batch[%d] NOC entry[%d] error: %v", i, j, err)
 					}
 				}
+
+				// Save this Entry
+				if action.Copy != nil {
+					mirror.saveEntry(action.Copy, entries[j])
+				}
+
 				// Add the transformed entry onto the batch
 				if entry != nil {
 					batch.AddEntry(entry)
 				}
 			}
 		}
+		// Save off the entries as requested
+		if err := mirror.saveFiles(); err != nil {
+			return fmt.Errorf("problem saving entries: %v", err)
+		}
+		// Create our Batch's Control and other fields
 		if entries := batch.GetEntries(); len(entries) > 0 {
 			if err := batch.Create(); err != nil {
 				return fmt.Errorf("transform batch[%d] create error: %v", i, err)
@@ -87,13 +100,14 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 			out.AddBatch(batch)
 		}
 	}
+
 	if out != nil && len(out.Batches) > 0 {
 		if err := out.Create(); err != nil {
 			return fmt.Errorf("transform out create: %v", err)
 		}
 		if err := out.Validate(); err == nil {
-			filepath := filepath.Join(ft.returnPath, generateFilename(out))
-			if err := ft.Writer.Write(filepath, out); err != nil {
+			filepath := filepath.Join(ft.returnPath, generateFilename(out)) // TODO(adam): need to determine return path
+			if err := ft.Writer.WriteFile(filepath, out); err != nil {
 				return fmt.Errorf("transform write %s: %v", filepath, err)
 			}
 		} else {

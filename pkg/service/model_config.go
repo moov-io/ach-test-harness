@@ -72,6 +72,7 @@ type Match struct {
 	Amount         *Amount
 	Debit          *Debit
 	IndividualName string
+	RoutingNumber  string
 	TraceNumber    string
 }
 
@@ -84,8 +85,13 @@ type Amount struct {
 type Debit struct{}
 
 type Action struct {
+	Copy       *Copy
 	Correction *Correction
 	Return     *Return
+}
+
+type Copy struct {
+	Path string
 }
 
 type Correction struct {
