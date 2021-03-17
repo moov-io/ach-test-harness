@@ -3,7 +3,9 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 
@@ -19,6 +21,7 @@ import (
 // RunServers - Boots up all the servers and awaits till they are stopped.
 func (env *Environment) RunServers(terminationListener chan error) func() {
 	adminServer := bootAdminServer(terminationListener, env.Logger, env.Config.Servers.Admin)
+	env.serveConfig(adminServer)
 
 	var shutdownFTPServer func()
 	if env.Config.Servers.FTP != nil {
@@ -95,4 +98,12 @@ func bootAdminServer(errs chan<- error, logger log.Logger, config HTTPConfig) *a
 	}()
 
 	return adminServer
+}
+
+func (env *Environment) serveConfig(svc *admin.Server) {
+	svc.AddHandler("/config", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(env.Config)
+	})
 }
