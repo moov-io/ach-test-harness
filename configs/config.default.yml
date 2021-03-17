@@ -19,37 +19,37 @@ ACHTestHarness:
   Matching:
     Debug: false
   Responses:
-    - match:
-        # This matches ./examples/ppd-debit.ach
-        accountNumber: "12345678"
-        traceNumber: "121042880000001"
-      action:
-        return:
-          code: "R03"
-    - match:
-        debit: {}
-        amount:
-          min: 100000 # $1,000
-          min: 120000 # $1,200
-      action:
-        return:
-          code: "R01"
-    - match:
-        accountNumber: "987654321"
-        amount:
-          value: 45121 # $451.21
-      action:
-        return:
-          code: "R01"
-    - match:
-        # This matches ./examples/utility-bill.ach
-        accountNumber: "744-5678-99"
-      action:
-        correction:
-          code: "C01"
-          data: "744567899"
-    - match:
-        routingNumber: "111222337"
-      action:
-        copy:
-          path: "/reconciliation/"
+  - match:
+      # This matches ./examples/ppd-debit.ach
+      accountNumber: "12345678"
+      traceNumber: "121042880000001"
+    action:
+      return:
+        code: "R03"
+  - match:
+      debit: {}
+      amount:
+        min: 100000 # $1,000
+        min: 120000 # $1,200
+    action:
+      return:
+        code: "R01"
+  - match:
+      accountNumber: "987654321"
+      amount:
+        value: 45121 # $451.21
+    action:
+      return:
+        code: "R01"
+  - match:
+      # This matches ./examples/utility-bill.ach
+      accountNumber: "744-5678-99"
+    action:
+      correction:
+        code: "C01"
+        data: "744567899"
+  - match:
+      routingNumber: "111222337"
+    action:
+      copy:
+        path: "/reconciliation/"
