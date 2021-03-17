@@ -80,6 +80,52 @@ action:
     code: <string>
 ```
 
+## Examples
+
+### Return Debits between two values
+
+```
+  - match:
+      debit: {} # remove if you want to return Credits and Debits
+      amount:
+        min: 100000 # $1,000
+        min: 120000 # $1,200
+    action:
+      return:
+        code: "R01"
+```
+
+### Return a specific TraceNumber
+
+```
+  - match:
+      # This matches ./examples/ppd-debit.ach
+      traceNumber: "121042880000001"
+    action:
+      return:
+        code: "R03"
+```
+
+### Correct an account number
+```
+  - match:
+      # This matches ./examples/utility-bill.ach
+      accountNumber: "744-5678-99"
+    action:
+      correction:
+        code: "C01"
+        data: "744567899"
+```
+
+### Copy all entries for a routing number
+```
+  - match:
+      routingNumber: "111222337"
+    action:
+      copy:
+        path: "/reconciliation/"
+```
+
 ## Getting Help
 
  channel | info
