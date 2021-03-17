@@ -80,11 +80,11 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 				// Save this Entry
 				if action.Copy != nil {
 					mirror.saveEntry(action.Copy, entries[j])
-				}
-
-				// Add the transformed entry onto the batch
-				if entry != nil {
-					batch.AddEntry(entry)
+				} else {
+					// Add the transformed entry onto the batch
+					if entry != nil {
+						batch.AddEntry(entry)
+					}
 				}
 			}
 		}
