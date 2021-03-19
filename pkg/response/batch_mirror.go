@@ -38,7 +38,7 @@ func (bm *batchMirror) saveEntry(copy *service.Copy, ed *ach.EntryDetail) {
 
 func (bm *batchMirror) saveFiles() error {
 	if bm.header == nil || len(bm.entries) == 0 {
-		return fmt.Errorf("missing BatchHeader or entries (found %d)", len(bm.entries))
+		return nil
 	}
 	for path, entries := range bm.entries {
 		// Accumulate file contents
