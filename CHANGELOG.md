@@ -1,3 +1,20 @@
+## v0.3.0 (Released 2021-03-22)
+
+ADDITIONS
+
+- response: add a "Copy" matcher for mirroring entries to another file
+- response: introduce RoutingNumber matcher
+- service: add route to render merged config
+
+IMPROVEMENTS
+
+- config: add example of routingNumber -> copy response
+- fix(deps): update module github.com/moov-io/ach to v1.6.3
+
+BUG FIXES
+
+- configs: fix default with empty object
+
 ## v0.2.2 (Released 2021-03-10)
 
 BUG FIXES
