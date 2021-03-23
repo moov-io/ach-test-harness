@@ -75,11 +75,10 @@ match:
     min: <integer>
     max: <integer>
     value: <integer>       # Either min AND max OR value is used
-  debit: <object>          # Include this to only match on debits
   individualName: <string> # Compare the IndividualName on EntryDetail records
   routingNumber: <string>  # Exact match of ABA routing number (RDFIIdentification and CheckDigit)
   traceNumber: <string>    # Exact match of TraceNumber
-
+  type: <string>       # credit, debit or empty string to skip the type match
 action:
   # Copy the EntryDetail to another directory
   copy:
@@ -101,7 +100,7 @@ action:
 
 ```
   - match:
-      debit: {} # remove if you want to return Credits and Debits
+      type: debit
       amount:
         min: 100000 # $1,000
         min: 120000 # $1,200

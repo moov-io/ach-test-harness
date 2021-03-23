@@ -70,7 +70,7 @@ type Response struct {
 type Match struct {
 	AccountNumber  string
 	Amount         *Amount
-	Debit          *Debit
+	Type           EntryType
 	IndividualName string
 	RoutingNumber  string
 	TraceNumber    string
@@ -82,7 +82,13 @@ type Amount struct {
 	Max   int
 }
 
-type Debit struct{}
+type EntryType string
+
+const (
+	TypeEmpty  EntryType = ""
+	TypeDebit  EntryType = "debit"
+	TypeCredit EntryType = "credit"
+)
 
 type Action struct {
 	Copy       *Copy
