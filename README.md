@@ -45,6 +45,8 @@ ACHTestHarness:
     Admin:
       Bind:
         Address: ":3333"
+  Matching:
+    Debug: false
   Responses:
     # Entries that match both the DFIAccountNumber and TraceNumber will be returned with a R03 return code.
     - match:
@@ -65,11 +67,17 @@ match:
   amount:
     min: <integer>
     max: <integer>
-    value: <integer>    # Either min AND max OR value is used
-  debit: <object>       # Include this to only match on debits
-  traceNumber: <string> # Exact match of TraceNumber
+    value: <integer>       # Either min AND max OR value is used
+  debit: <object>          # Include this to only match on debits
+  individualName: <string> # Compare the IndividualName on EntryDetail records
+  routingNumber: <string>  # Exact match of ABA routing number (RDFIIdentification and CheckDigit)
+  traceNumber: <string>    # Exact match of TraceNumber
 
 action:
+  # Copy the EntryDetail to another directory
+  copy:
+    path: <string> # Filepath on the FTP server
+
   # Send the EntryDetail back with the following ACH change code
   correction:
     code: <string>
@@ -117,13 +125,14 @@ action:
         data: "744567899"
 ```
 
-### Copy all entries for a routing number
+### Copy debit entries for a routing number
 ```
   - match:
+      debit: {}
       routingNumber: "111222337"
     action:
       copy:
-        path: "/reconciliation/"
+        path: "/fraud-doublecheck/"
 ```
 
 ## Getting Help
