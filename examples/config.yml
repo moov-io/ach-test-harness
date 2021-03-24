@@ -1,0 +1,34 @@
+# generated-from:e09dee96ebf4666ccbcec622d28d1772a2c1f53310b3395b4114a1fce494a91f DO NOT REMOVE, DO UPDATE
+
+ACHTestHarness:
+  Servers:
+    FTP:
+      RootPath: "./data"
+      Hostname: "0.0.0.0"
+      Port: 2222
+      Auth:
+        Username: "admin"
+        Password: "secret"
+      PassivePorts: "30000-30009"
+      Paths:
+        Files: "/outbound/"
+        Return: "/returned/"
+    Admin:
+      Bind:
+        Address: ":3333"
+  Matching:
+    Debug: true
+  Responses:
+  - match:
+      # This matches ./examples/utility-bill.ach
+      accountNumber: "744-5678-99"
+    action:
+      correction:
+        code: "C01"
+        data: "744567899"
+  - match:
+      # This matches ./examples/ppd-debit.ach
+      traceNumber: "121042880000001"
+    action:
+      copy:
+        path: "/reconciliation/"

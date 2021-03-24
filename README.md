@@ -22,11 +22,18 @@ We publish a [public Docker image `moov/ach-test-harness`](https://hub.docker.co
 
 Pull & start the Docker image:
 ```
-docker pull moov/ach-test-harness:latest
-docker run -p 2222:2222 -p 3333:3333 moov/ach-test-harness:latest
+$ docker-compose up
+harness_1  | ts=2021-03-24T20:36:10Z msg="loading config file" component=Service level=info app=ach-test-harness version=v0.3.0 file=/configs/config.default.yml
+harness_1  | ts=2021-03-24T20:36:10Z msg="Loading APP_CONFIG config file" app=ach-test-harness version=v0.3.0 APP_CONFIG=/examples/config.yml component=Service level=info
+harness_1  | ts=2021-03-24T20:36:10Z msg="loading config file" component=Service level=info app=ach-test-harness version=v0.3.0 APP_CONFIG=/examples/config.yml file=/examples/config.yml
+harness_1  | ts=2021-03-24T20:36:10Z msg="matcher: enable debug logging" level=info app=ach-test-harness version=v0.3.0
+harness_1  | 2021/03/24 20:36:10   Go FTP Server listening on 2222
+harness_1  | ts=2021-03-24T20:36:10Z msg="listening on [::]:3333" level=info app=ach-test-harness version=v0.3.0
 ```
 
-Inspect your configuration file and setup some scenarios to match uploaded files.
+You can then use an FTP client that connects to `localhost:2222` with a username of `admin` and password of `secret`. Upload files to the `outbound/` directory and watch for any responses.
+
+After setup inspect the configuration file in `./examples/config.yml` and setup some scenarios to match uploaded files.
 
 ```yaml
 ACHTestHarness:
