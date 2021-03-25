@@ -22,11 +22,18 @@ We publish a [public Docker image `moov/ach-test-harness`](https://hub.docker.co
 
 Pull & start the Docker image:
 ```
-docker pull moov/ach-test-harness:latest
-docker run -p 2222:2222 -p 3333:3333 moov/ach-test-harness:latest
+$ docker-compose up
+harness_1  | ts=2021-03-24T20:36:10Z msg="loading config file" component=Service level=info app=ach-test-harness version=v0.3.0 file=/configs/config.default.yml
+harness_1  | ts=2021-03-24T20:36:10Z msg="Loading APP_CONFIG config file" app=ach-test-harness version=v0.3.0 APP_CONFIG=/examples/config.yml component=Service level=info
+harness_1  | ts=2021-03-24T20:36:10Z msg="loading config file" component=Service level=info app=ach-test-harness version=v0.3.0 APP_CONFIG=/examples/config.yml file=/examples/config.yml
+harness_1  | ts=2021-03-24T20:36:10Z msg="matcher: enable debug logging" level=info app=ach-test-harness version=v0.3.0
+harness_1  | 2021/03/24 20:36:10   Go FTP Server listening on 2222
+harness_1  | ts=2021-03-24T20:36:10Z msg="listening on [::]:3333" level=info app=ach-test-harness version=v0.3.0
 ```
 
-Inspect your configuration file and setup some scenarios to match uploaded files.
+You can then use an FTP client that connects to `localhost:2222` with a username of `admin` and password of `secret`. Upload files to the `outbound/` directory and watch for any responses.
+
+After setup inspect the configuration file in `./examples/config.yml` and setup some scenarios to match uploaded files.
 
 ```yaml
 ACHTestHarness:
@@ -45,6 +52,8 @@ ACHTestHarness:
     Admin:
       Bind:
         Address: ":3333"
+  Matching:
+    Debug: false
   Responses:
     # Entries that match both the DFIAccountNumber and TraceNumber will be returned with a R03 return code.
     - match:
@@ -65,11 +74,17 @@ match:
   amount:
     min: <integer>
     max: <integer>
-    value: <integer>    # Either min AND max OR value is used
-  debit: <object>       # Include this to only match on debits
-  traceNumber: <string> # Exact match of TraceNumber
+    value: <integer>       # Either min AND max OR value is used
+  debit: <object>          # Include this to only match on debits
+  individualName: <string> # Compare the IndividualName on EntryDetail records
+  routingNumber: <string>  # Exact match of ABA routing number (RDFIIdentification and CheckDigit)
+  traceNumber: <string>    # Exact match of TraceNumber
 
 action:
+  # Copy the EntryDetail to another directory
+  copy:
+    path: <string> # Filepath on the FTP server
+
   # Send the EntryDetail back with the following ACH change code
   correction:
     code: <string>
@@ -117,13 +132,14 @@ action:
         data: "744567899"
 ```
 
-### Copy all entries for a routing number
+### Copy debit entries for a routing number
 ```
   - match:
+      debit: {}
       routingNumber: "111222337"
     action:
       copy:
-        path: "/reconciliation/"
+        path: "/fraud-doublecheck/"
 ```
 
 ## Getting Help
