@@ -32,17 +32,17 @@ func TestMatchType(t *testing.T) {
 	}
 
 	tests := []test{
-		{input: ach.CheckingDebit, entryType: service.TypeDebit, want: true},
-		{input: ach.SavingsDebit, entryType: service.TypeDebit, want: true},
-		{input: ach.CheckingCredit, entryType: service.TypeCredit, want: true},
-		{input: ach.CheckingDebit, entryType: service.TypeCredit, want: false},
-		{input: ach.SavingsDebit, entryType: service.TypeCredit, want: false},
-		{input: ach.CheckingCredit, entryType: service.TypeDebit, want: false},
+		{input: ach.CheckingDebit, entryType: service.EntryTypeDebit, want: true},
+		{input: ach.SavingsDebit, entryType: service.EntryTypeDebit, want: true},
+		{input: ach.CheckingCredit, entryType: service.EntryTypeCredit, want: true},
+		{input: ach.CheckingDebit, entryType: service.EntryTypeCredit, want: false},
+		{input: ach.SavingsDebit, entryType: service.EntryTypeCredit, want: false},
+		{input: ach.CheckingCredit, entryType: service.EntryTypeDebit, want: false},
 	}
 
 	for _, tc := range tests {
 		m := service.Match{
-			Type: tc.entryType,
+			EntryType: tc.entryType,
 		}
 		ed := ach.NewEntryDetail()
 		ed.TransactionCode = tc.input
@@ -96,7 +96,7 @@ func TestMultiMatch(t *testing.T) {
 						Min: 500000,  // $5,000.00
 						Max: 1000000, // $10,000.00
 					},
-					Type: service.TypeDebit,
+					EntryType: service.EntryTypeDebit,
 				},
 				Action: service.Action{
 					Return: &service.Return{

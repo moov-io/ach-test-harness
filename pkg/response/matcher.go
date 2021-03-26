@@ -82,7 +82,7 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 		}
 
 		// Check if this Entry is a debit
-		if matcher.Type != service.TypeEmpty {
+		if matcher.EntryType != service.EntryTypeEmpty {
 			if matchedType(matcher, ed) {
 				m.debugLog(fmt.Sprintf("EntryDetail.TransactionCode=%d type positive match", ed.TransactionCode))
 				positive++
@@ -138,9 +138,9 @@ func matchedAmount(m service.Match, ed *ach.EntryDetail) bool {
 
 func matchedType(m service.Match, ed *ach.EntryDetail) bool {
 	switch {
-	case m.Type == service.TypeDebit && matchedDebit(m, ed):
+	case m.EntryType == service.EntryTypeDebit && matchedDebit(m, ed):
 		return true
-	case m.Type == service.TypeCredit && !matchedDebit(m, ed):
+	case m.EntryType == service.EntryTypeCredit && !matchedDebit(m, ed):
 		return true
 	default:
 		return false

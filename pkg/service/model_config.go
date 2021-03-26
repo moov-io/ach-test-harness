@@ -70,7 +70,7 @@ type Response struct {
 type Match struct {
 	AccountNumber  string
 	Amount         *Amount
-	Type           EntryType
+	EntryType      EntryType
 	IndividualName string
 	RoutingNumber  string
 	TraceNumber    string
@@ -85,9 +85,9 @@ type Amount struct {
 type EntryType string
 
 const (
-	TypeEmpty  EntryType = ""
-	TypeDebit  EntryType = "debit"
-	TypeCredit EntryType = "credit"
+	EntryTypeEmpty  EntryType = ""
+	EntryTypeDebit  EntryType = "debit"
+	EntryTypeCredit EntryType = "credit"
 )
 
 type Action struct {
