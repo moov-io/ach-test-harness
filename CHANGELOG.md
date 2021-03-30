@@ -1,3 +1,14 @@
+## v0.4.0 (Unreleased)
+
+BREAKING CHANGES
+
+- response: add entry type matcher for debit or credit entry
+
+IMPROVEMENTS
+
+- build: update moov-io/base together with gogo/protobug to fix CVE
+- docs: refresh the readme after newer matchers
+
 ## v0.3.0 (Released 2021-03-22)
 
 ADDITIONS
