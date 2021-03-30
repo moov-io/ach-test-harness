@@ -24,25 +24,30 @@ func TestMatchAccountNumber(t *testing.T) {
 	require.False(t, matchesAccountNumber(m, ed))
 }
 
-func TestMatchDebit(t *testing.T) {
-	m := service.Match{
-		Debit: &service.Debit{},
-	}
-	ed := ach.NewEntryDetail()
-
-	tests := []int{ach.CheckingDebit, ach.SavingsDebit}
-	for i := range tests {
-		ed.TransactionCode = tests[i]
-
-		require.True(t, matchedDebit(m, ed))
+func TestMatchEntryType(t *testing.T) {
+	type test struct {
+		input     int
+		entryType service.EntryType
+		want      bool
 	}
 
-	// negative matches
-	tests = []int{ach.CheckingCredit, ach.SavingsCredit}
-	for i := range tests {
-		ed.TransactionCode = tests[i]
+	tests := []test{
+		{input: ach.CheckingDebit, entryType: service.EntryTypeDebit, want: true},
+		{input: ach.SavingsDebit, entryType: service.EntryTypeDebit, want: true},
+		{input: ach.CheckingCredit, entryType: service.EntryTypeCredit, want: true},
+		{input: ach.CheckingDebit, entryType: service.EntryTypeCredit, want: false},
+		{input: ach.SavingsDebit, entryType: service.EntryTypeCredit, want: false},
+		{input: ach.CheckingCredit, entryType: service.EntryTypeDebit, want: false},
+	}
 
-		require.False(t, matchedDebit(m, ed))
+	for _, tc := range tests {
+		m := service.Match{
+			EntryType: tc.entryType,
+		}
+		ed := ach.NewEntryDetail()
+		ed.TransactionCode = tc.input
+
+		require.Equal(t, tc.want, matchedEntryType(m, ed))
 	}
 }
 
@@ -76,6 +81,12 @@ func TestMatchTraceNumber(t *testing.T) {
 	require.False(t, matchesTraceNumber(m, ed))
 }
 
+// Following data is used for TestMultiMatch
+// TransactionCode  RDFIIdentification  AccountNumber      Amount  Name                    TraceNumber      Category
+// 37               22147578            221475786          100     John Doe                273976367520468
+
+// TransactionCode  RDFIIdentification  AccountNumber      Amount  Name                    TraceNumber      Category
+// 22               27397636            273976369          100     Incorrect Name          273976367520469
 func TestMultiMatch(t *testing.T) {
 	matcher := Matcher{
 		Responses: []service.Response{
@@ -85,7 +96,7 @@ func TestMultiMatch(t *testing.T) {
 						Min: 500000,  // $5,000.00
 						Max: 1000000, // $10,000.00
 					},
-					Debit: &service.Debit{},
+					EntryType: service.EntryTypeDebit,
 				},
 				Action: service.Action{
 					Return: &service.Return{
