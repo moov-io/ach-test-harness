@@ -24,7 +24,7 @@ func TestMatchAccountNumber(t *testing.T) {
 	require.False(t, matchesAccountNumber(m, ed))
 }
 
-func TestMatchType(t *testing.T) {
+func TestMatchEntryType(t *testing.T) {
 	type test struct {
 		input     int
 		entryType service.EntryType
@@ -47,7 +47,7 @@ func TestMatchType(t *testing.T) {
 		ed := ach.NewEntryDetail()
 		ed.TransactionCode = tc.input
 
-		require.Equal(t, tc.want, matchedType(m, ed))
+		require.Equal(t, tc.want, matchedEntryType(m, ed))
 	}
 }
 
