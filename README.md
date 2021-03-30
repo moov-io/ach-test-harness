@@ -134,7 +134,7 @@ action:
 ### Copy debit entries for a routing number
 ```
   - match:
-      debit: {}
+      entryType: "debit"
       routingNumber: "111222337"
     action:
       copy:
