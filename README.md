@@ -103,7 +103,7 @@ action:
       entryType: debit
       amount:
         min: 100000 # $1,000
-        min: 120000 # $1,200
+        max: 120000 # $1,200
     action:
       return:
         code: "R01"
