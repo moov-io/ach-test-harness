@@ -24,6 +24,88 @@ func TestMatchAccountNumber(t *testing.T) {
 	require.False(t, matchesAccountNumber(m, ed))
 }
 
+func TestMatchRoutingNumber(t *testing.T) {
+	m := service.Match{
+		RoutingNumber: "231380104",
+	}
+	ed := ach.NewEntryDetail()
+	ed.RDFIIdentification = "23138010"
+	ed.CheckDigit = "4"
+
+	// positive match
+	require.True(t, matchesRoutingNumber(m, ed))
+
+	// negative match - only CheckDigit matches
+	ed.CheckDigit = "1"
+	require.False(t, matchesRoutingNumber(m, ed))
+
+	// negative match - only RDFIIdentification matches
+	ed.RDFIIdentification = "11111111"
+	ed.CheckDigit = "4"
+	require.False(t, matchesRoutingNumber(m, ed))
+
+	// negative match
+	ed.CheckDigit = "1"
+	require.False(t, matchesRoutingNumber(m, ed))
+}
+
+func TestMatchAmount(t *testing.T) {
+	m1 := service.Match{
+		Amount: &service.Amount{
+			Value: 12345,
+		},
+	}
+	ed1 := ach.NewEntryDetail()
+	ed1.Amount = 12345
+
+	// positive match
+	require.True(t, matchedAmount(m1, ed1))
+
+	// negative match
+	ed1.Amount = 54321
+	require.False(t, matchedAmount(m1, ed1))
+
+	m2 := service.Match{
+		Amount: &service.Amount{
+			Min: 10000,
+			Max: 20000,
+		},
+	}
+	ed2 := ach.NewEntryDetail()
+	ed2.Amount = 12345
+
+	// positive match
+	require.True(t, matchedAmount(m2, ed2))
+	ed2.Amount = 10000
+	require.True(t, matchedAmount(m2, ed2))
+
+	// negative match
+	ed2.Amount = 100
+	require.False(t, matchedAmount(m2, ed2))
+}
+
+func TestMatchDebit(t *testing.T) {
+	type test struct {
+		input int
+		want  bool
+	}
+
+	tests := []test{
+		{input: ach.CheckingDebit, want: true},
+		{input: ach.SavingsDebit, want: true},
+		{input: ach.GLDebit, want: true},
+		{input: ach.LoanDebit, want: true},
+		{input: ach.CheckingCredit, want: false},
+	}
+
+	m := service.Match{}
+	for _, tc := range tests {
+		ed := ach.NewEntryDetail()
+		ed.TransactionCode = tc.input
+		require.Equal(t, tc.want, matchedDebit(m, ed))
+	}
+}
+
 func TestMatchEntryType(t *testing.T) {
 	type test struct {
 		input     int
