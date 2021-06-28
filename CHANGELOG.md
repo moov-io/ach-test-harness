@@ -1,3 +1,7 @@
+## v0.4.1 (Released 2021-06-28)
+
+This release contains MacOS and Windows binaries.
+
 ## v0.4.0 (Released 2021-03-30)
 
 BREAKING CHANGES
