@@ -6,7 +6,7 @@
 
 ## Running
 
-### Getting Started
+### Getting started
 
 More tutorials to come on how to use this as other pieces required to handle authorization are in place!
 
@@ -19,7 +19,7 @@ No configuration is required to serve on `:8200` and metrics at `:8201/metrics` 
 
 You can download [our docker image `moov/ach-test-harness`](https://hub.docker.com/r/moov/ach-test-harness/) from Docker Hub or use this repository. 
 
-### Local Development
+### Local development
 
 ```
 make run
