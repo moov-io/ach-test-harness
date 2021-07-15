@@ -7,7 +7,7 @@ go 1.15
 require (
 	github.com/markbates/pkger v0.17.1
 	github.com/moov-io/ach v1.9.3
-	github.com/moov-io/base v0.20.1
+	github.com/moov-io/base v0.21.0
 	github.com/stretchr/testify v1.7.0
 	goftp.io/server v0.4.1
 )
