@@ -23,7 +23,7 @@ A configurable FTP/SFTP server and Go library to interactively test ACH scenario
 
 ## Project status
 
-This project is currently under development and could introduce breaking changes to reach a stable status. We are looking for community feedback so please try out our code or give us feedback!
+This project is used in production at an early stage and might undergo breaking changes to reach a stable status. We are looking for community feedback so please try out our code or give us feedback!
 
 ## Getting started
 
