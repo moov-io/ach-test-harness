@@ -33,6 +33,12 @@ func (c *entryController) AppendRoutes(router *mux.Router) *mux.Router {
 		Path("/entries").
 		HandlerFunc(c.List())
 
+	router.
+		Name("Entry.delete").
+		Methods("DELETE").
+		Path("/entries").
+		HandlerFunc(c.Clean())
+
 	return router
 }
 
@@ -50,5 +56,14 @@ func (c *entryController) List() func(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(entries)
+	}
+}
+
+func (c *entryController) Clean() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		c.service.Clean()
+
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusNoContent)
 	}
 }

@@ -12,7 +12,6 @@ import (
 	ftp "goftp.io/server/core"
 	"goftp.io/server/driver/file"
 
-	"github.com/moov-io/ach-test-harness/pkg/entries"
 	"github.com/moov-io/base/admin"
 	"github.com/moov-io/base/log"
 
@@ -24,11 +23,11 @@ func (env *Environment) RunServers(terminationListener chan error) func() {
 	adminServer := bootAdminServer(terminationListener, env.Logger, env.Config.Servers.Admin)
 	env.serveConfig(adminServer)
 
+	// TODO:
 	// for now apiRouter is under admin router, we will change it later
-	apiRouter := adminServer.Subrouter("/api")
-	entryService := entries.NewEntryService()
-	entryController := entries.NewEntryController(env.Logger, entryService)
-	entryController.AppendRoutes(apiRouter)
+	// this feels a little bit hacky, I think we should create router in the evironment and pass it into admin server
+	// what do you think @adamdecaf?
+	env.Router = adminServer.Subrouter("/api")
 
 	var shutdownFTPServer func()
 	if env.Config.Servers.FTP != nil {

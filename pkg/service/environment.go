@@ -5,6 +5,7 @@ package service
 import (
 	ftp "goftp.io/server/core"
 
+	"github.com/gorilla/mux"
 	"github.com/moov-io/base/config"
 	"github.com/moov-io/base/log"
 	"github.com/moov-io/base/stime"
@@ -17,6 +18,7 @@ type Environment struct {
 	Logger      log.Logger
 	Config      *Config
 	TimeService stime.TimeService
+	Router      *mux.Router
 
 	// ftp or sftp server
 	FTPServer *ftp.Server
