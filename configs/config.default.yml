@@ -18,4 +18,5 @@ ACHTestHarness:
         Address: ":3333"
   Matching:
     Debug: false
+  ValidateOpts:
   Responses: []
