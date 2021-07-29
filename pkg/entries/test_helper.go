@@ -1,7 +1,6 @@
 package entries
 
 import (
-	"os"
 	"path/filepath"
 
 	"github.com/moov-io/ach"
