@@ -65,13 +65,7 @@ func (notify *FTPWatcher) AfterFilePut(conn *ftp.Conn, dstPath string, size int6
 	if err := file.Create(); err != nil {
 		notify.logger.Info().Log(fmt.Sprintf("ftp: error creating file %s: %v", dstPath, err))
 	}
-
-	if err := notify.entryService.AddFile(&file); err != nil {
-		notify.logger.Info().Log(fmt.Sprintf("entry service: error adding file %s: %v", dstPath, err))
-	}
-
 	if err := notify.transformer.Transform(&file); err != nil {
 		notify.logger.Info().Log(fmt.Sprintf("ftp: error transforming file %s: %v", dstPath, err))
 	}
-
 }

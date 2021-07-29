@@ -32,9 +32,9 @@ func main() {
 	defer stopServers()
 
 	// Initialize our responders
-	entryService := entries.NewEntryService()
+	entryService := entries.NewEntryService(env.Config.Servers.FTP.RootPath)
 	entryController := entries.NewEntryController(env.Logger, entryService)
-	entryController.AppendRoutes(env.Router)
+	entryController.AppendRoutes(env.AdminRouter)
 
 	fileWriter := response.NewFileWriter(env.Logger, env.Config.Servers, env.FTPServer)
 	fileTransformer := response.NewFileTransformer(env.Logger, env.Config, env.Config.Responses, fileWriter)

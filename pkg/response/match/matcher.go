@@ -1,4 +1,4 @@
-package response
+package match
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ type Matcher struct {
 	Responses []service.Response
 }
 
-func NewMatcher(logger log.Logger, cfg service.Matching, responses []service.Response) Matcher {
+func New(logger log.Logger, cfg service.Matching, responses []service.Response) Matcher {
 	if cfg.Debug {
 		logger.Info().Log("matcher: enable debug logging")
 	}
@@ -39,7 +39,7 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 
 		// Trace Number
 		if matcher.TraceNumber != "" {
-			if matchesTraceNumber(matcher, ed) {
+			if TraceNumber(matcher, ed) {
 				m.debugLog(fmt.Sprintf("EntryDetail.TraceNumber=%s positive match", ed.TraceNumber))
 				positive++
 			} else {
@@ -50,7 +50,7 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 
 		// Account Number
 		if matcher.AccountNumber != "" {
-			if matchesAccountNumber(matcher, ed) {
+			if AccountNumber(matcher, ed) {
 				m.debugLog("EntryDetail.DFIAccountNumber positive match")
 				positive++
 			} else {
@@ -61,7 +61,7 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 
 		// Routing Number
 		if matcher.RoutingNumber != "" {
-			if matchesRoutingNumber(matcher, ed) {
+			if RoutingNumber(matcher, ed) {
 				m.debugLog(fmt.Sprintf("EntryDetail.RDFIIdentification=%s positive match", ed.RDFIIdentification))
 				positive++
 			} else {
@@ -72,7 +72,7 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 
 		// Check if the Amount matches
 		if matcher.Amount != nil {
-			if matchedAmount(matcher, ed) {
+			if Amount(matcher, ed) {
 				m.debugLog(fmt.Sprintf("EntryDetail.Amount=%d positive match", ed.Amount))
 				positive++
 			} else {
@@ -111,21 +111,21 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 	return nil
 }
 
-func matchesTraceNumber(m service.Match, ed *ach.EntryDetail) bool {
+func TraceNumber(m service.Match, ed *ach.EntryDetail) bool {
 	return ed.TraceNumber == m.TraceNumber
 }
 
-func matchesAccountNumber(m service.Match, ed *ach.EntryDetail) bool {
+func AccountNumber(m service.Match, ed *ach.EntryDetail) bool {
 	return strings.TrimSpace(ed.DFIAccountNumber) == m.AccountNumber
 }
 
-func matchesRoutingNumber(m service.Match, ed *ach.EntryDetail) bool {
+func RoutingNumber(m service.Match, ed *ach.EntryDetail) bool {
 	aba8 := achx.ABA8(m.RoutingNumber) == ed.RDFIIdentification
 	check := achx.ABACheckDigit(m.RoutingNumber) == ed.CheckDigit
 	return aba8 && check
 }
 
-func matchedAmount(m service.Match, ed *ach.EntryDetail) bool {
+func Amount(m service.Match, ed *ach.EntryDetail) bool {
 	var inner bool
 	if m.Amount.Value != 0 {
 		inner = (ed.Amount == m.Amount.Value)

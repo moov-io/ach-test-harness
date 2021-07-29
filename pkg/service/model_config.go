@@ -77,10 +77,20 @@ type Match struct {
 	TraceNumber    string
 }
 
+func (m Match) Empty() bool {
+	return m.AccountNumber == "" && m.Amount.Empty() &&
+		string(m.EntryType) == "" && m.IndividualName == "" &&
+		m.RoutingNumber == "" && m.TraceNumber == ""
+}
+
 type Amount struct {
 	Value int
 	Min   int
 	Max   int
+}
+
+func (a *Amount) Empty() bool {
+	return a.Value == 0 && a.Min == 0 && a.Max == 0
 }
 
 type EntryType string

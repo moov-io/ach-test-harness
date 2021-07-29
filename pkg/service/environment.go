@@ -18,7 +18,7 @@ type Environment struct {
 	Logger      log.Logger
 	Config      *Config
 	TimeService stime.TimeService
-	Router      *mux.Router
+	AdminRouter *mux.Router
 
 	// ftp or sftp server
 	FTPServer *ftp.Server

@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/moov-io/ach"
+	"github.com/moov-io/ach-test-harness/pkg/response/match"
 	"github.com/moov-io/ach-test-harness/pkg/service"
 	"github.com/moov-io/base/log"
 )
 
 type FileTransfomer struct {
-	Matcher      Matcher
+	Matcher      match.Matcher
 	Entry        EntryTransformers
 	Writer       FileWriter
 	ValidateOpts *ach.ValidateOpts
@@ -22,7 +23,7 @@ type FileTransfomer struct {
 
 func NewFileTransformer(logger log.Logger, cfg *service.Config, responses []service.Response, writer FileWriter) *FileTransfomer {
 	xform := &FileTransfomer{
-		Matcher: NewMatcher(logger, cfg.Matching, responses),
+		Matcher: match.New(logger, cfg.Matching, responses),
 		Entry: EntryTransformers([]EntryTransformer{
 			&CorrectionTransformer{},
 			&ReturnTransformer{},

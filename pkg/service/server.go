@@ -23,7 +23,7 @@ func (env *Environment) RunServers(terminationListener chan error) func() {
 	adminServer := bootAdminServer(terminationListener, env.Logger, env.Config.Servers.Admin)
 	env.serveConfig(adminServer)
 
-	env.Router = adminServer.Subrouter("/api")
+	env.AdminRouter = adminServer.Subrouter("/api")
 
 	var shutdownFTPServer func()
 	if env.Config.Servers.FTP != nil {
