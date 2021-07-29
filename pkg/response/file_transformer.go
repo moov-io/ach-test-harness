@@ -15,7 +15,7 @@ type FileTransfomer struct {
 	Matcher      Matcher
 	Entry        EntryTransformers
 	Writer       FileWriter
-	ValidateOpts ach.ValidateOpts
+	ValidateOpts *ach.ValidateOpts
 
 	returnPath string
 }
@@ -38,10 +38,10 @@ func NewFileTransformer(logger log.Logger, cfg *service.Config, responses []serv
 
 func (ft *FileTransfomer) Transform(file *ach.File) error {
 	out := ach.NewFile()
-	out.SetValidation(&ft.ValidateOpts)
+	out.SetValidation(ft.ValidateOpts)
 
 	out.Header = ach.NewFileHeader()
-	out.Header.SetValidation(&ft.ValidateOpts)
+	out.Header.SetValidation(ft.ValidateOpts)
 
 	out.Header.ImmediateDestination = file.Header.ImmediateOrigin
 	out.Header.ImmediateDestinationName = file.Header.ImmediateOriginName

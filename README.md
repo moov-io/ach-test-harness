@@ -65,7 +65,8 @@ ACHTestHarness:
         Address: ":3333"
   Matching:
     Debug: false
-  ValidateOpts: # can use all values from https://pkg.go.dev/github.com/moov-io/ach#ValidateOpts
+  # ValidateOpts can use all values from https://pkg.go.dev/github.com/moov-io/ach#ValidateOpts
+  ValidateOpts: {}
   Responses:
     # Entries that match both the DFIAccountNumber and TraceNumber will be returned with a R03 return code.
     - match:

@@ -15,7 +15,7 @@ type GlobalConfig struct {
 // Config defines all the configuration for the app
 type Config struct {
 	Servers      ServerConfig
-	ValidateOpts ach.ValidateOpts
+	ValidateOpts *ach.ValidateOpts
 	Matching     Matching
 	Responses    []Response
 }
