@@ -12,9 +12,10 @@ import (
 )
 
 type FileTransfomer struct {
-	Matcher Matcher
-	Entry   EntryTransformers
-	Writer  FileWriter
+	Matcher      Matcher
+	Entry        EntryTransformers
+	Writer       FileWriter
+	ValidateOpts *ach.ValidateOpts
 
 	returnPath string
 }
@@ -26,7 +27,8 @@ func NewFileTransformer(logger log.Logger, cfg *service.Config, responses []serv
 			&CorrectionTransformer{},
 			&ReturnTransformer{},
 		}),
-		Writer: writer,
+		Writer:       writer,
+		ValidateOpts: cfg.ValidateOpts,
 	}
 	if cfg.Servers.FTP != nil {
 		xform.returnPath = cfg.Servers.FTP.Paths.Return
@@ -36,8 +38,11 @@ func NewFileTransformer(logger log.Logger, cfg *service.Config, responses []serv
 
 func (ft *FileTransfomer) Transform(file *ach.File) error {
 	out := ach.NewFile()
+	out.SetValidation(ft.ValidateOpts)
 
 	out.Header = ach.NewFileHeader()
+	out.Header.SetValidation(ft.ValidateOpts)
+
 	out.Header.ImmediateDestination = file.Header.ImmediateOrigin
 	out.Header.ImmediateDestinationName = file.Header.ImmediateOriginName
 	out.Header.ImmediateOrigin = file.Header.ImmediateDestination

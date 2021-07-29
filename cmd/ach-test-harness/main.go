@@ -13,7 +13,9 @@ import (
 
 func main() {
 	env := &service.Environment{
-		Logger: log.NewDefaultLogger().Set("app", log.String("ach-test-harness")).Set("version", log.String(achtestharness.Version)),
+		Logger: log.NewDefaultLogger().
+			Set("app", log.String("ach-test-harness")).
+			Set("version", log.String(achtestharness.Version)),
 	}
 
 	env, err := service.NewEnvironment(env)
@@ -31,7 +33,7 @@ func main() {
 	// Initialize our responders
 	fileWriter := response.NewFileWriter(env.Logger, env.Config.Servers, env.FTPServer)
 	fileTransformer := response.NewFileTransformer(env.Logger, env.Config, env.Config.Responses, fileWriter)
-	response.Register(env.Logger, env.FTPServer, fileTransformer)
+	response.Register(env.Logger, env.Config.ValidateOpts, env.FTPServer, fileTransformer)
 
 	// Block for a signal to shutdown
 	service.AwaitTermination(env.Logger, termListener)

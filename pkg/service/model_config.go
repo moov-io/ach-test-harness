@@ -14,9 +14,10 @@ type GlobalConfig struct {
 
 // Config defines all the configuration for the app
 type Config struct {
-	Servers   ServerConfig
-	Matching  Matching
-	Responses []Response
+	Servers      ServerConfig
+	ValidateOpts *ach.ValidateOpts
+	Matching     Matching
+	Responses    []Response
 }
 
 // ServerConfig - Groups all the http configs for the servers and ports that get opened.

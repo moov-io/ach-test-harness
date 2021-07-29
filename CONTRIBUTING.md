@@ -33,7 +33,7 @@ This project uses [Go Modules](https://github.com/golang/go/wiki/Modules) and us
 You can pull a working repository of our code code with git:
 
 ```
-$ midir -p $GOPATH/src/github.com/moov-io/
+$ mkdir -p $GOPATH/src/github.com/moov-io/
 $ cd $GOPATH/src/github.com/moov-io/
 $ git clone git@github.com:moov-io/ach-test-harness.git
 ```
@@ -43,7 +43,7 @@ We recommend using additional git remote's for pushing/pulling code. This allows
 First, [Fork our project](https://github.com/moov-io/ach-test-harness) somewhere and after that's done add the remote:
 
 ```
-$ cd $GOPATH/src/github.com/moov-io/ach-test-harness # Whereever this project's source code is
+$ cd $GOPATH/src/github.com/moov-io/ach-test-harness # Wherever this project's source code is
 
 $ git remote add $user git@github.com:$user/ach-test-harness.git # After
 

@@ -11,13 +11,15 @@ import (
 
 func Register(
 	logger log.Logger,
+	validateOpts *ach.ValidateOpts,
 	ftpServer *ftp.Server,
 	transformer *FileTransfomer,
 ) {
 	if ftpServer != nil && transformer != nil {
 		ftpServer.RegisterNotifer(&FTPWatcher{
-			logger:      logger,
-			transformer: transformer,
+			logger:       logger,
+			validateOpts: validateOpts,
+			transformer:  transformer,
 		})
 	} else {
 		logger.Info().Log("unable to register transformer")
@@ -27,8 +29,9 @@ func Register(
 type FTPWatcher struct {
 	ftp.NullNotifier
 
-	logger      log.Logger
-	transformer *FileTransfomer
+	logger       log.Logger
+	validateOpts *ach.ValidateOpts
+	transformer  *FileTransfomer
 }
 
 func (notify *FTPWatcher) AfterFilePut(conn *ftp.Conn, dstPath string, size int64, err error) {
@@ -48,7 +51,10 @@ func (notify *FTPWatcher) AfterFilePut(conn *ftp.Conn, dstPath string, size int6
 		notify.logger.Info().Log(fmt.Sprintf("ftp: error reading file %s: %v", dstPath, err))
 	}
 	// Read the file that was uploaded
-	file, err := ach.NewReader(fd).Read()
+	reader := ach.NewReader(fd)
+	reader.SetValidation(notify.validateOpts)
+
+	file, err := reader.Read()
 	if err != nil {
 		notify.logger.Info().Log(fmt.Sprintf("ftp: error reading ACH file %s: %v", dstPath, err))
 	}
