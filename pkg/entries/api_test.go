@@ -16,7 +16,7 @@ func TestEntryController(t *testing.T) {
 	router := mux.NewRouter()
 	logger := log.NewDefaultLogger()
 
-	repo := NewFTPRepository(service.FTPConfig{
+	repo := NewFTPRepository(&service.FTPConfig{
 		RootPath: "./testdata",
 		Paths: service.Paths{
 			Files:  "/outbound/",

@@ -32,13 +32,14 @@ func main() {
 	defer stopServers()
 
 	// Initialize our responders
-	entryService := entries.NewEntryService()
+	entryRepository := entries.NewFTPRepository(env.Config.Servers.FTP)
+	entryService := entries.NewEntryService(entryRepository)
 	entryController := entries.NewEntryController(env.Logger, entryService)
 	entryController.AppendRoutes(env.Router)
 
 	fileWriter := response.NewFileWriter(env.Logger, env.Config.Servers, env.FTPServer)
 	fileTransformer := response.NewFileTransformer(env.Logger, env.Config, env.Config.Responses, fileWriter)
-	response.Register(env.Logger, env.Config.ValidateOpts, env.FTPServer, fileTransformer, entryService)
+	response.Register(env.Logger, env.Config.ValidateOpts, env.FTPServer, fileTransformer)
 
 	// Block for a signal to shutdown
 	service.AwaitTermination(env.Logger, termListener)

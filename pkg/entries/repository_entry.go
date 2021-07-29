@@ -19,7 +19,7 @@ type ftpRepository struct {
 	returnPath string
 }
 
-func NewFTPRepository(cfg service.FTPConfig) *ftpRepository {
+func NewFTPRepository(cfg *service.FTPConfig) *ftpRepository {
 	return &ftpRepository{
 		dataPath:   cfg.RootPath,
 		filesPath:  cfg.Paths.Files,

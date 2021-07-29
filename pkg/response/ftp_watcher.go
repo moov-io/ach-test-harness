@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/moov-io/ach"
-	"github.com/moov-io/ach-test-harness/pkg/entries"
 	"github.com/moov-io/base/log"
 
 	ftp "goftp.io/server/core"
@@ -15,14 +14,12 @@ func Register(
 	validateOpts *ach.ValidateOpts,
 	ftpServer *ftp.Server,
 	transformer *FileTransfomer,
-	entryService entries.EntryService,
 ) {
 	if ftpServer != nil && transformer != nil {
 		ftpServer.RegisterNotifer(&FTPWatcher{
 			logger:       logger,
 			validateOpts: validateOpts,
 			transformer:  transformer,
-			entryService: entryService,
 		})
 	} else {
 		logger.Info().Log("unable to register transformer")
@@ -35,7 +32,6 @@ type FTPWatcher struct {
 	logger       log.Logger
 	validateOpts *ach.ValidateOpts
 	transformer  *FileTransfomer
-	entryService entries.EntryService
 }
 
 func (notify *FTPWatcher) AfterFilePut(conn *ftp.Conn, dstPath string, size int64, err error) {
@@ -66,12 +62,7 @@ func (notify *FTPWatcher) AfterFilePut(conn *ftp.Conn, dstPath string, size int6
 		notify.logger.Info().Log(fmt.Sprintf("ftp: error creating file %s: %v", dstPath, err))
 	}
 
-	if err := notify.entryService.AddFile(&file); err != nil {
-		notify.logger.Info().Log(fmt.Sprintf("entry service: error adding file %s: %v", dstPath, err))
-	}
-
 	if err := notify.transformer.Transform(&file); err != nil {
 		notify.logger.Info().Log(fmt.Sprintf("ftp: error transforming file %s: %v", dstPath, err))
 	}
-
 }

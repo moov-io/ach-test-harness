@@ -8,7 +8,7 @@ import (
 )
 
 func TestRepository(t *testing.T) {
-	repo := NewFTPRepository(service.FTPConfig{
+	repo := NewFTPRepository(&service.FTPConfig{
 		RootPath: "./testdata",
 		Paths: service.Paths{
 			Files:  "/outbound/",
