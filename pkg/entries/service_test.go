@@ -1,27 +1,20 @@
 package entries
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
-	"github.com/moov-io/ach"
 	"github.com/stretchr/testify/require"
 )
 
 func TestEntryService(t *testing.T) {
 	// load ACH file
-	f, err := os.Open(filepath.Join("testdata", "ccd-debit.ach"))
-	require.NoError(t, err)
-
-	r := ach.NewReader(f)
-	achFile, err := r.Read()
+	achFile, err := mockACHFile()
 	require.NoError(t, err)
 
 	service := NewEntryService()
 
 	t.Run("AddFile adds entries from the file", func(t *testing.T) {
-		err := service.AddFile(&achFile)
+		err := service.AddFile(achFile)
 
 		require.NoError(t, err)
 
