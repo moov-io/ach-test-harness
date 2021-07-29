@@ -1,3 +1,15 @@
+## v0.5.0 (Unreleased)
+
+ADDITIONS
+
+- response: Allow setting `ach.ValidateOpts` in config
+
+BUILD
+
+- build: use debian stable's slim image
+- fix(deps): update module github.com/moov-io/ach to v1.10.1
+- fix(deps): update module github.com/moov-io/base to v0.21.1
+
 ## v0.4.1 (Released 2021-06-28)
 
 This release contains MacOS and Windows binaries.
