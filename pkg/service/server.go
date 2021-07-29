@@ -12,6 +12,7 @@ import (
 	ftp "goftp.io/server/core"
 	"goftp.io/server/driver/file"
 
+	"github.com/moov-io/ach-test-harness/pkg/entries"
 	"github.com/moov-io/base/admin"
 	"github.com/moov-io/base/log"
 
@@ -22,6 +23,12 @@ import (
 func (env *Environment) RunServers(terminationListener chan error) func() {
 	adminServer := bootAdminServer(terminationListener, env.Logger, env.Config.Servers.Admin)
 	env.serveConfig(adminServer)
+
+	// for now apiRouter is under admin router, we will change it later
+	apiRouter := adminServer.Subrouter("/api")
+	entryService := entries.NewEntryService()
+	entryController := entries.NewEntryController(env.Logger, entryService)
+	entryController.AppendRoutes(apiRouter)
 
 	var shutdownFTPServer func()
 	if env.Config.Servers.FTP != nil {

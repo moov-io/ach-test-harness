@@ -5,6 +5,7 @@ module github.com/moov-io/ach-test-harness
 go 1.15
 
 require (
+	github.com/gorilla/mux v1.8.0
 	github.com/markbates/pkger v0.17.1
 	github.com/moov-io/ach v1.10.1
 	github.com/moov-io/base v0.21.1
