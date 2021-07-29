@@ -9,11 +9,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type EntryController interface {
-	AppendRoutes(router *mux.Router) *mux.Router
-	List()
-}
-
 func NewEntryController(logger log.Logger, service EntryService) *entryController {
 	return &entryController{
 		logger:  logger,
