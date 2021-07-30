@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
-	"time"
+	"strings"
 
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/response/match"
 	"github.com/moov-io/ach-test-harness/pkg/service"
-	"github.com/moov-io/base"
 )
 
 type EntryRepository interface {
@@ -39,8 +38,8 @@ func (r *ftpRepository) Search(opts SearchOptions) ([]*ach.EntryDetail, error) {
 			return nil
 		}
 
-		// read only *.ach file
-		if filepath.Ext(path) != ".ach" {
+		// read only *.ach files
+		if strings.ToLower(filepath.Ext(path)) != ".ach" {
 			return nil
 		}
 
@@ -65,19 +64,9 @@ func filterEntries(path string, opts SearchOptions) ([]*ach.EntryDetail, error) 
 		return nil, fmt.Errorf("reading ACH file %s: %v", path, err)
 	}
 
-	if opts.CreatedAfter != "" {
-		createdAfter, err := time.Parse(base.ISO8601Format, opts.CreatedAfter)
-		if err != nil {
-			return nil, fmt.Errorf("parsing time: %v", err)
-		}
-
-		// I assume that file creation date is in UTC
-		createdAfterStr := createdAfter.In(time.UTC).Format("0601021504")
-
-		// if file was created before "CreatedAfter" we skip entries of this file
-		if createdAfterStr > file.Header.FileCreationDate+file.Header.FileCreationTime {
-			return nil, nil
-		}
+	tooOld, err := opts.fileTooOld(file)
+	if tooOld || err != nil {
+		return nil, err
 	}
 
 	mm := service.Match{
