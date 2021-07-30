@@ -1,7 +1,8 @@
-## v0.5.0 (Unreleased)
+## v0.5.0 (Released 2021-07-30)
 
 ADDITIONS
 
+- entries: add search endpoint over account numbers, trace numbers, amount, and created at timestamps
 - response: Allow setting `ach.ValidateOpts` in config
 
 BUILD
