@@ -39,7 +39,7 @@ func (c *entryController) Search() func(w http.ResponseWriter, r *http.Request) 
 		entries, err := c.service.Search(readSearchOptions(r))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(err)
+			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 
 			return
 		}

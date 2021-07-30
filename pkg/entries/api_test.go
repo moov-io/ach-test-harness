@@ -16,18 +16,14 @@ func TestEntryController(t *testing.T) {
 	router := mux.NewRouter()
 	logger := log.NewDefaultLogger()
 
-	repo := NewFTPRepository(&service.FTPConfig{
-		RootPath: "./testdata",
-		Paths: service.Paths{
-			Files:  "/outbound/",
-			Return: "/returned/",
-		},
-	})
-	service := NewEntryService(repo)
-	controller := NewEntryController(logger, service)
-	controller.AppendRoutes(router)
-
 	t.Run("/entries returns list of entries", func(t *testing.T) {
+		repo := NewFTPRepository(&service.FTPConfig{
+			RootPath: "./testdata",
+		})
+		service := NewEntryService(repo)
+		controller := NewEntryController(logger, service)
+		controller.AppendRoutes(router)
+
 		req, _ := http.NewRequest("GET", "/entries", nil)
 		rr := httptest.NewRecorder()
 		router.ServeHTTP(rr, req)
