@@ -5,7 +5,7 @@ import (
 )
 
 type EntryService interface {
-	List() ([]*ach.EntryDetail, error)
+	Search(ops SearchOptions) ([]*ach.EntryDetail, error)
 }
 
 type entryService struct {
@@ -18,6 +18,13 @@ func NewEntryService(repository EntryRepository) *entryService {
 	}
 }
 
-func (s *entryService) List() ([]*ach.EntryDetail, error) {
-	return s.repository.List()
+type SearchOptions struct {
+	AccountNumber string
+	Amount        int
+	RoutingNumber string
+	TraceNumber   string
+}
+
+func (s *entryService) Search(opts SearchOptions) ([]*ach.EntryDetail, error) {
+	return s.repository.Search(opts)
 }

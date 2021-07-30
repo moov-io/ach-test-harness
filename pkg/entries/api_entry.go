@@ -3,6 +3,7 @@ package entries
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/moov-io/base/log"
 
@@ -23,19 +24,19 @@ type entryController struct {
 
 func (c *entryController) AppendRoutes(router *mux.Router) *mux.Router {
 	router.
-		Name("Entry.list").
+		Name("Entry.search").
 		Methods("GET").
 		Path("/entries").
-		HandlerFunc(c.List())
+		HandlerFunc(c.Search())
 
 	return router
 }
 
-func (c *entryController) List() func(w http.ResponseWriter, r *http.Request) {
+func (c *entryController) Search() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-		entries, err := c.service.List()
+		entries, err := c.service.Search(readSearchOptions(r))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(err)
@@ -46,4 +47,17 @@ func (c *entryController) List() func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(entries)
 	}
+}
+
+func readSearchOptions(r *http.Request) SearchOptions {
+	query := r.URL.Query()
+	opts := SearchOptions{
+		AccountNumber: query.Get("accountNumber"),
+		RoutingNumber: query.Get("routingNumber"),
+		TraceNumber:   query.Get("traceNumber"),
+	}
+	if n, _ := strconv.ParseInt(query.Get("amount"), 10, 32); n > 0 {
+		opts.Amount = int(n)
+	}
+	return opts
 }

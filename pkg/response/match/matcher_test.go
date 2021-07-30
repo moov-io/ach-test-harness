@@ -1,4 +1,4 @@
-package response
+package match
 
 import (
 	"path/filepath"
@@ -17,11 +17,11 @@ func TestMatchAccountNumber(t *testing.T) {
 	ed.DFIAccountNumber = "777-33-11"
 
 	// positive match
-	require.True(t, matchesAccountNumber(m, ed))
+	require.True(t, AccountNumber(m, ed))
 
 	// negative match
 	ed.DFIAccountNumber = "8171241"
-	require.False(t, matchesAccountNumber(m, ed))
+	require.False(t, AccountNumber(m, ed))
 }
 
 func TestMatchRoutingNumber(t *testing.T) {
@@ -33,20 +33,20 @@ func TestMatchRoutingNumber(t *testing.T) {
 	ed.CheckDigit = "4"
 
 	// positive match
-	require.True(t, matchesRoutingNumber(m, ed))
+	require.True(t, RoutingNumber(m, ed))
 
 	// negative match - only CheckDigit matches
 	ed.CheckDigit = "1"
-	require.False(t, matchesRoutingNumber(m, ed))
+	require.False(t, RoutingNumber(m, ed))
 
 	// negative match - only RDFIIdentification matches
 	ed.RDFIIdentification = "11111111"
 	ed.CheckDigit = "4"
-	require.False(t, matchesRoutingNumber(m, ed))
+	require.False(t, RoutingNumber(m, ed))
 
 	// negative match
 	ed.CheckDigit = "1"
-	require.False(t, matchesRoutingNumber(m, ed))
+	require.False(t, RoutingNumber(m, ed))
 }
 
 func TestMatchAmount(t *testing.T) {
@@ -59,11 +59,11 @@ func TestMatchAmount(t *testing.T) {
 	ed1.Amount = 12345
 
 	// positive match
-	require.True(t, matchedAmount(m1, ed1))
+	require.True(t, Amount(m1, ed1))
 
 	// negative match
 	ed1.Amount = 54321
-	require.False(t, matchedAmount(m1, ed1))
+	require.False(t, Amount(m1, ed1))
 
 	m2 := service.Match{
 		Amount: &service.Amount{
@@ -75,13 +75,13 @@ func TestMatchAmount(t *testing.T) {
 	ed2.Amount = 12345
 
 	// positive match
-	require.True(t, matchedAmount(m2, ed2))
+	require.True(t, Amount(m2, ed2))
 	ed2.Amount = 10000
-	require.True(t, matchedAmount(m2, ed2))
+	require.True(t, Amount(m2, ed2))
 
 	// negative match
 	ed2.Amount = 100
-	require.False(t, matchedAmount(m2, ed2))
+	require.False(t, Amount(m2, ed2))
 }
 
 func TestMatchDebit(t *testing.T) {
@@ -156,11 +156,11 @@ func TestMatchTraceNumber(t *testing.T) {
 	ed.TraceNumber = "12345678901234"
 
 	// positive match
-	require.True(t, matchesTraceNumber(m, ed))
+	require.True(t, TraceNumber(m, ed))
 
 	// negative match
 	ed.TraceNumber = "9876543201234"
-	require.False(t, matchesTraceNumber(m, ed))
+	require.False(t, TraceNumber(m, ed))
 }
 
 // Following data is used for TestMultiMatch
@@ -201,7 +201,7 @@ func TestMultiMatch(t *testing.T) {
 	}
 
 	// Read our test file
-	file, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20210308-1806-071000301.ach"))
+	file, err := ach.ReadFile(filepath.Join("..", "..", "..", "testdata", "20210308-1806-071000301.ach"))
 	require.NoError(t, err)
 	entries := file.Batches[0].GetEntries()
 

@@ -1,62 +1,85 @@
 package entries
 
 import (
-	"fmt"
-	"os"
+	"io/fs"
 	"path/filepath"
 
 	"github.com/moov-io/ach"
+	"github.com/moov-io/ach-test-harness/pkg/response/match"
 	"github.com/moov-io/ach-test-harness/pkg/service"
 )
 
 type EntryRepository interface {
-	List() ([]*ach.EntryDetail, error)
+	Search(opts SearchOptions) ([]*ach.EntryDetail, error)
 }
 
 type ftpRepository struct {
-	dataPath   string
-	filesPath  string
-	returnPath string
+	rootPath string
 }
 
 func NewFTPRepository(cfg *service.FTPConfig) *ftpRepository {
 	return &ftpRepository{
-		dataPath:   cfg.RootPath,
-		filesPath:  cfg.Paths.Files,
-		returnPath: cfg.Paths.Return,
+		rootPath: cfg.RootPath,
 	}
 }
 
-func (r *ftpRepository) List() ([]*ach.EntryDetail, error) {
-	var files []string
+func (r *ftpRepository) Search(opts SearchOptions) ([]*ach.EntryDetail, error) {
+	var out []*ach.EntryDetail
 
-	for _, path := range []string{r.filesPath, r.returnPath} {
-		err := filepath.Walk(r.dataPath+path, func(path string, info os.FileInfo, err error) error {
-			if info.IsDir() {
-				return nil
-			}
-
-			files = append(files, path)
+	//nolint:gosimple
+	var search fs.WalkDirFunc
+	search = func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() {
 			return nil
-		})
-
-		if err != nil {
-			return nil, fmt.Errorf("reading directory %s: %v", r.dataPath+path, err)
 		}
+		if err != nil {
+			return nil
+		}
+		entries, err := filterEntries(path, opts)
+		if err != nil {
+			return err
+		}
+		out = append(out, entries...)
+		return nil
 	}
 
-	entries := make([]*ach.EntryDetail, 0)
-
-	for _, filePath := range files {
-		achFile, err := ach.ReadFile(filePath)
-		if err != nil {
-			return nil, fmt.Errorf("reading ACH file %s: %v", filePath, err)
-		}
-
-		for _, batch := range achFile.Batches {
-			entries = append(entries, batch.GetEntries()...)
-		}
+	if err := filepath.WalkDir(r.rootPath, search); err != nil {
+		return nil, err
 	}
 
-	return entries, nil
+	return out, nil
+}
+
+func filterEntries(path string, opts SearchOptions) ([]*ach.EntryDetail, error) {
+	file, err := ach.ReadFile(path)
+	if file == nil || err != nil {
+		return nil, nil
+	}
+
+	mm := service.Match{
+		AccountNumber: opts.AccountNumber,
+		Amount: &service.Amount{
+			Value: opts.Amount,
+		},
+		RoutingNumber: opts.RoutingNumber,
+		TraceNumber:   opts.TraceNumber,
+	}
+
+	var out []*ach.EntryDetail
+	for i := range file.Batches {
+		entries := file.Batches[i].GetEntries()
+		if mm.Empty() {
+			out = append(out, entries...)
+			continue
+		}
+		for j := range entries {
+			if match.TraceNumber(mm, entries[j]) || match.AccountNumber(mm, entries[j]) ||
+				match.RoutingNumber(mm, entries[j]) || match.Amount(mm, entries[j]) {
+				// accumulate entry
+				out = append(out, entries[j])
+				continue
+			}
+		}
+	}
+	return out, nil
 }

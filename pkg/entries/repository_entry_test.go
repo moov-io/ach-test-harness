@@ -16,7 +16,16 @@ func TestRepository(t *testing.T) {
 		},
 	})
 
-	entries, err := repo.List()
+	// return all
+	entries, err := repo.Search(SearchOptions{})
 	require.NoError(t, err)
 	require.Len(t, entries, 3)
+
+	// search by account number
+	entries, err = repo.Search(SearchOptions{
+		AccountNumber: "987654321",
+	})
+
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
 }
