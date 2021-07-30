@@ -38,6 +38,12 @@ func (r *ftpRepository) Search(opts SearchOptions) ([]*ach.EntryDetail, error) {
 		if err != nil {
 			return nil
 		}
+
+		// read only *.ach file
+		if path[len(path)-4:] != ".ach" {
+			return nil
+		}
+
 		entries, err := filterEntries(path, opts)
 		if err != nil {
 			return err
@@ -47,7 +53,7 @@ func (r *ftpRepository) Search(opts SearchOptions) ([]*ach.EntryDetail, error) {
 	}
 
 	if err := filepath.WalkDir(r.rootPath, search); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed reading directory content %s: %v", r.rootPath, err)
 	}
 
 	return out, nil
