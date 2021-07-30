@@ -40,7 +40,7 @@ func (r *ftpRepository) Search(opts SearchOptions) ([]*ach.EntryDetail, error) {
 		}
 
 		// read only *.ach file
-		if path[len(path)-4:] != ".ach" {
+		if filepath.Ext(path) != ".ach" {
 			return nil
 		}
 
