@@ -38,4 +38,5 @@ cover.out
 /storage/ftp/*
 !/storage/ftp/.keep
 
+/data/
 /vendor/
