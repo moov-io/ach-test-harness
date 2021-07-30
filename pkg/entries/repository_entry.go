@@ -27,7 +27,7 @@ func NewFTPRepository(cfg *service.FTPConfig) *ftpRepository {
 }
 
 func (r *ftpRepository) Search(opts SearchOptions) ([]*ach.EntryDetail, error) {
-	var out []*ach.EntryDetail
+	out := make([]*ach.EntryDetail, 0)
 
 	//nolint:gosimple
 	var search fs.WalkDirFunc
