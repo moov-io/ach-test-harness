@@ -28,4 +28,15 @@ func TestRepository(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, entries, 1)
+
+	// search by timestamp in our files:
+	// returned/2.ach was created on 1908161055 and has 1 entry
+	// outbound/1.ach was created on 1908161059 and has 2 entries
+	entries, err = repo.Search(SearchOptions{
+		CreatedAfter: "2019-08-16T10:56:00+00:00",
+	})
+
+	// expect to get entries from outbound/1.ach
+	require.NoError(t, err)
+	require.Len(t, entries, 2)
 }

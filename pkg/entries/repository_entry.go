@@ -1,12 +1,15 @@
 package entries
 
 import (
+	"fmt"
 	"io/fs"
 	"path/filepath"
+	"time"
 
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/response/match"
 	"github.com/moov-io/ach-test-harness/pkg/service"
+	"github.com/moov-io/base"
 )
 
 type EntryRepository interface {
@@ -53,7 +56,22 @@ func (r *ftpRepository) Search(opts SearchOptions) ([]*ach.EntryDetail, error) {
 func filterEntries(path string, opts SearchOptions) ([]*ach.EntryDetail, error) {
 	file, err := ach.ReadFile(path)
 	if file == nil || err != nil {
-		return nil, nil
+		return nil, fmt.Errorf("reading ACH file %s: %v", path, err)
+	}
+
+	if opts.CreatedAfter != "" {
+		createdAfter, err := time.Parse(base.ISO8601Format, opts.CreatedAfter)
+		if err != nil {
+			return nil, fmt.Errorf("parsing time: %v", err)
+		}
+
+		// I assume that file creation date is in UTC
+		createdAfterStr := createdAfter.In(time.UTC).Format("0601021504")
+
+		// if file was created before "CreatedAfter" we skip entries of this file
+		if createdAfterStr > file.Header.FileCreationDate+file.Header.FileCreationTime {
+			return nil, nil
+		}
 	}
 
 	mm := service.Match{

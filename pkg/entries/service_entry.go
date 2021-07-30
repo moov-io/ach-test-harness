@@ -23,6 +23,7 @@ type SearchOptions struct {
 	Amount        int
 	RoutingNumber string
 	TraceNumber   string
+	CreatedAfter  string
 }
 
 func (s *entryService) Search(opts SearchOptions) ([]*ach.EntryDetail, error) {
