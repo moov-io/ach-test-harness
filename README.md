@@ -4,6 +4,8 @@
 <p align="center">
   <a href="https://github.com/moov-io/ach-test-harness/blob/master/docs/">Project Documentation</a>
   ·
+  <a href="https://moov.io/blog/education/ach-test-harness-guide/">Quickstart Guide</a>
+  ·
   <a href="https://slack.moov.io/">Community</a>
   ·
   <a href="https://moov.io/blog/">Blog</a>
