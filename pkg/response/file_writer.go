@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"path/filepath"
 
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/service"
@@ -43,13 +44,23 @@ func (w *FTPFileWriter) WriteFile(filepath string, file *ach.File) error {
 	return w.Write(filepath, &buf)
 }
 
-func (w *FTPFileWriter) Write(filepath string, r io.Reader) error {
+func (w *FTPFileWriter) Write(path string, r io.Reader) error {
 	driver, err := w.server.Factory.NewDriver()
 	if err != nil {
-		return fmt.Errorf("get driver to write %s: %v", filepath, err)
+		return fmt.Errorf("get driver to write %s: %v", path, err)
 	}
-	if _, err := driver.PutFile(filepath, r, false); err != nil {
-		return fmt.Errorf("PUT %s: %v", filepath, err)
+
+	if err := mkdir(driver, path); err != nil {
+		return fmt.Errorf("mkdir: %s: %v", path, err)
+	}
+
+	if _, err := driver.PutFile(path, r, false); err != nil {
+		return fmt.Errorf("STOR %s: %v", path, err)
 	}
 	return nil
+}
+
+func mkdir(driver ftp.Driver, path string) error {
+	dir, _ := filepath.Split(path)
+	return driver.MakeDir(dir)
 }
