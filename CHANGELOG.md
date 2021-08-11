@@ -1,3 +1,15 @@
+## v0.5.1 (Released 2021-08-11)
+
+BUG FIXES
+
+- response: write parent directories if needed
+
+BUILD
+
+- build: enable gosec linter
+- chore(deps): update moov/ach-test-harness docker tag to v0.5.0
+- fix(deps): update module github.com/moov-io/base to v0.22.0
+
 ## v0.5.0 (Released 2021-07-30)
 
 ADDITIONS
