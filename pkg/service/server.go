@@ -9,13 +9,12 @@ import (
 	"os"
 	"path/filepath"
 
-	ftp "goftp.io/server/core"
-	"goftp.io/server/driver/file"
-
+	_ "github.com/moov-io/ach-test-harness"
 	"github.com/moov-io/base/admin"
 	"github.com/moov-io/base/log"
 
-	_ "github.com/moov-io/ach-test-harness"
+	ftp "goftp.io/server/core"
+	"goftp.io/server/driver/file"
 )
 
 // RunServers - Boots up all the servers and awaits till they are stopped.
@@ -27,7 +26,7 @@ func (env *Environment) RunServers(terminationListener chan error) func() {
 
 	var shutdownFTPServer func()
 	if env.Config.Servers.FTP != nil {
-		ftpServer, shutdown := bootFTPServer(terminationListener, env.Logger, env.Config.Servers.FTP)
+		ftpServer, shutdown := bootFTPServer(terminationListener, env.Logger, env.Config.Servers.FTP, env.Config.responsePaths())
 		env.FTPServer = ftpServer
 		shutdownFTPServer = shutdown
 	}
@@ -38,7 +37,7 @@ func (env *Environment) RunServers(terminationListener chan error) func() {
 	}
 }
 
-func bootFTPServer(errs chan<- error, logger log.Logger, cfg *FTPConfig) (*ftp.Server, func()) {
+func bootFTPServer(errs chan<- error, logger log.Logger, cfg *FTPConfig, responsePaths []string) (*ftp.Server, func()) {
 	// Setup data directory
 	createDataDirectories(errs, logger, cfg)
 
@@ -58,6 +57,9 @@ func bootFTPServer(errs chan<- error, logger log.Logger, cfg *FTPConfig) (*ftp.S
 		PassivePorts: cfg.PassivePorts,
 	}
 	server := ftp.NewServer(opts)
+
+	// Create directories needed for Actions
+	createResponsePaths(errs, logger, server.Factory, responsePaths)
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
@@ -80,12 +82,29 @@ func createDataDirectories(errs chan<- error, logger log.Logger, cfg *FTPConfig)
 
 	// Create sub-paths
 	path := filepath.Join(cfg.RootPath, cfg.Paths.Files)
+	logger.Info().Logf("creating %s", path)
 	if err := os.MkdirAll(path, 0777); err != nil {
 		errs <- logger.Fatal().LogErrorf("problem creating files directory: %v", err).Err()
 	}
+
 	path = filepath.Join(cfg.RootPath, cfg.Paths.Return)
+	logger.Info().Logf("creating %s", path)
 	if err := os.MkdirAll(path, 0777); err != nil {
 		errs <- logger.Fatal().LogErrorf("problem creating return directory: %v", err).Err()
+	}
+}
+
+func createResponsePaths(errs chan<- error, logger log.Logger, fact ftp.DriverFactory, paths []string) {
+	driver, err := fact.NewDriver()
+	if err != nil {
+		errs <- logger.Fatal().LogErrorf("problem creating driver: %v", err).Err()
+		return
+	}
+	for i := range paths {
+		logger.Info().Logf("creating %s", paths[i])
+		if err := driver.MakeDir(paths[i]); err != nil {
+			logger.Warn().Logf("problem creating %s: %v", paths[i], err)
+		}
 	}
 }
 
