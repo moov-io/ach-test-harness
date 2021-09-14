@@ -20,6 +20,16 @@ type Config struct {
 	Responses    []Response
 }
 
+func (cfg *Config) responsePaths() []string {
+	var out []string
+	for i := range cfg.Responses {
+		if cfg.Responses[i].Action.Copy != nil {
+			out = append(out, cfg.Responses[i].Action.Copy.Path)
+		}
+	}
+	return out
+}
+
 // ServerConfig - Groups all the http configs for the servers and ports that get opened.
 type ServerConfig struct {
 	FTP   *FTPConfig
