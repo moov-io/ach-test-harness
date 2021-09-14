@@ -1,3 +1,15 @@
+## v0.5.2 (Released 2021-09-14)
+
+IMPROVEMENTS
+
+- service: create Action.Copy paths on startup
+
+BUILD
+
+- chore(deps): update golang docker tag to v1.17
+- fix(deps): update module github.com/moov-io/ach to v1.12.1
+- fix(deps): update module github.com/moov-io/base to v0.24.0
+
 ## v0.5.1 (Released 2021-08-11)
 
 BUG FIXES
