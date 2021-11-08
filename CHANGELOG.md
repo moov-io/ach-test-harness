@@ -1,3 +1,15 @@
+## v0.6.0 (Released 2021-11-08)
+
+BREAKING CHANGES
+
+moov-io/base introduces errors when unexpected configuration attributes are found in the files parsed on startup.
+
+BUILD
+
+- chore(deps): update moov/ach-test-harness docker tag to v0.5.2
+- fix(deps): update module github.com/moov-io/ach to v1.12.2
+- fix(deps): update module github.com/moov-io/base to v0.27.0
+
 ## v0.5.2 (Released 2021-09-14)
 
 IMPROVEMENTS
