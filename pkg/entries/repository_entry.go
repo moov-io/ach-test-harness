@@ -59,9 +59,9 @@ func (r *ftpRepository) Search(opts SearchOptions) ([]*ach.EntryDetail, error) {
 }
 
 func filterEntries(path string, opts SearchOptions) ([]*ach.EntryDetail, error) {
-	file, err := ach.ReadFile(path)
-	if file == nil || err != nil {
-		return nil, fmt.Errorf("reading ACH file %s: %v", path, err)
+	file, _ := ach.ReadFile(path)
+	if file == nil {
+		return nil, nil
 	}
 
 	tooOld, err := opts.fileTooOld(file)

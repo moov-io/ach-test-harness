@@ -40,3 +40,11 @@ func TestRepository(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, entries, 2)
 }
+
+func TestRepository__filterEntries(t *testing.T) {
+	var opts SearchOptions
+
+	entries, err := filterEntries("/tmp/noexist/foobar", opts)
+	require.NoError(t, err)
+	require.Len(t, entries, 0)
+}
