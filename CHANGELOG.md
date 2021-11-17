@@ -1,3 +1,9 @@
+## v0.6.1 (Released 2021-11-16)
+
+IMPROVEMENTS
+
+- entries: search even partial files
+
 ## v0.6.0 (Released 2021-11-08)
 
 BREAKING CHANGES
