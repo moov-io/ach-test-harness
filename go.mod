@@ -9,7 +9,7 @@ require (
 	github.com/gobuffalo/here v0.6.2 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/markbates/pkger v0.17.1
-	github.com/moov-io/ach v1.14.0
+	github.com/moov-io/ach v1.15.0
 	github.com/moov-io/base v0.28.1
 	github.com/stretchr/testify v1.7.1
 	goftp.io/server v0.4.1
