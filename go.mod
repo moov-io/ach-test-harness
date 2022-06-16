@@ -9,7 +9,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/markbates/pkger v0.17.1
 	github.com/moov-io/ach v1.18.0
-	github.com/moov-io/base v0.30.0
+	github.com/moov-io/base v0.31.1
 	github.com/stretchr/testify v1.7.2
 	goftp.io/server v0.4.1
 )
