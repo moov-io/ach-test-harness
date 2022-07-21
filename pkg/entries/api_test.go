@@ -1,14 +1,16 @@
 package entries
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	jsonpatch "github.com/evanphx/json-patch"
-	"github.com/gorilla/mux"
 	"github.com/moov-io/ach-test-harness/pkg/service"
 	"github.com/moov-io/base/log"
+
+	jsonpatch "github.com/evanphx/json-patch"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,7 +42,8 @@ func TestEntryController(t *testing.T) {
 			    "identificationNumber":"location1234567",
 			    "individualName":"Best Co. #123456789012",
 			    "discretionaryData":"S ",
-			    "traceNumber":"031300010000001"
+			    "traceNumber":"031300010000001",
+			    "category":"Forward"
 			  },
 			  {
 			    "id":"",
@@ -52,7 +55,8 @@ func TestEntryController(t *testing.T) {
 			    "identificationNumber":"Fee123456789012",
 			    "individualName":"Best Co. #123456789012",
 			    "discretionaryData":"S ",
-			    "traceNumber":"031300010000002"
+			    "traceNumber":"031300010000002",
+			    "category":"Forward"
 			  },
 			  {
 			    "id":"",
@@ -64,12 +68,15 @@ func TestEntryController(t *testing.T) {
 			    "identificationNumber":"               ",
 			    "individualName":"Credit Account 1      ",
 			    "discretionaryData":"  ",
-			    "traceNumber":"121042880000002"
+			    "traceNumber":"121042880000002",
+			    "category":"Forward"
 			  }
 			]
 		`)
 
 		gotJSON := rr.Body.Bytes()
+
+		fmt.Printf("\n\n%s\n\n", string(gotJSON))
 
 		require.Truef(t, jsonpatch.Equal(wantJSON, gotJSON), "received JSON does not match expected json")
 	})
