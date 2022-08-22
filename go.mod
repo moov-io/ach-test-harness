@@ -8,7 +8,7 @@ require (
 	github.com/evanphx/json-patch v4.11.0+incompatible
 	github.com/gorilla/mux v1.8.0
 	github.com/markbates/pkger v0.17.1
-	github.com/moov-io/ach v1.18.6
+	github.com/moov-io/ach v1.19.0
 	github.com/moov-io/base v0.34.0
 	github.com/stretchr/testify v1.8.0
 	goftp.io/server v0.4.1
@@ -42,7 +42,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.12.0 // indirect
 	github.com/subosito/gotenv v1.3.0 // indirect
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
+	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect
