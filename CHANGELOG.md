@@ -1,3 +1,11 @@
+## v0.6.3 (Released 2022-09-19)
+
+BUILD
+
+- chore(deps): update dependency golang to v1.19
+- fix(deps): update module github.com/stretchr/testify to v1.8.0
+- fix(deps): update module github.com/moov-io/base to v0.35.0
+
 ## v0.6.2 (Released 2022-05-18)
 
 BUILD
