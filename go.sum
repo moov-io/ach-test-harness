@@ -204,6 +204,8 @@ github.com/modern-go/reflect2 v1.0.1/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3Rllmb
 github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
 github.com/moov-io/ach v1.20.0 h1:SNvxVXAQtLGzXAPY2RdttVh/b9SDILCqNSVM/0JeGPc=
 github.com/moov-io/ach v1.20.0/go.mod h1:0rEnOuEaVIpf/LlgW49gRPcDoP3/mwes+B4iNiaWvIY=
+github.com/moov-io/ach v1.20.1 h1:K2Wt33hTFcl12/MYypLoRxTGebYyGlx/oqeVBR1PS54=
+github.com/moov-io/ach v1.20.1/go.mod h1:0rEnOuEaVIpf/LlgW49gRPcDoP3/mwes+B4iNiaWvIY=
 github.com/moov-io/base v0.35.0 h1:24jZwU5WekI/Ukl9zirV06KwZ06SdAExLZGfDJXTdqs=
 github.com/moov-io/base v0.35.0/go.mod h1:Ej6hMuk94opovep+wCuYVFm7zXqS9T63EufmKB6wXTE=
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
