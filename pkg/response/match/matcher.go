@@ -60,21 +60,21 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 			amount = matcher.Amount.Value
 		}
 
-		m.debugLog(
-			fmt.Sprintf(
-				"attempting matcher resp[%d]= AccountNumber: %s, Amount: %d, EntryType: %s, IndividualName: %s, RoutingNumber: %s, TraceNumber: %s, CopyPath: %s, CorrectionCode: %s, CorrectionData: %s, ReturnCode: %s",
-				i,
-				matcher.AccountNumber,
-				amount,
-				string(matcher.EntryType),
-				matcher.IndividualName,
-				matcher.RoutingNumber,
-				matcher.TraceNumber,
-				copyPath,
-				correctionCode,
-				correctionData,
-				returnCode))
-
+		if m.Debug {
+			m.Logger.With(log.Fields{
+				"response":        log.Int(i),
+				"account_number":  log.String(matcher.AccountNumber),
+				"amount":          log.Int(amount),
+				"entry_type":      log.String(string(matcher.EntryType)),
+				"individual_name": log.String(matcher.IndividualName),
+				"routing_number":  log.String(matcher.RoutingNumber),
+				"trace_number":    log.String(matcher.TraceNumber),
+				"copy_path":       log.String(copyPath),
+				"correction_code": log.String(correctionCode),
+				"correction_data": log.String(correctionData),
+				"return_code":     log.String(returnCode),
+			})
+		}
 		// Trace Number
 		if matcher.TraceNumber != "" {
 			if TraceNumber(matcher, ed) {
