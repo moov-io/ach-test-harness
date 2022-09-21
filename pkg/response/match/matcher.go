@@ -73,7 +73,7 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 				"correction_code": log.String(correctionCode),
 				"correction_data": log.String(correctionData),
 				"return_code":     log.String(returnCode),
-			})
+			}).Log("attempting matcher")
 		}
 		// Trace Number
 		if matcher.TraceNumber != "" {
