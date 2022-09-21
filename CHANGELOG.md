@@ -1,3 +1,14 @@
+## v0.6.6 (Released 2022-09-21)
+
+IMPROVEMENTS
+
+- response/match: use structured logging
+
+BUILD
+
+- build: Use go1.19.1 in CI and releases
+- fix(deps): update module github.com/moov-io/ach to v1.20.1
+
 ## v0.6.4 (Released 2022-09-19)
 
 BUILD
