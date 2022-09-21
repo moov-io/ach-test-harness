@@ -34,8 +34,46 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 	for i := range m.Responses {
 		positive, negative := 0, 0 // Matchers are AND'd together
 		matcher := m.Responses[i].Match
+		action := m.Responses[i].Action
 
-		m.debugLog(fmt.Sprintf("attempting matcher resp[%d]=%#v\n", i, m.Responses[i]))
+		var copyPath string
+		var correctionCode string
+		var correctionData string
+		var returnCode string
+		var amount int
+
+		// Safely retrieve several values that are needed for the debug log below
+		if action.Copy != nil {
+			copyPath = action.Copy.Path
+		}
+
+		if action.Correction != nil {
+			correctionCode = action.Correction.Code
+			correctionData = action.Correction.Data
+		}
+
+		if action.Return != nil {
+			returnCode = action.Return.Code
+		}
+
+		if matcher.Amount != nil {
+			amount = matcher.Amount.Value
+		}
+
+		m.debugLog(
+			fmt.Sprintf(
+				"attempting matcher resp[%d]= AccountNumber: %s, Amount: %d, EntryType: %s, IndividualName: %s, RoutingNumber: %s, TraceNumber: %s, CopyPath: %s, CorrectionCode: %s, CorrectionData: %s, ReturnCode: %s",
+				i,
+				matcher.AccountNumber,
+				amount,
+				string(matcher.EntryType),
+				matcher.IndividualName,
+				matcher.RoutingNumber,
+				matcher.TraceNumber,
+				copyPath,
+				correctionCode,
+				correctionData,
+				returnCode))
 
 		// Trace Number
 		if matcher.TraceNumber != "" {
