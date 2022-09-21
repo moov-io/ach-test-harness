@@ -6,6 +6,8 @@ import (
 
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/service"
+	"github.com/moov-io/base/log"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -171,6 +173,7 @@ func TestMatchTraceNumber(t *testing.T) {
 // 22               27397636            273976369          100     Incorrect Name          273976367520469
 func TestMultiMatch(t *testing.T) {
 	matcher := Matcher{
+		Logger: log.NewTestLogger(),
 		Responses: []service.Response{
 			{
 				Match: service.Match{

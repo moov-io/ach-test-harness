@@ -1,7 +1,6 @@
 package match
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/moov-io/ach"
@@ -29,7 +28,10 @@ func New(logger log.Logger, cfg service.Matching, responses []service.Response) 
 }
 
 func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
-	m.debugLog(fmt.Sprintf("matching EntryDetail TraceNumber=%s", ed.TraceNumber))
+	logger := m.Logger.With(log.Fields{
+		"entry_trace_number": log.String(ed.TraceNumber),
+	})
+	logger.Log("starting EntryDetail matching")
 
 	for i := range m.Responses {
 		positive, negative := 0, 0 // Matchers are AND'd together
@@ -45,43 +47,56 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 		// Safely retrieve several values that are needed for the debug log below
 		if action.Copy != nil {
 			copyPath = action.Copy.Path
+			logger = logger.With(log.Fields{
+				"copy_path": log.String(copyPath),
+			})
 		}
 
 		if action.Correction != nil {
 			correctionCode = action.Correction.Code
 			correctionData = action.Correction.Data
+			logger = logger.With(log.Fields{
+				"correction_code": log.String(correctionCode),
+				"correction_data": log.String(correctionData),
+			})
 		}
 
 		if action.Return != nil {
 			returnCode = action.Return.Code
+			logger = logger.With(log.Fields{
+				"return_code": log.String(returnCode),
+			})
 		}
 
 		if matcher.Amount != nil {
 			amount = matcher.Amount.Value
+			logger = logger.With(log.Fields{
+				"amount": log.Int(amount),
+			})
 		}
 
 		if m.Debug {
-			m.Logger.With(log.Fields{
-				"response":        log.Int(i),
-				"account_number":  log.String(matcher.AccountNumber),
-				"amount":          log.Int(amount),
-				"entry_type":      log.String(string(matcher.EntryType)),
-				"individual_name": log.String(matcher.IndividualName),
-				"routing_number":  log.String(matcher.RoutingNumber),
-				"trace_number":    log.String(matcher.TraceNumber),
-				"copy_path":       log.String(copyPath),
-				"correction_code": log.String(correctionCode),
-				"correction_data": log.String(correctionData),
-				"return_code":     log.String(returnCode),
-			}).Log("attempting matcher")
+			logger = logger.With(log.Fields{
+				"response_idx":         log.Int(i),
+				"account_number":       log.String(matcher.AccountNumber),
+				"entry_type":           log.String(string(matcher.EntryType)),
+				"individual_name":      log.String(matcher.IndividualName),
+				"routing_number":       log.String(matcher.RoutingNumber),
+				"matcher_trace_number": log.String(matcher.TraceNumber),
+			})
 		}
+
 		// Trace Number
 		if matcher.TraceNumber != "" {
 			if TraceNumber(matcher, ed) {
-				m.debugLog(fmt.Sprintf("EntryDetail.TraceNumber=%s positive match", ed.TraceNumber))
+				if m.Debug {
+					logger.Log("TraceNumber positive match")
+				}
 				positive++
 			} else {
-				m.debugLog(fmt.Sprintf("EntryDetail.TraceNumber=%s negative match", ed.TraceNumber))
+				if m.Debug {
+					logger.Log("TraceNumber negative match")
+				}
 				negative++
 			}
 		}
@@ -89,10 +104,14 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 		// Account Number
 		if matcher.AccountNumber != "" {
 			if AccountNumber(matcher, ed) {
-				m.debugLog("EntryDetail.DFIAccountNumber positive match")
+				if m.Debug {
+					logger.Log("DFIAccountNumber positive match")
+				}
 				positive++
 			} else {
-				m.debugLog("EntryDetail.DFIAccountNumber negative match")
+				if m.Debug {
+					logger.Log("DFIAccountNumber negative match")
+				}
 				negative++
 			}
 		}
@@ -100,10 +119,14 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 		// Routing Number
 		if matcher.RoutingNumber != "" {
 			if RoutingNumber(matcher, ed) {
-				m.debugLog(fmt.Sprintf("EntryDetail.RDFIIdentification=%s positive match", ed.RDFIIdentification))
+				if m.Debug {
+					logger.Log("RDFIIdentification positive match")
+				}
 				positive++
 			} else {
-				m.debugLog(fmt.Sprintf("EntryDetail=%s negative match", ed.RDFIIdentification))
+				if m.Debug {
+					logger.Log("RDFIIdentification negative match")
+				}
 				negative++
 			}
 		}
@@ -111,10 +134,14 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 		// Check if the Amount matches
 		if matcher.Amount != nil {
 			if Amount(matcher, ed) {
-				m.debugLog(fmt.Sprintf("EntryDetail.Amount=%d positive match", ed.Amount))
+				if m.Debug {
+					logger.Log("Amount positive match")
+				}
 				positive++
 			} else {
-				m.debugLog(fmt.Sprintf("EntryDetail.Amount=%d negative match", ed.Amount))
+				if m.Debug {
+					logger.Log("Amount negative match")
+				}
 				negative++
 			}
 		}
@@ -122,26 +149,35 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 		// Check if this Entry is a debit
 		if matcher.EntryType != service.EntryTypeEmpty {
 			if matchedEntryType(matcher, ed) {
-				m.debugLog(fmt.Sprintf("EntryDetail.TransactionCode=%d type positive match", ed.TransactionCode))
+				if m.Debug {
+					logger.Log("TransactionCode type positive match")
+				}
 				positive++
 			} else {
-				m.debugLog(fmt.Sprintf("EntryDetail.TransactionCode=%d type negative match", ed.TransactionCode))
+				if m.Debug {
+					logger.Log("TransactionCode type negative match")
+				}
 				negative++
 			}
 		}
 
 		if matcher.IndividualName != "" {
 			if matchedIndividualName(matcher, ed) {
-				m.debugLog(fmt.Sprintf("EntryDetail.IndividualName='%s' positive match", ed.IndividualName))
+				if m.Debug {
+					logger.Log("IndividualName positive match")
+				}
 				positive++
 			} else {
-				m.debugLog(fmt.Sprintf("EntryDetail.IndividualName='%s' negative match", ed.IndividualName))
+				if m.Debug {
+					logger.Log("IndividualName negative match")
+				}
 				negative++
 			}
 		}
 
 		// Return the Action if we've still matched
-		m.debugLog(fmt.Sprintf("FINAL EntryDetail.TraceNumber=%s score negative=%d positive=%d\n", ed.TraceNumber, negative, positive))
+		logger.Logf("FINAL matching score negative=%d positive=%d", ed.TraceNumber, negative, positive)
+
 		if negative == 0 && positive > 0 {
 			return &m.Responses[i].Action
 		}
@@ -195,10 +231,4 @@ func matchedDebit(m service.Match, ed *ach.EntryDetail) bool {
 
 func matchedIndividualName(m service.Match, ed *ach.EntryDetail) bool {
 	return strings.TrimSpace(ed.IndividualName) == m.IndividualName
-}
-
-func (m Matcher) debugLog(msg string) {
-	if m.Debug {
-		m.Logger.Info().Log(msg)
-	}
 }
