@@ -34,9 +34,47 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 	for i := range m.Responses {
 		positive, negative := 0, 0 // Matchers are AND'd together
 		matcher := m.Responses[i].Match
+		action := m.Responses[i].Action
 
-		m.debugLog(fmt.Sprintf("attempting matcher resp[%d]=%#v\n", i, m.Responses[i]))
+		var copyPath string
+		var correctionCode string
+		var correctionData string
+		var returnCode string
+		var amount int
 
+		// Safely retrieve several values that are needed for the debug log below
+		if action.Copy != nil {
+			copyPath = action.Copy.Path
+		}
+
+		if action.Correction != nil {
+			correctionCode = action.Correction.Code
+			correctionData = action.Correction.Data
+		}
+
+		if action.Return != nil {
+			returnCode = action.Return.Code
+		}
+
+		if matcher.Amount != nil {
+			amount = matcher.Amount.Value
+		}
+
+		if m.Debug {
+			m.Logger.With(log.Fields{
+				"response":        log.Int(i),
+				"account_number":  log.String(matcher.AccountNumber),
+				"amount":          log.Int(amount),
+				"entry_type":      log.String(string(matcher.EntryType)),
+				"individual_name": log.String(matcher.IndividualName),
+				"routing_number":  log.String(matcher.RoutingNumber),
+				"trace_number":    log.String(matcher.TraceNumber),
+				"copy_path":       log.String(copyPath),
+				"correction_code": log.String(correctionCode),
+				"correction_data": log.String(correctionData),
+				"return_code":     log.String(returnCode),
+			}).Log("attempting matcher")
+		}
 		// Trace Number
 		if matcher.TraceNumber != "" {
 			if TraceNumber(matcher, ed) {
