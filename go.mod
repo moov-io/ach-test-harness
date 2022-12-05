@@ -9,7 +9,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/markbates/pkger v0.17.1
 	github.com/moov-io/ach v1.25.0
-	github.com/moov-io/base v0.36.2
+	github.com/moov-io/base v0.36.3
 	github.com/stretchr/testify v1.8.1
 	goftp.io/server v0.4.1
 )
@@ -35,7 +35,7 @@ require (
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
-	github.com/rickar/cal/v2 v2.1.8 // indirect
+	github.com/rickar/cal/v2 v2.1.9 // indirect
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
