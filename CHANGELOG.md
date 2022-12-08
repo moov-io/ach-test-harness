@@ -1,3 +1,10 @@
+## v0.6.8 (Released 2022-12-08)
+
+BUILD
+
+- fix(deps): update module github.com/moov-io/ach to v1.26.0
+- fix(deps): update module github.com/moov-io/base to v0.37.0
+
 ## v0.6.7 (Released 2022-11-15)
 
 BUILD
