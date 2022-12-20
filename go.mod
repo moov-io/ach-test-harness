@@ -12,6 +12,7 @@ require (
 	github.com/moov-io/base v0.38.1
 	github.com/stretchr/testify v1.8.1
 	goftp.io/server v0.4.1
+	goftp.io/server/v2 v2.0.0
 )
 
 require (
