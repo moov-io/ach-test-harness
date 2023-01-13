@@ -1,3 +1,12 @@
+## v0.6.9 (Released 2023-01-13)
+
+Note: moov-io/ach version v1.28.0 does not preserve spaces in fields like `DFIAccountNumber`. Enable `PreserveSpaces: true` to restore this behavior.
+
+BUILD
+
+- fix(deps): update module github.com/moov-io/ach to v1.28.0
+- fix(deps): update module github.com/moov-io/base to v0.38.1
+
 ## v0.6.8 (Released 2022-12-08)
 
 BUILD
