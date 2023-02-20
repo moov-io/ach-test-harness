@@ -93,7 +93,7 @@ match:
   individualName: <string> # Compare the IndividualName on EntryDetail records
   routingNumber: <string>  # Exact match of ABA routing number (RDFIIdentification and CheckDigit)
   traceNumber: <string>    # Exact match of TraceNumber
-  entryType: <string>      # Check TransactionCode of entry if it's credit or debit. Accepted values: credit, debit or empty to skip the type match
+  entryType: <string>      # Checks TransactionCode. Accepted values: credit, debit or prenote.
 action:
   # Copy the EntryDetail to another directory
   copy:

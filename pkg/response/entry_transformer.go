@@ -38,6 +38,13 @@ func (t *CorrectionTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetai
 	switch ed.TransactionCode {
 	case ach.CheckingCredit, ach.CheckingDebit, ach.SavingsCredit, ach.SavingsDebit:
 		out.TransactionCode = ed.TransactionCode - 1
+
+	case ach.CheckingPrenoteCredit, ach.CheckingPrenoteDebit, ach.SavingsPrenoteCredit, ach.SavingsPrenoteDebit,
+		ach.GLPrenoteCredit, ach.GLPrenoteDebit, ach.LoanPrenoteCredit:
+		out.TransactionCode = ed.TransactionCode - 2
+
+	default:
+		out.TransactionCode = ed.TransactionCode
 	}
 
 	// Set the fields from the original EntryDetail
@@ -68,7 +75,7 @@ func (t *CorrectionTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetai
 	out.Addenda98 = addenda98
 
 	if err := out.Validate(); err != nil {
-		return out, fmt.Errorf("entry detail validate: %v", out)
+		return out, fmt.Errorf("addenda98 entry detail validate: %v", err)
 	}
 
 	return out, nil
@@ -95,6 +102,8 @@ func (t *ReturnTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, a
 	switch ed.TransactionCode {
 	case ach.CheckingCredit, ach.CheckingDebit, ach.SavingsCredit, ach.SavingsDebit:
 		out.TransactionCode = ed.TransactionCode - 1
+	default:
+		out.TransactionCode = ed.TransactionCode
 	}
 
 	// Set the fields from the original EntryDetail
@@ -124,7 +133,7 @@ func (t *ReturnTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, a
 	out.Addenda99 = addenda99
 
 	if err := out.Validate(); err != nil {
-		return out, fmt.Errorf("entry detail validate: %v", out)
+		return out, fmt.Errorf("addenda99 entry detail validate: %v", err)
 	}
 
 	return out, nil

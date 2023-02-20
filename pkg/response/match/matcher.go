@@ -214,7 +214,9 @@ func matchedEntryType(m service.Match, ed *ach.EntryDetail) bool {
 	switch {
 	case m.EntryType == service.EntryTypeDebit && matchedDebit(m, ed):
 		return true
-	case m.EntryType == service.EntryTypeCredit && !matchedDebit(m, ed):
+	case m.EntryType == service.EntryTypeCredit && matchedCredit(m, ed):
+		return true
+	case m.EntryType == service.EntryTypePrenote && matchedPrenote(m, ed):
 		return true
 	default:
 		return false
@@ -224,6 +226,24 @@ func matchedEntryType(m service.Match, ed *ach.EntryDetail) bool {
 func matchedDebit(m service.Match, ed *ach.EntryDetail) bool {
 	switch ed.TransactionCode {
 	case ach.CheckingDebit, ach.SavingsDebit, ach.GLDebit, ach.LoanDebit:
+		return true
+	}
+	return false
+}
+
+func matchedCredit(m service.Match, ed *ach.EntryDetail) bool {
+	switch ed.TransactionCode {
+	case ach.CheckingCredit, ach.SavingsCredit, ach.GLCredit, ach.LoanCredit:
+		return true
+	}
+	return false
+}
+
+func matchedPrenote(m service.Match, ed *ach.EntryDetail) bool {
+	switch ed.TransactionCode {
+	case ach.CheckingPrenoteCredit, ach.SavingsPrenoteCredit, ach.GLPrenoteCredit, ach.LoanPrenoteCredit:
+		return true
+	case ach.CheckingPrenoteDebit, ach.SavingsPrenoteDebit, ach.GLPrenoteDebit:
 		return true
 	}
 	return false

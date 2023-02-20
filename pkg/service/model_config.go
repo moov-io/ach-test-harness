@@ -106,9 +106,10 @@ func (a *Amount) Empty() bool {
 type EntryType string
 
 const (
-	EntryTypeEmpty  EntryType = ""
-	EntryTypeDebit  EntryType = "debit"
-	EntryTypeCredit EntryType = "credit"
+	EntryTypeEmpty   EntryType = ""
+	EntryTypeDebit   EntryType = "debit"
+	EntryTypeCredit  EntryType = "credit"
+	EntryTypePrenote EntryType = "prenote"
 )
 
 type Action struct {
