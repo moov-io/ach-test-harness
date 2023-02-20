@@ -176,7 +176,7 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 		}
 
 		// Return the Action if we've still matched
-		logger.Logf("FINAL matching score negative=%d positive=%d", ed.TraceNumber, negative, positive)
+		logger.Logf("FINAL matching score negative=%d positive=%d", negative, positive)
 
 		if negative == 0 && positive > 0 {
 			return &m.Responses[i].Action
