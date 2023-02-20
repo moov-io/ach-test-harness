@@ -100,6 +100,9 @@ type Amount struct {
 }
 
 func (a *Amount) Empty() bool {
+	if a == nil {
+		return true
+	}
 	return a.Value == 0 && a.Min == 0 && a.Max == 0
 }
 

@@ -18,7 +18,7 @@ func fileBackedFtpServer(t *testing.T) (string, *ftp.Server) {
 		RootPath: dir,
 	}
 
-	ln, err := net.Listen("tcp", ":0")
+	ln, err := net.Listen("tcp", ":0") //nolint:gosec
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,13 +32,7 @@ func fileBackedFtpServer(t *testing.T) (string, *ftp.Server) {
 		Hostname: "127.0.0.1",
 	}
 	server := ftp.NewServer(opts)
-
-	go func() {
-		err := server.ListenAndServe()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}()
+	go server.ListenAndServe()
 
 	return dir, server
 }
