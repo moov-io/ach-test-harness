@@ -1,3 +1,17 @@
+## v0.7.0 (Released 2023-02-21)
+
+IMPROVEMENTS
+
+- feat: add prenote entryType matcher, properly correct/return prenotes
+- fix: FINAL match log
+- test: linter fixup, increase coverage requirement
+
+BUILD
+
+- build: update moov-io/ach to v1.29.0
+- chore(deps): update golang docker tag to v1.20
+- fix(deps): update module github.com/moov-io/base to v0.39.0
+
 ## v0.6.9 (Released 2023-01-13)
 
 Note: moov-io/ach version v1.28.0 does not preserve spaces in fields like `DFIAccountNumber`. Enable `PreserveSpaces: true` to restore this behavior.
