@@ -122,6 +122,10 @@ func TestMatchEntryType(t *testing.T) {
 		{input: ach.CheckingDebit, entryType: service.EntryTypeCredit, want: false},
 		{input: ach.SavingsDebit, entryType: service.EntryTypeCredit, want: false},
 		{input: ach.CheckingCredit, entryType: service.EntryTypeDebit, want: false},
+		// Prenotes
+		{input: ach.CheckingDebit, entryType: service.EntryTypePrenote, want: false},
+		{input: ach.CheckingPrenoteDebit, entryType: service.EntryTypePrenote, want: true},
+		{input: ach.SavingsPrenoteDebit, entryType: service.EntryTypePrenote, want: true},
 	}
 
 	for _, tc := range tests {

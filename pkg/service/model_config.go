@@ -100,15 +100,19 @@ type Amount struct {
 }
 
 func (a *Amount) Empty() bool {
+	if a == nil {
+		return true
+	}
 	return a.Value == 0 && a.Min == 0 && a.Max == 0
 }
 
 type EntryType string
 
 const (
-	EntryTypeEmpty  EntryType = ""
-	EntryTypeDebit  EntryType = "debit"
-	EntryTypeCredit EntryType = "credit"
+	EntryTypeEmpty   EntryType = ""
+	EntryTypeDebit   EntryType = "debit"
+	EntryTypeCredit  EntryType = "credit"
+	EntryTypePrenote EntryType = "prenote"
 )
 
 type Action struct {
