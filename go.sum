@@ -170,6 +170,8 @@ github.com/mitchellh/mapstructure v1.5.0 h1:jeMsZIYE/09sWLaz43PL7Gy6RuMjD2eJVyua
 github.com/mitchellh/mapstructure v1.5.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/moov-io/ach v1.29.0 h1:fy1Cbzfjvo/vu2vW6N+xsoMFP1scJk/uoL3zgdGuBtg=
 github.com/moov-io/ach v1.29.0/go.mod h1:Hmxz4G0HkWUbQD2avA434uwBTPUpLDk/1s4f3ZGEAJc=
+github.com/moov-io/ach v1.29.2 h1:sQLdUAiwZc5hpyk5Sb651FOzjPqxJKsq+RVxE7DSR5w=
+github.com/moov-io/ach v1.29.2/go.mod h1:Hmxz4G0HkWUbQD2avA434uwBTPUpLDk/1s4f3ZGEAJc=
 github.com/moov-io/base v0.39.0 h1:eehvhnA/w452ls+23h13qb9ZZn86NSaeXrW6zAJ3FXE=
 github.com/moov-io/base v0.39.0/go.mod h1:KtMunwaPFvefvVgEwLAU41R0AKGt9wipxLR2dSXdZ78=
 github.com/pelletier/go-toml/v2 v2.0.6 h1:nrzqCb7j9cDFj2coyLNLaZuJTLjWjlaz6nvTvIwycIU=
