@@ -28,6 +28,8 @@ func TestMorphEntry__Correction(t *testing.T) {
 	if out.Addenda98 == nil {
 		t.Fatal("exected Addenda98 record")
 	}
+	require.NotEqual(t, ed.TraceNumber, out.TraceNumber)
+	require.Equal(t, ed.TraceNumber, out.Addenda98.OriginalTrace)
 	require.Equal(t, out.Addenda98.ChangeCode, "C01")
 	require.Equal(t, out.Addenda98.CorrectedData, "45111616")
 
@@ -56,5 +58,7 @@ func TestMorphEntry__Return(t *testing.T) {
 	if out.Addenda99 == nil {
 		t.Fatal("exected Addenda99 record")
 	}
+	require.NotEqual(t, ed.TraceNumber, out.TraceNumber)
+	require.Equal(t, ed.TraceNumber, out.Addenda99.OriginalTrace)
 	require.Equal(t, out.Addenda99.ReturnCode, "R01")
 }
