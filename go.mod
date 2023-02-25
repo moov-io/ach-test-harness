@@ -10,7 +10,7 @@ require (
 	github.com/markbates/pkger v0.17.1
 	github.com/moov-io/ach v1.29.2
 	github.com/moov-io/base v0.39.0
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	goftp.io/server v0.4.1
 )
 
