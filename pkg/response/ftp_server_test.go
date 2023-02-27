@@ -26,9 +26,14 @@ func fileBackedFtpServer(t *testing.T) (string, *ftp.Server) {
 		ln.Close()
 	})
 
+	addr, ok := ln.Addr().(*net.TCPAddr)
+	if !ok {
+		t.Fatalf("unexpected listener address: %T", ln.Addr())
+	}
+
 	opts := &ftp.ServerOpts{
 		Factory:  factory,
-		Port:     ln.Addr().(*net.TCPAddr).Port,
+		Port:     addr.Port,
 		Hostname: "127.0.0.1",
 	}
 	server := ftp.NewServer(opts)
