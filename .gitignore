@@ -36,6 +36,9 @@ pkger*
 pkged.go
 cover.out
 
+.idea/
+.vscode/
+
 /storage/ftp/*
 !/storage/ftp/.keep
 
