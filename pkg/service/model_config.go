@@ -75,7 +75,8 @@ type Matching struct {
 
 type Response struct {
 	Match  Match
-	Action Action
+	Action *Action
+	Future *Future
 }
 
 type Match struct {
@@ -142,4 +143,10 @@ func (r Return) Validate() error {
 		return nil
 	}
 	return fmt.Errorf("unexpected return code %s", r.Code)
+}
+
+type Future struct {
+	Delay      string // ex: "12h"
+	Correction *Correction
+	Return     *Return
 }

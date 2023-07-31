@@ -54,6 +54,8 @@ func (w *FTPFileWriter) Write(path string, r io.Reader) error {
 		return fmt.Errorf("mkdir: %s: %v", path, err)
 	}
 
+	// TODO JB: see if there's a way to future-date the file's timestamp
+
 	if _, err := driver.PutFile(path, r, false); err != nil {
 		return fmt.Errorf("STOR %s: %v", path, err)
 	}

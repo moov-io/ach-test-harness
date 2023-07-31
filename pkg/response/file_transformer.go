@@ -64,8 +64,8 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 		}
 		entries := file.Batches[i].GetEntries()
 		for j := range entries {
-			// Check if there's a matching Action and perform it
-			action := ft.Matcher.FindAction(entries[j])
+			// Check if there's a matching Action and perform it - this might be a future-dated action
+			action, _ := ft.Matcher.FindAction(entries[j])
 			if action != nil {
 				entry, err := ft.Entry.MorphEntry(file.Header, entries[j], *action)
 				if err != nil {
@@ -92,6 +92,8 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 						batch.AddEntry(entry)
 					}
 				}
+
+				// TODO JB: do something with the `future` object
 			}
 		}
 		// Save off the entries as requested
