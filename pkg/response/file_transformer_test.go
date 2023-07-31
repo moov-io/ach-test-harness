@@ -21,7 +21,7 @@ func TestFileTransformer__CorrectedPrenote(t *testing.T) {
 			EntryType:     service.EntryTypePrenote,
 			AccountNumber: "810044964044",
 		},
-		Action: service.Action{
+		Action: &service.Action{
 			Correction: &service.Correction{
 				Code: "C01",
 				Data: "445566778",
@@ -58,7 +58,7 @@ func TestFileTransformer__ReturnedPrenote(t *testing.T) {
 			EntryType:     service.EntryTypePrenote,
 			AccountNumber: "810044964044",
 		},
-		Action: service.Action{
+		Action: &service.Action{
 			Return: &service.Return{
 				Code: "R03",
 			},
@@ -97,11 +97,13 @@ func TestFileTransformer__FutureCorrectedPrenote(t *testing.T) {
 			EntryType:     service.EntryTypePrenote,
 			AccountNumber: "810044964044",
 		},
-		Action: service.Action{
-			Delay: &delay,
-			Correction: &service.Correction{
-				Code: "C01",
-				Data: "445566778",
+		Future: &service.Future{
+			Delay: delay,
+			Action: service.Action{
+				Correction: &service.Correction{
+					Code: "C01",
+					Data: "445566778",
+				},
 			},
 		},
 	}
@@ -138,10 +140,12 @@ func TestFileTransformer__FutureReturnedPrenote(t *testing.T) {
 			EntryType:     service.EntryTypePrenote,
 			AccountNumber: "810044964044",
 		},
-		Action: service.Action{
-			Delay: &delay,
-			Return: &service.Return{
-				Code: "R03",
+		Future: &service.Future{
+			Delay: delay,
+			Action: service.Action{
+				Return: &service.Return{
+					Code: "R03",
+				},
 			},
 		},
 	}

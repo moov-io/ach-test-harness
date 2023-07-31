@@ -76,9 +76,16 @@ ACHTestHarness:
         accountNumber: "12345678"
         traceNumber: "121042880000001"
       action:
-        delay: "12h"
         return:
           code: "R03"
+
+    - match:
+        amount:
+          value: 12357 # $123.57
+        future:
+          delay: "12h"
+          return:
+            code: "R10"
 ```
 
 The full config for Responses is below:
@@ -97,12 +104,21 @@ match:
   traceNumber: <string>    # Exact match of TraceNumber
   entryType: <string>      # Checks TransactionCode. Accepted values: credit, debit or prenote.
 action:
-  # How long into the future should we wait before making the correction/return available?
-  delay: <duration>
-
   # Copy the EntryDetail to another directory
   copy:
     path: <string> # Filepath on the FTP server
+
+  # Send the EntryDetail back with the following ACH change code
+  correction:
+    code: <string>
+    data: <string>
+
+  # Send the EntryDetail back with the following ACH return code
+  return:
+    code: <string>
+future:
+  # How long into the future should we wait before making the correction/return available?
+  delay: <duration>
 
   # Send the EntryDetail back with the following ACH change code
   correction:

@@ -19,7 +19,7 @@ func TestFileWriter__mkdir(t *testing.T) {
 
 	path := filepath.Join("foo", "Bar", "baz", "example.ach")
 
-	err = mkdir(driver, path)
+	err = mkdir(FTPFileDriver{Driver: driver}, path)
 	require.NoError(t, err)
 
 	// Check that the directory exists

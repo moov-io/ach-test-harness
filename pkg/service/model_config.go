@@ -76,7 +76,8 @@ type Matching struct {
 
 type Response struct {
 	Match  Match
-	Action Action
+	Action *Action
+	Future *Future
 }
 
 type Match struct {
@@ -117,10 +118,14 @@ const (
 )
 
 type Action struct {
-	Delay      *time.Duration // e.g. "12h" or "10s"
 	Copy       *Copy
 	Correction *Correction
 	Return     *Return
+}
+
+type Future struct {
+	Delay time.Duration // e.g. "12h" or "10s"
+	Action
 }
 
 type Copy struct {
