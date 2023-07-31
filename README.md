@@ -71,6 +71,7 @@ ACHTestHarness:
   ValidateOpts: {}
   Responses:
     # Entries that match both the DFIAccountNumber and TraceNumber will be returned with a R03 return code.
+    # Each entry will be checked against all match conditions and actions of the first match will be used.
     - match:
         accountNumber: "12345678"
         traceNumber: "121042880000001"
