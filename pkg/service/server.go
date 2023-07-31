@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	_ "github.com/moov-io/ach-test-harness"
+	"github.com/moov-io/ach-test-harness/pkg/filedrive"
 	"github.com/moov-io/base/admin"
 	"github.com/moov-io/base/log"
 
@@ -42,12 +43,15 @@ func bootFTPServer(errs chan<- error, logger log.Logger, cfg *FTPConfig, respons
 	createDataDirectories(errs, logger, cfg)
 
 	// Start the FTP server
-	fileDriver := &file.DriverFactory{
+	fileDriverFactory := &file.DriverFactory{
 		RootPath: cfg.RootPath,
 		Perm:     ftp.NewSimplePerm("user", "group"),
 	}
+	filteringDriver := &filedrive.Factory{
+		DriverFactory: fileDriverFactory,
+	}
 	opts := &ftp.ServerOpts{
-		Factory:  fileDriver,
+		Factory:  filteringDriver,
 		Port:     cfg.Port,
 		Hostname: cfg.Hostname,
 		Auth: &ftp.SimpleAuth{
