@@ -165,13 +165,15 @@ func TestFileTransformer__FutureReturnedPrenote(t *testing.T) {
 func testFileTransformer(t *testing.T, resp service.Response) (*FileTransfomer, string) {
 	t.Helper()
 
-	logger := log.NewTestLogger()
+	dir, ftpServer := fileBackedFtpServer(t)
+
 	cfg := &service.Config{
 		Matching: service.Matching{
 			Debug: true,
 		},
 		Servers: service.ServerConfig{
 			FTP: &service.FTPConfig{
+				RootPath: dir,
 				Paths: service.Paths{
 					Return: "./returned/",
 				},
@@ -180,8 +182,7 @@ func testFileTransformer(t *testing.T, resp service.Response) (*FileTransfomer, 
 	}
 	responses := []service.Response{resp}
 
-	dir, ftpServer := fileBackedFtpServer(t)
-
+	logger := log.NewTestLogger()
 	w := NewFileWriter(logger, cfg.Servers, ftpServer)
 
 	return NewFileTransformer(logger, cfg, responses, w), dir
