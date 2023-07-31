@@ -4,6 +4,7 @@ package service
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/moov-io/ach"
 )
@@ -75,8 +76,7 @@ type Matching struct {
 
 type Response struct {
 	Match  Match
-	Action *Action
-	Future *Future
+	Action Action
 }
 
 type Match struct {
@@ -117,6 +117,7 @@ const (
 )
 
 type Action struct {
+	Delay      *time.Duration // e.g. "12h" or "10s"
 	Copy       *Copy
 	Correction *Correction
 	Return     *Return
@@ -143,10 +144,4 @@ func (r Return) Validate() error {
 		return nil
 	}
 	return fmt.Errorf("unexpected return code %s", r.Code)
-}
-
-type Future struct {
-	Delay      string // ex: "12h"
-	Correction *Correction
-	Return     *Return
 }

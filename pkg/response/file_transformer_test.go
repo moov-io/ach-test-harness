@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/service"
@@ -20,7 +21,7 @@ func TestFileTransformer__CorrectedPrenote(t *testing.T) {
 			EntryType:     service.EntryTypePrenote,
 			AccountNumber: "810044964044",
 		},
-		Action: &service.Action{
+		Action: service.Action{
 			Correction: &service.Correction{
 				Code: "C01",
 				Data: "445566778",
@@ -57,7 +58,7 @@ func TestFileTransformer__ReturnedPrenote(t *testing.T) {
 			EntryType:     service.EntryTypePrenote,
 			AccountNumber: "810044964044",
 		},
-		Action: &service.Action{
+		Action: service.Action{
 			Return: &service.Return{
 				Code: "R03",
 			},
@@ -88,13 +89,16 @@ func TestFileTransformer__ReturnedPrenote(t *testing.T) {
 }
 
 func TestFileTransformer__FutureCorrectedPrenote(t *testing.T) {
+	var delay, err = time.ParseDuration("12h")
+	require.NoError(t, err)
+
 	resp := service.Response{
 		Match: service.Match{
 			EntryType:     service.EntryTypePrenote,
 			AccountNumber: "810044964044",
 		},
-		Future: &service.Future{
-			Delay: "12h",
+		Action: service.Action{
+			Delay: &delay,
 			Correction: &service.Correction{
 				Code: "C01",
 				Data: "445566778",
@@ -126,13 +130,16 @@ func TestFileTransformer__FutureCorrectedPrenote(t *testing.T) {
 }
 
 func TestFileTransformer__FutureReturnedPrenote(t *testing.T) {
+	var delay, err = time.ParseDuration("12h")
+	require.NoError(t, err)
+
 	resp := service.Response{
 		Match: service.Match{
 			EntryType:     service.EntryTypePrenote,
 			AccountNumber: "810044964044",
 		},
-		Future: &service.Future{
-			Delay: "12h",
+		Action: service.Action{
+			Delay: &delay,
 			Return: &service.Return{
 				Code: "R03",
 			},

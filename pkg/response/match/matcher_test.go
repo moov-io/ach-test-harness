@@ -3,6 +3,7 @@ package match
 import (
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/service"
@@ -187,7 +188,7 @@ func TestMultiMatch(t *testing.T) {
 					},
 					EntryType: service.EntryTypeDebit,
 				},
-				Action: &service.Action{
+				Action: service.Action{
 					Return: &service.Return{
 						Code: "R01",
 					},
@@ -197,7 +198,7 @@ func TestMultiMatch(t *testing.T) {
 				Match: service.Match{
 					IndividualName: "Incorrect Name",
 				},
-				Action: &service.Action{
+				Action: service.Action{
 					Correction: &service.Correction{
 						Code: "C04",
 						Data: "Correct Name",
@@ -214,19 +215,21 @@ func TestMultiMatch(t *testing.T) {
 	require.True(t, len(file.Batches) > 0)
 	entries := file.Batches[0].GetEntries()
 
-	action, future := matcher.FindAction(entries[0])
+	action := matcher.FindAction(entries[0])
 	require.Nil(t, action)
-	require.Nil(t, future)
 
 	// Find our Action
-	action, future = matcher.FindAction(entries[1])
+	action = matcher.FindAction(entries[1])
 	require.NotNil(t, action)
 	require.NotNil(t, action.Correction)
 	require.Equal(t, action.Correction.Code, "C04")
-	require.Nil(t, future)
+	require.Nil(t, action.Delay)
 }
 
 func TestMatchFuture(t *testing.T) {
+	var delay, err = time.ParseDuration("12h")
+	require.NoError(t, err)
+
 	matcher := Matcher{
 		Logger: log.NewTestLogger(),
 		Responses: []service.Response{
@@ -234,8 +237,8 @@ func TestMatchFuture(t *testing.T) {
 				Match: service.Match{
 					IndividualName: "Incorrect Name",
 				},
-				Future: &service.Future{
-					Delay: "12h",
+				Action: service.Action{
+					Delay: &delay,
 					Correction: &service.Correction{
 						Code: "C04",
 						Data: "Correct Name",
@@ -252,45 +255,13 @@ func TestMatchFuture(t *testing.T) {
 	require.True(t, len(file.Batches) > 0)
 	entries := file.Batches[0].GetEntries()
 
-	action, future := matcher.FindAction(entries[0])
+	action := matcher.FindAction(entries[0])
 	require.Nil(t, action)
-	require.Nil(t, future)
 
 	// Find our Action
-	action, future = matcher.FindAction(entries[1])
+	action = matcher.FindAction(entries[1])
 	require.NotNil(t, action)
 	require.NotNil(t, action.Correction)
 	require.Equal(t, action.Correction.Code, "C04")
-	require.NotNil(t, future)
-	require.Equal(t, future.Delay, "12h")
-}
-
-func TestMatchNilActionNilFuture(t *testing.T) {
-	matcher := Matcher{
-		Logger: log.NewTestLogger(),
-		Responses: []service.Response{
-			{
-				Match: service.Match{
-					Amount: &service.Amount{
-						Min: 500000,  // $5,000.00
-						Max: 1000000, // $10,000.00
-					},
-					EntryType: service.EntryTypeDebit,
-				},
-				Action: nil,
-				Future: nil,
-			},
-		},
-	}
-
-	// Read our test file
-	file, err := ach.ReadFile(filepath.Join("..", "..", "..", "testdata", "20210308-1806-071000301.ach"))
-	require.NoError(t, err)
-	require.NotNil(t, file)
-	require.True(t, len(file.Batches) > 0)
-	entries := file.Batches[0].GetEntries()
-
-	action, future := matcher.FindAction(entries[0])
-	require.Nil(t, action)
-	require.Nil(t, future)
+	require.Equal(t, action.Delay.String(), "12h0m0s")
 }

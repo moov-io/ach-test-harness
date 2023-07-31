@@ -56,6 +56,7 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 		return fmt.Errorf("file transform: header validate: %v", err)
 	}
 
+	var delay *time.Duration // TODO JB: delay should be at the entry-level instead of the file-level
 	for i := range file.Batches {
 		mirror := newBatchMirror(ft.Writer, file.Batches[i])
 		batch, err := ach.NewBatch(file.Batches[i].GetHeader())
@@ -65,7 +66,7 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 		entries := file.Batches[i].GetEntries()
 		for j := range entries {
 			// Check if there's a matching Action and perform it - this might be a future-dated action
-			action, _ := ft.Matcher.FindAction(entries[j])
+			action := ft.Matcher.FindAction(entries[j])
 			if action != nil {
 				entry, err := ft.Entry.MorphEntry(file.Header, entries[j], *action)
 				if err != nil {
@@ -93,7 +94,9 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 					}
 				}
 
-				// TODO JB: do something with the `future` object
+				if action.Delay != nil {
+					delay = action.Delay
+				}
 			}
 		}
 		// Save off the entries as requested
@@ -115,7 +118,7 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 		}
 		if err := out.Validate(); err == nil {
 			filepath := filepath.Join(ft.returnPath, generateFilename(out)) // TODO(adam): need to determine return path
-			if err := ft.Writer.WriteFile(filepath, out); err != nil {
+			if err := ft.Writer.WriteFile(filepath, out, delay); err != nil {
 				return fmt.Errorf("transform write %s: %v", filepath, err)
 			}
 		} else {

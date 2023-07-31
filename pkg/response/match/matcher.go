@@ -27,7 +27,7 @@ func New(logger log.Logger, cfg service.Matching, responses []service.Response) 
 	}
 }
 
-func (m Matcher) FindAction(ed *ach.EntryDetail) (*service.Action, *service.Future) {
+func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 	logger := m.Logger.With(log.Fields{
 		"entry_trace_number": log.String(ed.TraceNumber),
 	})
@@ -37,12 +37,6 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (*service.Action, *service.Futu
 		positive, negative := 0, 0 // Matchers are AND'd together
 		matcher := m.Responses[i].Match
 		action := m.Responses[i].Action
-		future := m.Responses[i].Future
-
-		if future == nil && action == nil {
-			logger.Log("future and action are both nil")
-			continue
-		}
 
 		var copyPath string
 		var delayTime string
@@ -52,21 +46,21 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (*service.Action, *service.Futu
 		var amount int
 
 		// Safely retrieve several values that are needed for the debug log below
-		if action != nil && action.Copy != nil {
+		if action.Copy != nil {
 			copyPath = action.Copy.Path
 			logger = logger.With(log.Fields{
 				"copy_path": log.String(copyPath),
 			})
 		}
 
-		if future != nil {
-			delayTime = future.Delay
+		if action.Delay != nil {
+			delayTime = action.Delay.String()
 			logger = logger.With(log.Fields{
 				"delay": log.String(delayTime),
 			})
 		}
 
-		if action != nil && action.Correction != nil {
+		if action.Correction != nil {
 			correctionCode = action.Correction.Code
 			correctionData = action.Correction.Data
 			logger = logger.With(log.Fields{
@@ -75,24 +69,8 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (*service.Action, *service.Futu
 			})
 		}
 
-		if future != nil && future.Correction != nil {
-			correctionCode = future.Correction.Code
-			correctionData = future.Correction.Data
-			logger = logger.With(log.Fields{
-				"correction_code": log.String(correctionCode),
-				"correction_data": log.String(correctionData),
-			})
-		}
-
-		if action != nil && action.Return != nil {
+		if action.Return != nil {
 			returnCode = action.Return.Code
-			logger = logger.With(log.Fields{
-				"return_code": log.String(returnCode),
-			})
-		}
-
-		if future != nil && future.Return != nil {
-			returnCode = future.Return.Code
 			logger = logger.With(log.Fields{
 				"return_code": log.String(returnCode),
 			})
@@ -209,17 +187,10 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (*service.Action, *service.Futu
 		logger.Logf("FINAL matching score negative=%d positive=%d", negative, positive)
 
 		if negative == 0 && positive > 0 {
-			if m.Responses[i].Future != nil {
-				// do this so that the entries can be morphed without duplicating code
-				action = &service.Action{
-					Correction: future.Correction,
-					Return:     future.Return,
-				}
-			}
-			return action, future
+			return &m.Responses[i].Action
 		}
 	}
-	return nil, nil
+	return nil
 }
 
 func TraceNumber(m service.Match, ed *ach.EntryDetail) bool {
