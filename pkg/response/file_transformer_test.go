@@ -21,7 +21,7 @@ func TestFileTransformer__CorrectedPrenote(t *testing.T) {
 			EntryType:     service.EntryTypePrenote,
 			AccountNumber: "810044964044",
 		},
-		Action: &service.Action{
+		Action: service.Action{
 			Correction: &service.Correction{
 				Code: "C01",
 				Data: "445566778",
@@ -58,7 +58,7 @@ func TestFileTransformer__ReturnedPrenote(t *testing.T) {
 			EntryType:     service.EntryTypePrenote,
 			AccountNumber: "810044964044",
 		},
-		Action: &service.Action{
+		Action: service.Action{
 			Return: &service.Return{
 				Code: "R03",
 			},
@@ -88,7 +88,7 @@ func TestFileTransformer__ReturnedPrenote(t *testing.T) {
 	require.Contains(t, out.String(), "R03")
 }
 
-func TestFileTransformer__FutureCorrectedPrenote(t *testing.T) {
+func TestFileTransformer__DelayCorrectedPrenote(t *testing.T) {
 	var delay, err = time.ParseDuration("12h")
 	require.NoError(t, err)
 
@@ -97,13 +97,11 @@ func TestFileTransformer__FutureCorrectedPrenote(t *testing.T) {
 			EntryType:     service.EntryTypePrenote,
 			AccountNumber: "810044964044",
 		},
-		Future: &service.Future{
-			Delay: delay,
-			Action: service.Action{
-				Correction: &service.Correction{
-					Code: "C01",
-					Data: "445566778",
-				},
+		Action: service.Action{
+			Delay: &delay,
+			Correction: &service.Correction{
+				Code: "C01",
+				Data: "445566778",
 			},
 		},
 	}
@@ -134,7 +132,7 @@ func TestFileTransformer__FutureCorrectedPrenote(t *testing.T) {
 	require.Contains(t, out.String(), "C01")
 }
 
-func TestFileTransformer__FutureReturnedPrenote(t *testing.T) {
+func TestFileTransformer__DelayReturnedPrenote(t *testing.T) {
 	var delay, err = time.ParseDuration("24h")
 	require.NoError(t, err)
 
@@ -143,12 +141,10 @@ func TestFileTransformer__FutureReturnedPrenote(t *testing.T) {
 			EntryType:     service.EntryTypePrenote,
 			AccountNumber: "810044964044",
 		},
-		Future: &service.Future{
-			Delay: delay,
-			Action: service.Action{
-				Return: &service.Return{
-					Code: "R03",
-				},
+		Action: service.Action{
+			Delay: &delay,
+			Return: &service.Return{
+				Code: "R03",
 			},
 		},
 	}
@@ -204,3 +200,5 @@ func testFileTransformer(t *testing.T, resp service.Response) (*FileTransfomer, 
 
 	return NewFileTransformer(logger, cfg, responses, w), dir
 }
+
+// TODO JB: more tests

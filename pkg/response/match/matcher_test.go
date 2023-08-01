@@ -188,7 +188,7 @@ func TestMultiMatch(t *testing.T) {
 					},
 					EntryType: service.EntryTypeDebit,
 				},
-				Action: &service.Action{
+				Action: service.Action{
 					Return: &service.Return{
 						Code: "R01",
 					},
@@ -198,7 +198,7 @@ func TestMultiMatch(t *testing.T) {
 				Match: service.Match{
 					IndividualName: "Incorrect Name",
 				},
-				Action: &service.Action{
+				Action: service.Action{
 					Correction: &service.Correction{
 						Code: "C04",
 						Data: "Correct Name",
@@ -215,16 +215,17 @@ func TestMultiMatch(t *testing.T) {
 	require.True(t, len(file.Batches) > 0)
 	entries := file.Batches[0].GetEntries()
 
-	action, future := matcher.FindAction(entries[0])
-	require.Nil(t, action)
-	require.Nil(t, future)
+	// Find our Action
+	copyAction, processAction := matcher.FindAction(entries[0])
+	require.Nil(t, copyAction)
+	require.Nil(t, processAction)
 
 	// Find our Action
-	action, future = matcher.FindAction(entries[1])
-	require.NotNil(t, action)
-	require.NotNil(t, action.Correction)
-	require.Equal(t, action.Correction.Code, "C04")
-	require.Nil(t, future)
+	copyAction, processAction = matcher.FindAction(entries[1])
+	require.Nil(t, copyAction)
+	require.NotNil(t, processAction)
+	require.NotNil(t, processAction.Correction)
+	require.Equal(t, processAction.Correction.Code, "C04")
 }
 
 func TestMatchFuture(t *testing.T) {
@@ -238,13 +239,11 @@ func TestMatchFuture(t *testing.T) {
 				Match: service.Match{
 					IndividualName: "Incorrect Name",
 				},
-				Future: &service.Future{
-					Delay: delay,
-					Action: service.Action{
-						Correction: &service.Correction{
-							Code: "C04",
-							Data: "Correct Name",
-						},
+				Action: service.Action{
+					Delay: &delay,
+					Correction: &service.Correction{
+						Code: "C04",
+						Data: "Correct Name",
 					},
 				},
 			},
@@ -258,15 +257,17 @@ func TestMatchFuture(t *testing.T) {
 	require.True(t, len(file.Batches) > 0)
 	entries := file.Batches[0].GetEntries()
 
-	action, future := matcher.FindAction(entries[0])
-	require.Nil(t, action)
-	require.Nil(t, future)
+	copyAction, processAction := matcher.FindAction(entries[0])
+	require.Nil(t, copyAction)
+	require.Nil(t, processAction)
 
 	// Find our Action
-	action, future = matcher.FindAction(entries[1])
-	require.Nil(t, action)
-	require.NotNil(t, future)
-	require.NotNil(t, future.Correction)
-	require.Equal(t, future.Correction.Code, "C04")
-	require.Equal(t, future.Delay.String(), "12h0m0s")
+	copyAction, processAction = matcher.FindAction(entries[1])
+	require.Nil(t, copyAction)
+	require.NotNil(t, processAction)
+	require.NotNil(t, processAction.Correction)
+	require.Equal(t, processAction.Correction.Code, "C04")
+	require.Equal(t, processAction.Delay.String(), "12h0m0s")
 }
+
+// TODO JB: more tests

@@ -13,12 +13,26 @@ type GlobalConfig struct {
 	ACHTestHarness Config
 }
 
+func (gc *GlobalConfig) Validate() bool {
+	return gc.ACHTestHarness.Validate()
+}
+
 // Config defines all the configuration for the app
 type Config struct {
 	Servers      ServerConfig
 	ValidateOpts *ach.ValidateOpts
 	Matching     Matching
 	Responses    []Response
+}
+
+func (cfg *Config) Validate() bool {
+	for i := range cfg.Responses {
+		if !cfg.Responses[i].Validate() {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (cfg *Config) responsePaths() []string {
@@ -76,8 +90,11 @@ type Matching struct {
 
 type Response struct {
 	Match  Match
-	Action *Action
-	Future *Future
+	Action Action
+}
+
+func (r *Response) Validate() bool {
+	return r.Action.Validate()
 }
 
 type Match struct {
@@ -118,14 +135,34 @@ const (
 )
 
 type Action struct {
+	Delay      *time.Duration // e.g. "12h" or "10s"
 	Copy       *Copy
 	Correction *Correction
 	Return     *Return
 }
 
-type Future struct {
-	Delay time.Duration // e.g. "12h" or "10s"
-	Action
+func (a *Action) Validate() bool {
+	// Delay is only valid for Return and Correction
+	if a.Delay != nil && a.Copy != nil {
+		return false
+	}
+
+	// only allowed 1 of Copy, Return, Correction to be configured
+	var count = 0
+	if a.Copy != nil {
+		count++
+	}
+	if a.Return != nil {
+		count++
+	}
+	if a.Correction != nil {
+		count++
+	}
+	if count > 1 {
+		return false
+	}
+
+	return true
 }
 
 type Copy struct {

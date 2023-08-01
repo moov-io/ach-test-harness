@@ -3,6 +3,7 @@
 package service
 
 import (
+	"errors"
 	ftp "goftp.io/server/core"
 
 	"github.com/gorilla/mux"
@@ -59,6 +60,9 @@ func LoadConfig(logger log.Logger) (*Config, error) {
 	global := &GlobalConfig{}
 	if err := configService.Load(global); err != nil {
 		return nil, err
+	}
+	if !global.Validate() {
+		return nil, errors.New("invalid config")
 	}
 
 	cfg := &global.ACHTestHarness

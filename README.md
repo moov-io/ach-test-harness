@@ -82,7 +82,7 @@ ACHTestHarness:
     - match:
         amount:
           value: 12357 # $123.57
-        future:
+        action:
           delay: "12h"
           return:
             code: "R10"
@@ -103,22 +103,14 @@ match:
   routingNumber: <string>  # Exact match of ABA routing number (RDFIIdentification and CheckDigit)
   traceNumber: <string>    # Exact match of TraceNumber
   entryType: <string>      # Checks TransactionCode. Accepted values: credit, debit or prenote.
+# at most, one `copy` action and one other action will be returned
 action:
-  # Copy the EntryDetail to another directory
-  copy:
-    path: <string> # Filepath on the FTP server
-
-  # Send the EntryDetail back with the following ACH change code
-  correction:
-    code: <string>
-    data: <string>
-
-  # Send the EntryDetail back with the following ACH return code
-  return:
-    code: <string>
-future:
   # How long into the future should we wait before making the correction/return available?
   delay: <duration>
+
+  # Copy the EntryDetail to another directory (not valid with a delay)
+  copy:
+    path: <string> # Filepath on the FTP server
 
   # Send the EntryDetail back with the following ACH change code
   correction:
