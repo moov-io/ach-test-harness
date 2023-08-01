@@ -40,9 +40,9 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, pr
 	 * Valid combinations include:
 	 * 1. Copy
 	 * 2. Return/Correction w/ Delay
-	 * 2. Return/Correction w/o Delay
-	 * 3. Copy and Return/Correction w/ Delay
-	 * 4. Nothing
+	 * 3. Return/Correction w/o Delay
+	 * 4. Copy and Return/Correction w/ Delay
+	 * 5. Nothing
 	 *
 	 * Invalid combinations are:
 	 * 1. Copy + Return/Correction w/o Delay

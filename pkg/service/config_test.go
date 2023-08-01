@@ -21,3 +21,5 @@ func Test_ConfigLoading(t *testing.T) {
 	err := ConfigService.Load(gc)
 	require.Nil(t, err)
 }
+
+// TODO JB: tests

@@ -3,6 +3,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -13,7 +14,7 @@ type GlobalConfig struct {
 	ACHTestHarness Config
 }
 
-func (gc *GlobalConfig) Validate() bool {
+func (gc *GlobalConfig) Validate() error {
 	return gc.ACHTestHarness.Validate()
 }
 
@@ -25,14 +26,14 @@ type Config struct {
 	Responses    []Response
 }
 
-func (cfg *Config) Validate() bool {
+func (cfg *Config) Validate() error {
 	for i := range cfg.Responses {
-		if !cfg.Responses[i].Validate() {
-			return false
+		if err := cfg.Responses[i].Validate(); err != nil {
+			return err
 		}
 	}
 
-	return true
+	return nil
 }
 
 func (cfg *Config) responsePaths() []string {
@@ -93,7 +94,7 @@ type Response struct {
 	Action Action
 }
 
-func (r *Response) Validate() bool {
+func (r *Response) Validate() error {
 	return r.Action.Validate()
 }
 
@@ -141,10 +142,10 @@ type Action struct {
 	Return     *Return
 }
 
-func (a *Action) Validate() bool {
+func (a *Action) Validate() error {
 	// Delay is only valid for Return and Correction
 	if a.Delay != nil && a.Copy != nil {
-		return false
+		return errors.New("Delay and Copy are not valid together in an Action")
 	}
 
 	// only allowed 1 of Copy, Return, Correction to be configured
@@ -159,10 +160,10 @@ func (a *Action) Validate() bool {
 		count++
 	}
 	if count > 1 {
-		return false
+		return errors.New("only 1 of Copy, Return, Correction can be configured in an Action")
 	}
 
-	return true
+	return nil
 }
 
 type Copy struct {

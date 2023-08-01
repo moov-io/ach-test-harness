@@ -31,3 +31,5 @@ func TestConfig__Return(t *testing.T) {
 	r.Code = "R99"
 	require.Error(t, r.Validate())
 }
+
+// TODO JB: tests

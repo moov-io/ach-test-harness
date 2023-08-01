@@ -103,7 +103,17 @@ match:
   routingNumber: <string>  # Exact match of ABA routing number (RDFIIdentification and CheckDigit)
   traceNumber: <string>    # Exact match of TraceNumber
   entryType: <string>      # Checks TransactionCode. Accepted values: credit, debit or prenote.
-# at most, one `copy` action and one other action will be returned
+# Matching will find at most 2 Actions: 1 Copy Action and 1 Return/Correction Action.
+# If the Return/Correction Action as no Delay, the Copy Action will be excluded.
+# Valid combinations include:
+#  1. Copy
+#  2. Return/Correction w/ Delay
+#  3. Return/Correction w/o Delay
+#  4. Copy and Return/Correction w/ Delay
+#  5. Nothing
+# Invalid combinations are:
+#  1. Copy + Return/Correction w/o Delay
+#  2. Copy w/ Delay (validated when reading configuration)
 action:
   # How long into the future should we wait before making the correction/return available?
   delay: <duration>
