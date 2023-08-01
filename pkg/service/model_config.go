@@ -162,6 +162,9 @@ func (a *Action) Validate() error {
 	if count > 1 {
 		return errors.New("only 1 of Copy, Return, Correction can be configured in an Action")
 	}
+	if a.Delay != nil && count == 0 {
+		return errors.New("either Return or Correction is required if Delay is set")
+	}
 
 	return nil
 }
