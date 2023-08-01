@@ -40,23 +40,10 @@ func NewFileTransformer(logger log.Logger, cfg *service.Config, responses []serv
 func (ft *FileTransfomer) Transform(file *ach.File) error {
 	out := ach.NewFile()
 	out.SetValidation(ft.ValidateOpts)
-
-	out.Header = ach.NewFileHeader()
-	out.Header.SetValidation(ft.ValidateOpts)
-
-	out.Header.ImmediateDestination = file.Header.ImmediateOrigin
-	out.Header.ImmediateDestinationName = file.Header.ImmediateOriginName
-	out.Header.ImmediateOrigin = file.Header.ImmediateDestination
-	out.Header.ImmediateOriginName = file.Header.ImmediateDestinationName
-	out.Header.FileCreationDate = time.Now().Format("060102")
-	out.Header.FileCreationTime = time.Now().Format("1504")
-	out.Header.FileIDModifier = "A"
-
-	if err := out.Header.Validate(); err != nil {
-		return fmt.Errorf("file transform: header validate: %v", err)
+	if err := createOutHeader(out, file, ft.ValidateOpts); err != nil {
+		return err
 	}
 
-	var delay *time.Duration // TODO JB: delay should be at the entry-level instead of the file-level
 	for i := range file.Batches {
 		mirror := newBatchMirror(ft.Writer, file.Batches[i])
 		batch, err := ach.NewBatch(file.Batches[i].GetHeader())
@@ -68,7 +55,6 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 			// Check if there's a matching Action and perform it - this might be a future-dated action
 			action, future := ft.Matcher.FindAction(entries[j])
 			if future != nil {
-				delay = &future.Delay
 				action = &future.Action
 			}
 			if action != nil {
@@ -88,17 +74,41 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 					}
 				}
 
-				// Save this Entry
-				if action.Copy != nil {
-					mirror.saveEntry(action.Copy, entries[j])
-				} else {
-					// Add the transformed entry onto the batch
-					if entry != nil {
-						batch.AddEntry(entry)
+				if future != nil {
+					// need to save off the future-dated entry
+					futOut := ach.NewFile()
+					futOut.SetValidation(ft.ValidateOpts)
+					if futErr := createOutHeader(futOut, file, ft.ValidateOpts); futErr != nil {
+						return futErr
 					}
+
+					futMirror := newBatchMirror(ft.Writer, file.Batches[i])
+					futBatch, futErr := ach.NewBatch(file.Batches[i].GetHeader())
+					if futErr != nil {
+						return fmt.Errorf("transform batch[%d] problem creating Batch: %v", i, futErr)
+					}
+
+					saveEntry(action, futMirror, futBatch, entry, entries[j])
+
+					// Save off the entries as requested
+					if futErr := futMirror.saveFiles(); futErr != nil {
+						return fmt.Errorf("problem saving entries: %v", futErr)
+					}
+					// Create our Batch's Control and other fields
+					if futErr := futBatch.Create(); futErr != nil {
+						return fmt.Errorf("transform batch[%d] create error: %v", i, futErr)
+					}
+					futOut.AddBatch(futBatch)
+
+					if futErr := writeOutFile(futOut, ft, &future.Delay); futErr != nil {
+						return futErr
+					}
+				} else {
+					saveEntry(action, mirror, batch, entry, entries[j])
 				}
 			}
 		}
+
 		// Save off the entries as requested
 		if err := mirror.saveFiles(); err != nil {
 			return fmt.Errorf("problem saving entries: %v", err)
@@ -112,14 +122,52 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 		}
 	}
 
+	if err := writeOutFile(out, ft, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func createOutHeader(out *ach.File, file *ach.File, opts *ach.ValidateOpts) error {
+	out.Header = ach.NewFileHeader()
+	out.Header.SetValidation(opts)
+
+	out.Header.ImmediateDestination = file.Header.ImmediateOrigin
+	out.Header.ImmediateDestinationName = file.Header.ImmediateOriginName
+	out.Header.ImmediateOrigin = file.Header.ImmediateDestination
+	out.Header.ImmediateOriginName = file.Header.ImmediateDestinationName
+	out.Header.FileCreationDate = time.Now().Format("060102")
+	out.Header.FileCreationTime = time.Now().Format("1504")
+	out.Header.FileIDModifier = "A"
+
+	if err := out.Header.Validate(); err != nil {
+		return fmt.Errorf("file transform: header validate: %v", err)
+	}
+
+	return nil
+}
+
+func saveEntry(action *service.Action, mirror *batchMirror, batch ach.Batcher, morphedEntry *ach.EntryDetail, originalEntry *ach.EntryDetail) {
+	// Save this Entry
+	if action.Copy != nil {
+		mirror.saveEntry(action.Copy, originalEntry)
+	} else {
+		// Add the transformed entry onto the batch
+		if morphedEntry != nil {
+			batch.AddEntry(morphedEntry)
+		}
+	}
+}
+
+func writeOutFile(out *ach.File, ft *FileTransfomer, delay *time.Duration) error {
 	if out != nil && len(out.Batches) > 0 {
 		if err := out.Create(); err != nil {
 			return fmt.Errorf("transform out create: %v", err)
 		}
 		if err := out.Validate(); err == nil {
-			filepath := filepath.Join(ft.returnPath, generateFilename(out)) // TODO(adam): need to determine return path
-			if err := ft.Writer.WriteFile(filepath, out, delay); err != nil {
-				return fmt.Errorf("transform write %s: %v", filepath, err)
+			generatedFilePath := filepath.Join(ft.returnPath, generateFilename(out)) // TODO(adam): need to determine return path
+			if err := ft.Writer.WriteFile(generatedFilePath, out, delay); err != nil {
+				return fmt.Errorf("transform write %s: %v", generatedFilePath, err)
 			}
 		} else {
 			return fmt.Errorf("transform validate out file: %v", err)

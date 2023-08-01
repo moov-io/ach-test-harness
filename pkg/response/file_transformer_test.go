@@ -121,6 +121,9 @@ func TestFileTransformer__FutureCorrectedPrenote(t *testing.T) {
 	fds, err := os.ReadDir(retdir)
 	require.NoError(t, err)
 	require.Len(t, fds, 1)
+	finfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, finfo.ModTime(), time.Now().Add(delay))
 
 	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
 	require.NoError(t, err)
@@ -132,7 +135,7 @@ func TestFileTransformer__FutureCorrectedPrenote(t *testing.T) {
 }
 
 func TestFileTransformer__FutureReturnedPrenote(t *testing.T) {
-	var delay, err = time.ParseDuration("12h")
+	var delay, err = time.ParseDuration("24h")
 	require.NoError(t, err)
 
 	resp := service.Response{
@@ -163,6 +166,9 @@ func TestFileTransformer__FutureReturnedPrenote(t *testing.T) {
 	fds, err := os.ReadDir(retdir)
 	require.NoError(t, err)
 	require.Len(t, fds, 1)
+	finfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, finfo.ModTime(), time.Now().Add(delay))
 
 	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
 	require.NoError(t, err)
