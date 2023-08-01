@@ -52,7 +52,7 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 		}
 		entries := file.Batches[i].GetEntries()
 		for j := range entries {
-			// Check if there's a matching Action and perform it - this might be a future-dated action
+			// Check if there's a matching Action and perform it. There may also be a future-dated action to execute.
 			action, future := ft.Matcher.FindAction(entries[j])
 			if future != nil {
 				action = &future.Action
