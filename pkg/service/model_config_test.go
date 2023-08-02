@@ -32,8 +32,29 @@ func TestConfig__Match(t *testing.T) {
 
 func TestConfig__Response(t *testing.T) {
 	r := &Response{
-		Action: Action{
+		Match: Match{
+			IndividualName: "John Doe",
+		},
+		Action: Action{ // invalid
 			Copy:   &Copy{Path: "/reconciliation/"},
+			Return: &Return{Code: "R01"},
+		},
+	}
+	require.Error(t, r.Validate())
+
+	r = &Response{
+		Match: Match{
+			IndividualName: "John Doe",
+		},
+		Action: Action{
+			Copy: &Copy{Path: "/reconciliation/"},
+		},
+	}
+	require.NoError(t, r.Validate())
+
+	r = &Response{
+		// invalid - no Match
+		Action: Action{
 			Return: &Return{Code: "R01"},
 		},
 	}

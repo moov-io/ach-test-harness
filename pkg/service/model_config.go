@@ -95,6 +95,9 @@ type Response struct {
 }
 
 func (r *Response) Validate() error {
+	if r.Match.Empty() {
+		return errors.New("no Match configured")
+	}
 	return r.Action.Validate()
 }
 
