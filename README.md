@@ -33,6 +33,8 @@ This project is used in production at an early stage and might undergo breaking 
 
 We publish a [public Docker image `moov/ach-test-harness`](https://hub.docker.com/r/moov/ach-test-harness/) from Docker Hub or use this repository. No configuration is required to serve on `:2222` and metrics at `:3333/metrics` in Prometheus format. <!-- We also have Docker images for [OpenShift](https://quay.io/repository/moov/ach-test-harness?tab=tags) published as `quay.io/moov/ach-test-harness`. -->
 
+### Docker image
+
 Pull & start the Docker image:
 ```
 $ docker-compose up
@@ -45,6 +47,8 @@ harness_1  | ts=2021-03-24T20:36:10Z msg="listening on [::]:3333" level=info app
 ```
 
 You can then use an FTP client that connects to `localhost:2222` with a username of `admin` and password of `secret`. Upload files to the `outbound/` directory and watch for any responses.
+
+### config.yml
 
 After setup inspect the configuration file in `./examples/config.yml` and setup some scenarios to match uploaded files.
 
@@ -87,6 +91,8 @@ ACHTestHarness:
           return:
             code: "R10"
 ```
+
+#### config schema
 
 The full config for Responses is below:
 

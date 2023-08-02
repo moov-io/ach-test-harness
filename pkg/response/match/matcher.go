@@ -34,19 +34,7 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, pr
 	logger.Log("starting EntryDetail matching")
 
 	/*
-	 * Matching will find at most 2 Actions: 1 Copy Action and 1 Return/Correction Action.
-	 * If the Return/Correction Action as no Delay, the Copy Action will be excluded.
-	 *
-	 * Valid combinations include:
-	 * 1. Copy
-	 * 2. Return/Correction w/ Delay
-	 * 3. Return/Correction w/o Delay
-	 * 4. Copy and Return/Correction w/ Delay
-	 * 5. Nothing
-	 *
-	 * Invalid combinations are:
-	 * 1. Copy + Return/Correction w/o Delay
-	 * 2. Copy w/ Delay (validated when reading configuration)
+	 * See https://github.com/moov-io/ach-test-harness#config-schema for more details on how to configure.
 	 */
 	for i := range m.Responses {
 		positive, negative := 0, 0 // Matchers are AND'd together
