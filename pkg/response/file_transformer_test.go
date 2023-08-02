@@ -100,6 +100,11 @@ func TestFileTransformer(t *testing.T) {
 		require.Len(t, fds, 1)
 		found, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name()))
 		require.Equal(t, matchEntry1.IndividualName, strings.Trim(found.Batches[0].GetEntries()[0].IndividualName, " "))
+
+		// verify the timestamp on the file is in the past
+		fInfo, err := fds[0].Info()
+		require.NoError(t, err)
+		require.Less(t, fInfo.ModTime(), time.Now())
 	})
 
 	t.Run("ProcessOnly - Return", func(t *testing.T) {
@@ -126,6 +131,11 @@ func TestFileTransformer(t *testing.T) {
 		found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
 		require.NoError(t, err)
 		require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
+
+		// verify the timestamp on the file is in the past
+		fInfo, err := fds[0].Info()
+		require.NoError(t, err)
+		require.Less(t, fInfo.ModTime(), time.Now())
 
 		// verify no "reconciliation" files created
 		recondir := filepath.Join(dir, "reconciliation")
@@ -157,6 +167,11 @@ func TestFileTransformer(t *testing.T) {
 		found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
 		require.NoError(t, err)
 		require.Equal(t, "C01", found.Batches[0].GetEntries()[0].Addenda98.ChangeCode)
+
+		// verify the timestamp on the file is in the past
+		fInfo, err := fds[0].Info()
+		require.NoError(t, err)
+		require.Less(t, fInfo.ModTime(), time.Now())
 
 		// verify no "reconciliation" files created
 		recondir := filepath.Join(dir, "reconciliation")
@@ -274,6 +289,11 @@ func TestFileTransformer(t *testing.T) {
 		require.Len(t, fds, 1)
 		found, _ = ach.ReadFile(filepath.Join(recondir, fds[0].Name()))
 		require.Equal(t, matchEntry1.IndividualName, strings.Trim(found.Batches[0].GetEntries()[0].IndividualName, " "))
+
+		// verify the timestamp on the file is in the past
+		fInfo, err = fds[0].Info()
+		require.NoError(t, err)
+		require.Less(t, fInfo.ModTime(), time.Now())
 	})
 }
 
