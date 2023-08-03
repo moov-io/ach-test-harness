@@ -1,3 +1,19 @@
+## v0.8.0 (Released 2023-08-03)
+
+This release of ach-test-harness includes a new property (`delay: <duration>`) on actions,
+which allows for returns and corrections to be produced after the initial upload. The delay
+feature allows for more testing scenarios.
+
+IMPROVEMENTS
+
+- feat: add support for future-dated actions
+- test: verify OriginalTrace is set properl
+
+BUILD
+
+- fix(deps): update module github.com/moov-io/ach to v1.32.0
+- fix(deps): update module github.com/moov-io/base to v0.45.1
+
 ## v0.7.0 (Released 2023-02-21)
 
 IMPROVEMENTS
