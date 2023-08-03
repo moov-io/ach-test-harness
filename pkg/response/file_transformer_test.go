@@ -249,7 +249,7 @@ func TestFileTransformer(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("CopyAndDelayProcess", func(t *testing.T) {
+	t.Run("CopyAndDelayProcess - Return", func(t *testing.T) {
 		resp1 := service.Response{
 			Match:  matchEntry1,
 			Action: actionCopy,
@@ -276,6 +276,53 @@ func TestFileTransformer(t *testing.T) {
 		found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
 		require.NoError(t, err)
 		require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
+
+		// verify the timestamp on the file is in the future
+		fInfo, err := fds[0].Info()
+		require.NoError(t, err)
+		require.Greater(t, fInfo.ModTime(), time.Now())
+
+		// verify the "reconciliation" file created
+		recondir := filepath.Join(dir, "reconciliation")
+		fds, err = os.ReadDir(recondir)
+		require.NoError(t, err)
+		require.Len(t, fds, 1)
+		found, _ = ach.ReadFile(filepath.Join(recondir, fds[0].Name()))
+		require.Equal(t, matchEntry1.IndividualName, strings.Trim(found.Batches[0].GetEntries()[0].IndividualName, " "))
+
+		// verify the timestamp on the file is in the past
+		fInfo, err = fds[0].Info()
+		require.NoError(t, err)
+		require.Less(t, fInfo.ModTime(), time.Now())
+	})
+
+	t.Run("CopyAndDelayProcess - Correction", func(t *testing.T) {
+		resp1 := service.Response{
+			Match:  matchEntry1,
+			Action: actionCopy,
+		}
+		resp2 := service.Response{
+			Match:  matchEntry1,
+			Action: actionDelayCorrection,
+		}
+		fileTransformer, dir := testFileTransformer(t, resp1, resp2)
+
+		achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20210308-1806-071000301.ach"))
+		require.NoError(t, err)
+		require.NotNil(t, achIn)
+
+		// transform the file
+		err = fileTransformer.Transform(achIn)
+		require.NoError(t, err)
+
+		// verify the "returned" file created
+		retdir := filepath.Join(dir, "returned")
+		fds, err := os.ReadDir(retdir)
+		require.NoError(t, err)
+		require.Len(t, fds, 1)
+		found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+		require.NoError(t, err)
+		require.Equal(t, "C01", found.Batches[0].GetEntries()[0].Addenda98.ChangeCode)
 
 		// verify the timestamp on the file is in the future
 		fInfo, err := fds[0].Info()
