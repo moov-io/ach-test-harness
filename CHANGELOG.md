@@ -1,4 +1,4 @@
-## v0.8.0 (Released 2023-08-03)
+## v0.8.1 (Released 2023-08-03)
 
 This release of ach-test-harness includes a new property (`delay: <duration>`) on actions,
 which allows for returns and corrections to be produced after the initial upload. The delay
