@@ -20,9 +20,9 @@ func TestMTimeFilter_ListDir(t *testing.T) {
 	found := listFiles(t, driver, ".")
 	require.Len(t, found, 0)
 
-	err := os.WriteFile(filepath.Join(dir, "first.txt"), []byte("first file"), 0644)
+	err := os.WriteFile(filepath.Join(dir, "first.txt"), []byte("first file"), 0600)
 	require.NoError(t, err)
-	err = os.WriteFile(filepath.Join(dir, "second.txt"), []byte("second file"), 0644)
+	err = os.WriteFile(filepath.Join(dir, "second.txt"), []byte("second file"), 0600)
 	require.NoError(t, err)
 
 	found = listFiles(t, driver, ".")
