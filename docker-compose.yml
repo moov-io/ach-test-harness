@@ -4,7 +4,7 @@ version: '3'
 
 services:
   harness:
-    image: moov/ach-test-harness:v0.7.0
+    image: moov/ach-test-harness:v0.8.1
     networks:
       - intranet
     ports:
