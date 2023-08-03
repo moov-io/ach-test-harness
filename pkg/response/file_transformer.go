@@ -83,6 +83,9 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 
 func processMatchedAction(action *service.Action, ft *FileTransfomer, mirror *batchMirror, file *ach.File, batch ach.Batcher, entries []*ach.EntryDetail, i int, j int) (ach.Batcher, error) {
 	if action != nil {
+		logger := ft.Matcher.Logger.With(action)
+		logger.Log("Processing matched action")
+
 		entry, err := ft.Entry.MorphEntry(file.Header, entries[j], action)
 		if err != nil {
 			return nil, fmt.Errorf("transform batch[%d] morph entry[%d] error: %v", i, j, err)

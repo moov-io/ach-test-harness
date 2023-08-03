@@ -28,15 +28,15 @@ func New(logger log.Logger, cfg service.Matching, responses []service.Response) 
 }
 
 func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, processAction *service.Action) {
-	logger := m.Logger.With(log.Fields{
-		"entry_trace_number": log.String(ed.TraceNumber),
-	})
-	logger.Log("starting EntryDetail matching")
-
 	/*
 	 * See https://github.com/moov-io/ach-test-harness#config-schema for more details on how to configure.
 	 */
 	for i := range m.Responses {
+		logger := m.Logger.With(log.Fields{
+			"entry_trace_number": log.String(ed.TraceNumber),
+		})
+		logger.Log("starting EntryDetail matching")
+
 		positive, negative := 0, 0 // Matchers are AND'd together
 		matcher := m.Responses[i].Match
 		action := m.Responses[i].Action
@@ -48,50 +48,8 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, pr
 			continue // skip, we already have a process action
 		}
 
-		var delayTime string
-		var copyPath string
-		var correctionCode string
-		var correctionData string
-		var returnCode string
-		var amount int
-
-		// Safely retrieve several values that are needed for the debug log below
-		if action.Delay != nil {
-			delayTime = action.Delay.String()
-			logger = logger.With(log.Fields{
-				"delay": log.String(delayTime),
-			})
-		}
-
-		if action.Copy != nil {
-			copyPath = action.Copy.Path
-			logger = logger.With(log.Fields{
-				"copy_path": log.String(copyPath),
-			})
-		}
-
-		if action.Correction != nil {
-			correctionCode = action.Correction.Code
-			correctionData = action.Correction.Data
-			logger = logger.With(log.Fields{
-				"correction_code": log.String(correctionCode),
-				"correction_data": log.String(correctionData),
-			})
-		}
-
-		if action.Return != nil {
-			returnCode = action.Return.Code
-			logger = logger.With(log.Fields{
-				"return_code": log.String(returnCode),
-			})
-		}
-
-		if matcher.Amount != nil {
-			amount = matcher.Amount.Value
-			logger = logger.With(log.Fields{
-				"amount": log.Int(amount),
-			})
-		}
+		logger = logger.With(action)
+		logger = logger.With(matcher)
 
 		if m.Debug {
 			logger = logger.With(log.Fields{

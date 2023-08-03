@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/moov-io/ach"
+	"github.com/moov-io/base/log"
 )
 
 type GlobalConfig struct {
@@ -110,6 +111,17 @@ type Match struct {
 	TraceNumber    string
 }
 
+func (m Match) Context() map[string]log.Valuer {
+	logFields := log.Fields{}
+
+	if m.Amount != nil {
+		var amount = m.Amount.Value
+		logFields["amount"] = log.Int(amount)
+	}
+
+	return logFields
+}
+
 func (m Match) Empty() bool {
 	return m.AccountNumber == "" && m.Amount.Empty() &&
 		string(m.EntryType) == "" && m.IndividualName == "" &&
@@ -143,6 +155,35 @@ type Action struct {
 	Copy       *Copy
 	Correction *Correction
 	Return     *Return
+}
+
+func (a Action) Context() map[string]log.Valuer {
+	logFields := log.Fields{}
+
+	// Safely retrieve several values that are needed for the debug log below
+	if a.Delay != nil {
+		var delayTime = a.Delay.String()
+		logFields["delay"] = log.String(delayTime)
+	}
+
+	if a.Copy != nil {
+		var copyPath = a.Copy.Path
+		logFields["copy_path"] = log.String(copyPath)
+	}
+
+	if a.Correction != nil {
+		var correctionCode = a.Correction.Code
+		var correctionData = a.Correction.Data
+		logFields["correction_code"] = log.String(correctionCode)
+		logFields["correction_data"] = log.String(correctionData)
+	}
+
+	if a.Return != nil {
+		var returnCode = a.Return.Code
+		logFields["return_code"] = log.String(returnCode)
+	}
+
+	return logFields
 }
 
 func (a *Action) Validate() error {
