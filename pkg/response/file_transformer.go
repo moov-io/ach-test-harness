@@ -44,6 +44,7 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 		return err
 	}
 
+	var entrySaved = false
 	for i := range file.Batches {
 		mirror := newBatchMirror(ft.Writer, file.Batches[i])
 		batch, err := ach.NewBatch(file.Batches[i].GetHeader())
@@ -54,24 +55,97 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 		for j := range entries {
 			// Check if there's a matching Action and perform it. There may also be a future-dated action to execute.
 			copyAction, processAction := ft.Matcher.FindAction(entries[j])
-			if batch, err = processMatchedAction(copyAction, ft, mirror, file, batch, entries, i, j); err != nil {
-				return err
+			if copyAction != nil {
+				logger := ft.Matcher.Logger.With(copyAction)
+				logger.Log("Processing matched action")
+
+				mirror.saveEntry(copyAction.Copy, entries[j])
+				entrySaved = true
 			}
-			if batch, err = processMatchedAction(processAction, ft, mirror, file, batch, entries, i, j); err != nil {
-				return err
+			if processAction != nil {
+				logger := ft.Matcher.Logger.With(processAction)
+				logger.Log("Processing matched action")
+
+				entry, err := ft.Entry.MorphEntry(file.Header, entries[j], processAction)
+				if err != nil {
+					return fmt.Errorf("transform batch[%d] morph entry[%d] error: %v", i, j, err)
+				}
+
+				if processAction.Delay != nil {
+					// need to save off the future-dated entry
+					futOut := ach.NewFile()
+					futOut.SetValidation(ft.ValidateOpts)
+					if futErr := createOutHeader(futOut, file, ft.ValidateOpts); futErr != nil {
+						return futErr
+					}
+
+					futMirror := newBatchMirror(ft.Writer, file.Batches[i])
+					var futBatch ach.Batcher
+					var futErr error
+
+					// When the entry is corrected we need to change the SEC code
+					if entry.Category == ach.CategoryNOC {
+						bh := *file.Batches[i].GetHeader()
+						bh.StandardEntryClassCode = ach.COR
+						futBatch, futErr = ach.NewBatch(&bh)
+					} else {
+						futBatch, futErr = ach.NewBatch(file.Batches[i].GetHeader())
+					}
+					if futErr != nil {
+						return fmt.Errorf("transform batch[%d] problem creating Batch: %v", i, futErr)
+					}
+
+					// Add the transformed entry onto the batch
+					if entry != nil {
+						futBatch.AddEntry(entry)
+					}
+
+					// Save off the entries as requested
+					if futErr = futMirror.saveFiles(); futErr != nil {
+						return fmt.Errorf("problem saving entries: %v", futErr)
+					}
+					// Create our Batch's Control and other fields
+					if futErr = futBatch.Create(); futErr != nil {
+						return fmt.Errorf("transform batch[%d] create error: %v", i, futErr)
+					}
+					futOut.AddBatch(futBatch)
+
+					if futErr = writeOutFile(futOut, ft, processAction.Delay); futErr != nil {
+						return futErr
+					}
+				} else {
+					// When the entry is corrected we need to change the SEC code
+					if entry.Category == ach.CategoryNOC {
+						bh := batch.GetHeader()
+						bh.StandardEntryClassCode = ach.COR
+						if b, err := ach.NewBatch(bh); b != nil {
+							batch = b // replace entire Batch
+						} else {
+							return fmt.Errorf("transform batch[%d] NOC entry[%d] error: %v", i, j, err)
+						}
+					}
+
+					// Add the transformed entry onto the batch
+					if entry != nil {
+						batch.AddEntry(entry)
+					}
+					entrySaved = true
+				}
 			}
 		}
 
-		// Save off the entries as requested
-		if err := mirror.saveFiles(); err != nil {
-			return fmt.Errorf("problem saving entries: %v", err)
-		}
-		// Create our Batch's Control and other fields
-		if entries := batch.GetEntries(); len(entries) > 0 {
-			if err := batch.Create(); err != nil {
-				return fmt.Errorf("transform batch[%d] create error: %v", i, err)
+		if entrySaved {
+			// Save off the entries as requested
+			if err := mirror.saveFiles(); err != nil {
+				return fmt.Errorf("problem saving entries: %v", err)
 			}
-			out.AddBatch(batch)
+			// Create our Batch's Control and other fields
+			if entries := batch.GetEntries(); len(entries) > 0 {
+				if err := batch.Create(); err != nil {
+					return fmt.Errorf("transform batch[%d] create error: %v", i, err)
+				}
+				out.AddBatch(batch)
+			}
 		}
 	}
 
@@ -79,64 +153,6 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 		return err
 	}
 	return nil
-}
-
-func processMatchedAction(action *service.Action, ft *FileTransfomer, mirror *batchMirror, file *ach.File, batch ach.Batcher, entries []*ach.EntryDetail, i int, j int) (ach.Batcher, error) {
-	if action != nil {
-		logger := ft.Matcher.Logger.With(action)
-		logger.Log("Processing matched action")
-
-		entry, err := ft.Entry.MorphEntry(file.Header, entries[j], action)
-		if err != nil {
-			return nil, fmt.Errorf("transform batch[%d] morph entry[%d] error: %v", i, j, err)
-		}
-
-		// When the entry is corrected we need to change the SEC code
-		if entry.Category == ach.CategoryNOC {
-			bh := batch.GetHeader()
-			bh.StandardEntryClassCode = ach.COR
-			if b, err := ach.NewBatch(bh); b != nil {
-				batch = b // replace entire Batch
-			} else {
-				return nil, fmt.Errorf("transform batch[%d] NOC entry[%d] error: %v", i, j, err)
-			}
-		}
-
-		if action.Delay != nil {
-			// need to save off the future-dated entry
-			futOut := ach.NewFile()
-			futOut.SetValidation(ft.ValidateOpts)
-			if futErr := createOutHeader(futOut, file, ft.ValidateOpts); futErr != nil {
-				return nil, futErr
-			}
-
-			futMirror := newBatchMirror(ft.Writer, file.Batches[i])
-			futBatch, futErr := ach.NewBatch(file.Batches[i].GetHeader())
-			if futErr != nil {
-				return nil, fmt.Errorf("transform batch[%d] problem creating Batch: %v", i, futErr)
-			}
-
-			saveEntry(action, futMirror, futBatch, entry, entries[j])
-
-			// Save off the entries as requested
-			if futErr := futMirror.saveFiles(); futErr != nil {
-				return nil, fmt.Errorf("problem saving entries: %v", futErr)
-			}
-			// Create our Batch's Control and other fields
-			if futErr := futBatch.Create(); futErr != nil {
-				return nil, fmt.Errorf("transform batch[%d] create error: %v", i, futErr)
-			}
-			futOut.AddBatch(futBatch)
-
-			if futErr := writeOutFile(futOut, ft, action.Delay); futErr != nil {
-				return nil, futErr
-			}
-		} else {
-			saveEntry(action, mirror, batch, entry, entries[j])
-		}
-	}
-
-	return batch, nil
 }
 
 func createOutHeader(out *ach.File, file *ach.File, opts *ach.ValidateOpts) error {
@@ -156,18 +172,6 @@ func createOutHeader(out *ach.File, file *ach.File, opts *ach.ValidateOpts) erro
 	}
 
 	return nil
-}
-
-func saveEntry(action *service.Action, mirror *batchMirror, batch ach.Batcher, morphedEntry *ach.EntryDetail, originalEntry *ach.EntryDetail) {
-	// Save this Entry
-	if action.Copy != nil {
-		mirror.saveEntry(action.Copy, originalEntry)
-	} else {
-		// Add the transformed entry onto the batch
-		if morphedEntry != nil {
-			batch.AddEntry(morphedEntry)
-		}
-	}
 }
 
 func writeOutFile(out *ach.File, ft *FileTransfomer, delay *time.Duration) error {
