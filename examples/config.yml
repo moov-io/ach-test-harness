@@ -25,6 +25,7 @@ ACHTestHarness:
       # This matches ./examples/utility-bill.ach
       accountNumber: "744-5678-99"
     action:
+      delay: "12h"
       correction:
         code: "C01"
         data: "744567899"

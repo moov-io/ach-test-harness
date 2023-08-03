@@ -3,13 +3,20 @@
 package service
 
 import (
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/moov-io/ach"
+	"github.com/moov-io/base/log"
 )
 
 type GlobalConfig struct {
 	ACHTestHarness Config
+}
+
+func (gc *GlobalConfig) Validate() error {
+	return gc.ACHTestHarness.Validate()
 }
 
 // Config defines all the configuration for the app
@@ -18,6 +25,16 @@ type Config struct {
 	ValidateOpts *ach.ValidateOpts
 	Matching     Matching
 	Responses    []Response
+}
+
+func (cfg *Config) Validate() error {
+	for i := range cfg.Responses {
+		if err := cfg.Responses[i].Validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (cfg *Config) responsePaths() []string {
@@ -78,6 +95,13 @@ type Response struct {
 	Action Action
 }
 
+func (r *Response) Validate() error {
+	if r.Match.Empty() {
+		return errors.New("no Match configured")
+	}
+	return r.Action.Validate()
+}
+
 type Match struct {
 	AccountNumber  string
 	Amount         *Amount
@@ -85,6 +109,17 @@ type Match struct {
 	IndividualName string
 	RoutingNumber  string
 	TraceNumber    string
+}
+
+func (m Match) Context() map[string]log.Valuer {
+	logFields := log.Fields{}
+
+	if m.Amount != nil {
+		var amount = m.Amount.Value
+		logFields["amount"] = log.Int(amount)
+	}
+
+	return logFields
 }
 
 func (m Match) Empty() bool {
@@ -116,9 +151,66 @@ const (
 )
 
 type Action struct {
+	Delay      *time.Duration // e.g. "12h" or "10s"
 	Copy       *Copy
 	Correction *Correction
 	Return     *Return
+}
+
+func (a Action) Context() map[string]log.Valuer {
+	logFields := log.Fields{}
+
+	// Safely retrieve several values that are needed for the debug log below
+	if a.Delay != nil {
+		var delayTime = a.Delay.String()
+		logFields["delay"] = log.String(delayTime)
+	}
+
+	if a.Copy != nil {
+		var copyPath = a.Copy.Path
+		logFields["copy_path"] = log.String(copyPath)
+	}
+
+	if a.Correction != nil {
+		var correctionCode = a.Correction.Code
+		var correctionData = a.Correction.Data
+		logFields["correction_code"] = log.String(correctionCode)
+		logFields["correction_data"] = log.String(correctionData)
+	}
+
+	if a.Return != nil {
+		var returnCode = a.Return.Code
+		logFields["return_code"] = log.String(returnCode)
+	}
+
+	return logFields
+}
+
+func (a *Action) Validate() error {
+	// Delay is only valid for Return and Correction
+	if a.Delay != nil && a.Copy != nil {
+		return errors.New("Delay and Copy are not valid together in an Action")
+	}
+
+	// only allowed 1 of Copy, Return, Correction to be configured
+	var count = 0
+	if a.Copy != nil {
+		count++
+	}
+	if a.Return != nil {
+		count++
+	}
+	if a.Correction != nil {
+		count++
+	}
+	if count > 1 {
+		return errors.New("only 1 of Copy, Return, Correction can be configured in an Action")
+	}
+	if a.Delay != nil && count == 0 {
+		return errors.New("either Return or Correction is required if Delay is set")
+	}
+
+	return nil
 }
 
 type Copy struct {

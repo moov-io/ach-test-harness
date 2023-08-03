@@ -22,7 +22,7 @@ func TestMorphEntry__Correction(t *testing.T) {
 		},
 	}
 	ed := file.Batches[0].GetEntries()[0]
-	out, err := xform.MorphEntry(file.Header, ed, action)
+	out, err := xform.MorphEntry(file.Header, ed, &action)
 	require.NoError(t, err)
 
 	if out.Addenda98 == nil {
@@ -49,7 +49,7 @@ func TestMorphEntry__Return(t *testing.T) {
 		},
 	}
 	ed := file.Batches[0].GetEntries()[0]
-	out, err := xform.MorphEntry(file.Header, ed, action)
+	out, err := xform.MorphEntry(file.Header, ed, &action)
 	require.NoError(t, err)
 
 	if out.Addenda98 != nil {

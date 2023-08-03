@@ -57,7 +57,7 @@ func (bm *batchMirror) saveFiles() error {
 		if filename, err := bm.filename(); err != nil {
 			return fmt.Errorf("unable to get filename: %v", err)
 		} else {
-			bm.writer.Write(filepath.Join(path, filename), &buf)
+			bm.writer.Write(filepath.Join(path, filename), &buf, nil)
 		}
 	}
 	return nil

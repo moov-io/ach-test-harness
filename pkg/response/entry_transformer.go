@@ -9,12 +9,12 @@ import (
 )
 
 type EntryTransformer interface {
-	MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, action service.Action) (*ach.EntryDetail, error)
+	MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error)
 }
 
 type EntryTransformers []EntryTransformer
 
-func (et EntryTransformers) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, action service.Action) (*ach.EntryDetail, error) {
+func (et EntryTransformers) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error) {
 	var err error
 	for i := range et {
 		ed, err = et[i].MorphEntry(fh, ed, action)
@@ -27,7 +27,7 @@ func (et EntryTransformers) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, a
 
 type CorrectionTransformer struct{}
 
-func (t *CorrectionTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, action service.Action) (*ach.EntryDetail, error) {
+func (t *CorrectionTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error) {
 	if action.Correction == nil {
 		return ed, nil
 	}
@@ -91,7 +91,7 @@ func generateCorrectedData(cor *service.Correction) string {
 
 type ReturnTransformer struct{}
 
-func (t *ReturnTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, action service.Action) (*ach.EntryDetail, error) {
+func (t *ReturnTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error) {
 	if action.Return == nil {
 		return ed, nil
 	}

@@ -60,6 +60,9 @@ func LoadConfig(logger log.Logger) (*Config, error) {
 	if err := configService.Load(global); err != nil {
 		return nil, err
 	}
+	if err := global.Validate(); err != nil {
+		return nil, err
+	}
 
 	cfg := &global.ACHTestHarness
 

@@ -3,6 +3,7 @@ package match
 import (
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/service"
@@ -176,46 +177,156 @@ func TestMatchTraceNumber(t *testing.T) {
 // TransactionCode  RDFIIdentification  AccountNumber      Amount  Name                    TraceNumber      Category
 // 22               27397636            273976369          100     Incorrect Name          273976367520469
 func TestMultiMatch(t *testing.T) {
-	matcher := Matcher{
-		Logger: log.NewTestLogger(),
-		Responses: []service.Response{
-			{
-				Match: service.Match{
-					Amount: &service.Amount{
-						Min: 500000,  // $5,000.00
-						Max: 1000000, // $10,000.00
-					},
-					EntryType: service.EntryTypeDebit,
-				},
-				Action: service.Action{
-					Return: &service.Return{
-						Code: "R01",
-					},
-				},
-			},
-			{
-				Match: service.Match{
-					IndividualName: "Incorrect Name",
-				},
-				Action: service.Action{
-					Correction: &service.Correction{
-						Code: "C04",
-						Data: "Correct Name",
-					},
-				},
-			},
+	var delay, err = time.ParseDuration("12h")
+	require.NoError(t, err)
+
+	var matchNone = service.Match{
+		Amount: &service.Amount{
+			Min: 500000,  // $5,000.00
+			Max: 1000000, // $10,000.00
+		},
+		EntryType: service.EntryTypeDebit,
+	}
+	var matchEntry1 = service.Match{
+		IndividualName: "Incorrect Name",
+	}
+	var actionCopy = service.Action{
+		Copy: &service.Copy{
+			Path: "/reconciliation",
 		},
 	}
+	var actionReturn = service.Action{
+		Return: &service.Return{
+			Code: "R01",
+		},
+	}
+	var actionCorrection = service.Action{
+		Correction: &service.Correction{
+			Code: "C04",
+			Data: "Correct Name",
+		},
+	}
+	var actionDelayReturn = actionReturn
+	actionDelayReturn.Delay = &delay
+	var actionDelayCorrection = actionCorrection
+	actionDelayCorrection.Delay = &delay
 
-	// Read our test file
-	file, err := ach.ReadFile(filepath.Join("..", "..", "..", "testdata", "20210308-1806-071000301.ach"))
-	require.NoError(t, err)
-	entries := file.Batches[0].GetEntries()
+	t.Run("No Match", func(t *testing.T) {
+		var matcher Matcher
+		matcher.Logger = log.NewTestLogger()
+		matcher.Responses = []service.Response{}
 
-	action := matcher.FindAction(entries[0])
-	require.Nil(t, action)
+		// Read our test file
+		file, err := ach.ReadFile(filepath.Join("..", "..", "..", "testdata", "20210308-1806-071000301.ach"))
+		require.NoError(t, err)
+		require.NotNil(t, file)
+		require.True(t, len(file.Batches) > 0)
+		entries := file.Batches[0].GetEntries()
 
-	// Find our Action
-	action = matcher.FindAction(entries[1])
-	require.Equal(t, action.Correction.Code, "C04")
+		// Find our Action
+		copyAction, processAction := matcher.FindAction(entries[0])
+		require.Nil(t, copyAction)
+		require.Nil(t, processAction)
+
+		// Find our Action
+		copyAction, processAction = matcher.FindAction(entries[1])
+		require.Nil(t, copyAction)
+		require.Nil(t, processAction)
+	})
+
+	t.Run("Match Copy only", func(t *testing.T) {
+		var matcher Matcher
+		matcher.Logger = log.NewTestLogger()
+		matcher.Responses = []service.Response{
+			{
+				Match:  matchEntry1,
+				Action: actionCopy,
+			},
+		}
+
+		// Read our test file
+		file, err := ach.ReadFile(filepath.Join("..", "..", "..", "testdata", "20210308-1806-071000301.ach"))
+		require.NoError(t, err)
+		require.NotNil(t, file)
+		require.True(t, len(file.Batches) > 0)
+		entries := file.Batches[0].GetEntries()
+
+		// Find our Action
+		copyAction, processAction := matcher.FindAction(entries[0])
+		require.Nil(t, copyAction)
+		require.Nil(t, processAction)
+
+		// Find our Action
+		copyAction, processAction = matcher.FindAction(entries[1])
+		require.NotNil(t, copyAction)
+		require.Equal(t, actionCopy, *copyAction)
+		require.Nil(t, processAction)
+	})
+
+	t.Run("Match Process only", func(t *testing.T) {
+		var matcher Matcher
+		matcher.Logger = log.NewTestLogger()
+		matcher.Responses = []service.Response{
+			{
+				Match:  matchEntry1,
+				Action: actionReturn,
+			},
+		}
+
+		// Read our test file
+		file, err := ach.ReadFile(filepath.Join("..", "..", "..", "testdata", "20210308-1806-071000301.ach"))
+		require.NoError(t, err)
+		require.NotNil(t, file)
+		require.True(t, len(file.Batches) > 0)
+		entries := file.Batches[0].GetEntries()
+
+		// Find our Action
+		copyAction, processAction := matcher.FindAction(entries[0])
+		require.Nil(t, copyAction)
+		require.Nil(t, processAction)
+
+		// Find our Action
+		copyAction, processAction = matcher.FindAction(entries[1])
+		require.Nil(t, copyAction)
+		require.NotNil(t, processAction)
+		require.Equal(t, actionReturn, *processAction)
+	})
+
+	t.Run("Match Copy + Process", func(t *testing.T) {
+		var matcher Matcher
+		matcher.Logger = log.NewTestLogger()
+		matcher.Responses = []service.Response{
+			{
+				Match:  matchEntry1,
+				Action: actionDelayCorrection,
+			},
+			{
+				Match:  matchNone,
+				Action: actionReturn,
+			},
+			{
+				Match:  matchEntry1,
+				Action: actionCopy,
+			},
+		}
+
+		// Read our test file
+		file, err := ach.ReadFile(filepath.Join("..", "..", "..", "testdata", "20210308-1806-071000301.ach"))
+		require.NoError(t, err)
+		require.NotNil(t, file)
+		require.True(t, len(file.Batches) > 0)
+		entries := file.Batches[0].GetEntries()
+
+		// Find our Action
+		copyAction, processAction := matcher.FindAction(entries[0])
+		require.Nil(t, copyAction)
+		require.Nil(t, processAction)
+
+		// Find our Action
+		copyAction, processAction = matcher.FindAction(entries[1])
+		require.NotNil(t, copyAction)
+		require.Equal(t, actionCopy, *copyAction)
+		require.NotNil(t, processAction)
+		require.Equal(t, actionDelayCorrection, *processAction)
+	})
 }

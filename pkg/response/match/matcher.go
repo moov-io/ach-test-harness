@@ -27,53 +27,29 @@ func New(logger log.Logger, cfg service.Matching, responses []service.Response) 
 	}
 }
 
-func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
-	logger := m.Logger.With(log.Fields{
-		"entry_trace_number": log.String(ed.TraceNumber),
-	})
-	logger.Log("starting EntryDetail matching")
-
+func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, processAction *service.Action) {
+	/*
+	 * See https://github.com/moov-io/ach-test-harness#config-schema for more details on how to configure.
+	 */
 	for i := range m.Responses {
+		logger := m.Logger.With(log.Fields{
+			"entry_trace_number": log.String(ed.TraceNumber),
+		})
+		logger.Log("starting EntryDetail matching")
+
 		positive, negative := 0, 0 // Matchers are AND'd together
 		matcher := m.Responses[i].Match
 		action := m.Responses[i].Action
 
-		var copyPath string
-		var correctionCode string
-		var correctionData string
-		var returnCode string
-		var amount int
-
-		// Safely retrieve several values that are needed for the debug log below
-		if action.Copy != nil {
-			copyPath = action.Copy.Path
-			logger = logger.With(log.Fields{
-				"copy_path": log.String(copyPath),
-			})
+		if copyAction != nil && action.Copy != nil {
+			continue // skip, we already have a copy action
+		}
+		if processAction != nil && action.Return != nil {
+			continue // skip, we already have a process action
 		}
 
-		if action.Correction != nil {
-			correctionCode = action.Correction.Code
-			correctionData = action.Correction.Data
-			logger = logger.With(log.Fields{
-				"correction_code": log.String(correctionCode),
-				"correction_data": log.String(correctionData),
-			})
-		}
-
-		if action.Return != nil {
-			returnCode = action.Return.Code
-			logger = logger.With(log.Fields{
-				"return_code": log.String(returnCode),
-			})
-		}
-
-		if matcher.Amount != nil {
-			amount = matcher.Amount.Value
-			logger = logger.With(log.Fields{
-				"amount": log.Int(amount),
-			})
-		}
+		logger = logger.With(action)
+		logger = logger.With(matcher)
 
 		if m.Debug {
 			logger = logger.With(log.Fields{
@@ -179,10 +155,19 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) *service.Action {
 		logger.Logf("FINAL matching score negative=%d positive=%d", negative, positive)
 
 		if negative == 0 && positive > 0 {
-			return &m.Responses[i].Action
+			// Action is valid, figure out where it belongs
+			if m.Responses[i].Action.Copy != nil {
+				copyAction = &m.Responses[i].Action
+			} else {
+				processAction = &m.Responses[i].Action
+				// A non-Copy (process) Action with no Delay supersedes everything else
+				if processAction.Delay == nil {
+					return nil, processAction
+				}
+			}
 		}
 	}
-	return nil
+	return
 }
 
 func TraceNumber(m service.Match, ed *ach.EntryDetail) bool {
