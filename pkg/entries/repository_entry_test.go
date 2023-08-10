@@ -11,13 +11,13 @@ import (
 func TestRepository(t *testing.T) {
 	logger := log.NewDefaultLogger()
 
-	repo := NewFTPRepository(&service.FTPConfig{
+	repo := NewFTPRepository(logger, &service.FTPConfig{
 		RootPath: "./testdata",
 		Paths: service.Paths{
 			Files:  "/outbound/",
 			Return: "/returned/",
 		},
-	}, logger)
+	})
 
 	// return all
 	entries, err := repo.Search(SearchOptions{})

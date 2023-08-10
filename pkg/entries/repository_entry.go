@@ -17,14 +17,14 @@ type EntryRepository interface {
 }
 
 type ftpRepository struct {
-	rootPath string
 	logger   log.Logger
+	rootPath string
 }
 
-func NewFTPRepository(cfg *service.FTPConfig, logger log.Logger) *ftpRepository {
+func NewFTPRepository(logger log.Logger, cfg *service.FTPConfig) *ftpRepository {
 	return &ftpRepository{
-		rootPath: cfg.RootPath,
 		logger:   logger,
+		rootPath: cfg.RootPath,
 	}
 }
 
