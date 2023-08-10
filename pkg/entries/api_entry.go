@@ -56,6 +56,7 @@ func readSearchOptions(r *http.Request) SearchOptions {
 		RoutingNumber: query.Get("routingNumber"),
 		TraceNumber:   query.Get("traceNumber"),
 		CreatedAfter:  query.Get("createdAfter"),
+		SubDirectory:  query.Get("subDirectory"),
 	}
 	if n, _ := strconv.ParseInt(query.Get("amount"), 10, 32); n > 0 {
 		opts.Amount = int(n)

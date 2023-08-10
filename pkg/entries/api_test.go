@@ -21,7 +21,7 @@ func TestEntryController(t *testing.T) {
 	t.Run("/entries returns list of entries", func(t *testing.T) {
 		repo := NewFTPRepository(&service.FTPConfig{
 			RootPath: "./testdata",
-		})
+		}, logger)
 		service := NewEntryService(repo)
 		controller := NewEntryController(logger, service)
 		controller.AppendRoutes(router)
