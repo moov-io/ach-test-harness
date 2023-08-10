@@ -56,8 +56,8 @@ func (r *ftpRepository) Search(opts SearchOptions) ([]*ach.EntryDetail, error) {
 	}
 
 	var walkingPath = r.rootPath
-	if opts.SubDirectory != "" {
-		walkingPath = filepath.Join(r.rootPath, opts.SubDirectory)
+	if opts.Path != "" {
+		walkingPath = filepath.Join(r.rootPath, opts.Path)
 	}
 
 	r.logger.Logf("Waling directory %s", walkingPath)

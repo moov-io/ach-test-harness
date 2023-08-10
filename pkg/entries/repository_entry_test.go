@@ -46,7 +46,7 @@ func TestRepository(t *testing.T) {
 	// search by subdirectory in our files:
 	// outbound/1.ach was created on 1908161059 and has 2 entries
 	entries, err = repo.Search(SearchOptions{
-		SubDirectory: "outbound",
+		Path: "outbound",
 	})
 
 	// expect to get entries from outbound/1.ach
