@@ -1,3 +1,15 @@
+## v0.8.2 (Released 2023-08-11)
+
+IMPROVEMENTS
+
+- feat: Add directory to search options on entries search API
+- fix: Fix logic in transforming cases of multiple entries
+
+BUILD
+
+- fix(deps): update module github.com/moov-io/ach to v1.32.1
+- fix(deps): update golang docker tag to v1.21
+
 ## v0.8.1 (Released 2023-08-03)
 
 This release of ach-test-harness includes a new property (`delay: <duration>`) on actions,
