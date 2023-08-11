@@ -3,7 +3,6 @@ package response
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -14,334 +13,802 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFileTransformer(t *testing.T) {
-	var delay, err = time.ParseDuration("24h")
-	require.NoError(t, err)
+var (
+	delay, _  = time.ParseDuration("24h")
+	delay2, _ = time.ParseDuration("12m")
 
-	var matchPrenote = service.Match{
-		EntryType:     service.EntryTypePrenote,
-		AccountNumber: "810044964044",
-	}
-	var matchEntry1 = service.Match{
-		IndividualName: "Incorrect Name",
-	}
-	var actionCopy = service.Action{
+	actionCopy = service.Action{
 		Copy: &service.Copy{
 			Path: "/reconciliation/",
 		},
 	}
-	var actionReturn = service.Action{
+	respCopyDebit = service.Response{
+		Match: service.Match{
+			EntryType: service.EntryTypeDebit,
+			Amount: &service.Amount{
+				Min: 1,
+				Max: 1000000000,
+			},
+		},
+		Action: actionCopy,
+	}
+	respCopyCredit = service.Response{
+		Match: service.Match{
+			EntryType: service.EntryTypeCredit,
+			Amount: &service.Amount{
+				Min: 1,
+				Max: 1000000000,
+			},
+		},
+		Action: actionCopy,
+	}
+
+	matchDebit = service.Match{
+		EntryType: service.EntryTypeDebit,
+		Amount: &service.Amount{
+			Value: 62_01,
+		},
+	}
+	matchCredit = service.Match{
+		EntryType: service.EntryTypeCredit,
+		Amount: &service.Amount{
+			Value: 62_01,
+		},
+	}
+
+	actionReturn = service.Action{
 		Return: &service.Return{
 			Code: "R03",
 		},
 	}
-	var actionCorrection = service.Action{
+	actionDelayReturn = service.Action{
+		Delay: &delay,
+		Return: &service.Return{
+			Code: "R03",
+		},
+	}
+	actionCorrection = service.Action{
 		Correction: &service.Correction{
 			Code: "C01",
 			Data: "445566778",
 		},
 	}
-	var actionDelayReturn = actionReturn
-	actionDelayReturn.Delay = &delay
-	var actionDelayCorrection = actionCorrection
-	actionDelayCorrection.Delay = &delay
+	actionDelayCorrection = service.Action{
+		Delay: &delay,
+		Correction: &service.Correction{
+			Code: "C01",
+			Data: "445566778",
+		},
+	}
+)
 
-	t.Run("NoMatch", func(t *testing.T) {
-		resp := service.Response{
-			Match:  matchEntry1,
-			Action: actionCopy,
+func TestFileTransformer_NoMatch(t *testing.T) {
+	fileTransformer, dir := testFileTransformer(t)
+
+	// read the file
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
+
+	// verify no "returned" files created
+	retdir := filepath.Join(dir, "returned")
+	_, err = os.ReadDir(retdir)
+	require.Error(t, err)
+
+	// verify no "reconciliation" files created
+	recondir := filepath.Join(dir, "reconciliation")
+	_, err = os.ReadDir(recondir)
+	require.Error(t, err)
+}
+
+// credit
+func TestFileTransformer_CopyOnly(t *testing.T) {
+	fileTransformer, dir := testFileTransformer(t, respCopyCredit)
+
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021C.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
+
+	// verify no "returned" files created
+	retdir := filepath.Join(dir, "returned")
+	_, err = os.ReadDir(retdir)
+	require.Error(t, err)
+
+	// verify the "reconciliation" file created
+	recondir := filepath.Join(dir, "reconciliation")
+	fds, err := os.ReadDir(recondir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	require.Equal(t, achIn.Batches, read.Batches)
+
+	// verify the timestamp on the file is in the past
+	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, fInfo.ModTime(), time.Now())
+}
+
+// debit & credit
+func TestFileTransformer_CopyOnlyAndCopyOnly(t *testing.T) {
+	fileTransformer, dir := testFileTransformer(t, respCopyDebit, respCopyCredit)
+
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
+
+	// verify no "returned" files created
+	retdir := filepath.Join(dir, "returned")
+	_, err = os.ReadDir(retdir)
+	require.Error(t, err)
+
+	// verify the "reconciliation" file created
+	recondir := filepath.Join(dir, "reconciliation")
+	fds, err := os.ReadDir(recondir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	require.Equal(t, achIn.Batches, read.Batches)
+
+	// verify the timestamp on the file is in the past
+	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, fInfo.ModTime(), time.Now())
+}
+
+// credit
+func TestFileTransformer_ReturnOnly(t *testing.T) {
+	resp := service.Response{
+		Match:  matchCredit,
+		Action: actionReturn,
+	}
+	fileTransformer, dir := testFileTransformer(t, resp)
+
+	// read the file
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021C.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
+
+	// verify the "returned" file created
+	retdir := filepath.Join(dir, "returned")
+	fds, err := os.ReadDir(retdir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+	require.NoError(t, err)
+	require.Len(t, found.Batches, 1)
+	require.Len(t, found.Batches[0].GetEntries(), 1)
+	require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
+
+	// verify the timestamp on the file is in the past
+	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, fInfo.ModTime(), time.Now())
+
+	// verify no "reconciliation" files created
+	recondir := filepath.Join(dir, "reconciliation")
+	_, err = os.ReadDir(recondir)
+	require.Error(t, err)
+}
+
+// debit
+func TestFileTransformer_CorrectionOnly(t *testing.T) {
+	resp := service.Response{
+		Match:  matchDebit,
+		Action: actionCorrection,
+	}
+	fileTransformer, dir := testFileTransformer(t, resp)
+
+	// read the file
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021D.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
+
+	// verify the "returned" file created
+	retdir := filepath.Join(dir, "returned")
+	fds, err := os.ReadDir(retdir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+	require.NoError(t, err)
+	require.Len(t, found.Batches, 1)
+	require.Len(t, found.Batches[0].GetEntries(), 1)
+	require.Equal(t, "C01", found.Batches[0].GetEntries()[0].Addenda98.ChangeCode)
+
+	// verify the timestamp on the file is in the past
+	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, fInfo.ModTime(), time.Now())
+
+	// verify no "reconciliation" files created
+	recondir := filepath.Join(dir, "reconciliation")
+	_, err = os.ReadDir(recondir)
+	require.Error(t, err)
+}
+
+// debit & credit
+func TestFileTransformer_ReturnOnlyAndCopyOnly(t *testing.T) {
+	resp := service.Response{
+		Match:  matchDebit,
+		Action: actionReturn,
+	}
+	fileTransformer, dir := testFileTransformer(t, resp, respCopyCredit)
+
+	// read the file
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
+
+	// verify the "returned" file created
+	retdir := filepath.Join(dir, "returned")
+	fds, err := os.ReadDir(retdir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+	require.NoError(t, err)
+	require.Len(t, found.Batches, 1)
+	require.Len(t, found.Batches[0].GetEntries(), 1)
+	require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
+
+	// verify the timestamp on the file is in the past
+	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, fInfo.ModTime(), time.Now())
+
+	// verify the "reconciliation" file created
+	recondir := filepath.Join(dir, "reconciliation")
+	fds, err = os.ReadDir(recondir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	require.Len(t, read.Batches, 1)
+	require.Len(t, read.Batches[0].GetEntries(), 1)
+	require.Equal(t, achIn.Batches[0].GetEntries()[1], read.Batches[0].GetEntries()[0])
+
+	// verify the timestamp on the file is in the past
+	fInfo, err = fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, fInfo.ModTime(), time.Now())
+}
+
+// credit & debit
+func TestFileTransformer_CorrectionOnlyAndCopyOnly(t *testing.T) {
+	resp := service.Response{
+		Match:  matchCredit,
+		Action: actionCorrection,
+	}
+	fileTransformer, dir := testFileTransformer(t, resp, respCopyDebit)
+
+	// read the file
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
+
+	// verify the "returned" file created
+	retdir := filepath.Join(dir, "returned")
+	fds, err := os.ReadDir(retdir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+	require.NoError(t, err)
+	require.Len(t, found.Batches, 1)
+	require.Len(t, found.Batches[0].GetEntries(), 1)
+	require.Equal(t, "C01", found.Batches[0].GetEntries()[0].Addenda98.ChangeCode)
+
+	// verify the timestamp on the file is in the past
+	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, fInfo.ModTime(), time.Now())
+
+	// verify the "reconciliation" file created
+	recondir := filepath.Join(dir, "reconciliation")
+	fds, err = os.ReadDir(recondir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	require.Len(t, read.Batches, 1)
+	require.Len(t, read.Batches[0].GetEntries(), 1)
+	require.Equal(t, achIn.Batches[0].GetEntries()[0], read.Batches[0].GetEntries()[0])
+
+	// verify the timestamp on the file is in the past
+	fInfo, err = fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, fInfo.ModTime(), time.Now())
+}
+
+// debit
+func TestFileTransformer_DelayReturnOnly(t *testing.T) {
+	resp := service.Response{
+		Match:  matchDebit,
+		Action: actionDelayReturn,
+	}
+	fileTransformer, dir := testFileTransformer(t, resp)
+
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021D.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
+
+	// verify the "returned" file created
+	retdir := filepath.Join(dir, "returned")
+	fds, err := os.ReadDir(retdir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+	require.NoError(t, err)
+	require.Len(t, found.Batches, 1)
+	require.Len(t, found.Batches[0].GetEntries(), 1)
+	require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
+
+	// verify the timestamp on the file is in the future
+	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Greater(t, fInfo.ModTime(), time.Now())
+
+	// verify no "reconciliation" files created
+	recondir := filepath.Join(dir, "reconciliation")
+	_, err = os.ReadDir(recondir)
+	require.Error(t, err)
+}
+
+// credit
+func TestFileTransformer_DelayCorrectionOnly(t *testing.T) {
+	resp := service.Response{
+		Match:  matchCredit,
+		Action: actionDelayCorrection,
+	}
+	fileTransformer, dir := testFileTransformer(t, resp)
+
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021C.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
+
+	// verify the "returned" file created
+	retdir := filepath.Join(dir, "returned")
+	fds, err := os.ReadDir(retdir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+	require.NoError(t, err)
+	require.Len(t, found.Batches, 1)
+	require.Len(t, found.Batches[0].GetEntries(), 1)
+	require.Equal(t, "C01", found.Batches[0].GetEntries()[0].Addenda98.ChangeCode)
+
+	// verify the timestamp on the file is in the future
+	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Greater(t, fInfo.ModTime(), time.Now())
+
+	// verify no "reconciliation" files created
+	recondir := filepath.Join(dir, "reconciliation")
+	_, err = os.ReadDir(recondir)
+	require.Error(t, err)
+}
+
+// credit & debit
+func TestFileTransformer_DelayReturnOnlyAndCopyOnly(t *testing.T) {
+	resp := service.Response{
+		Match:  matchCredit,
+		Action: actionDelayReturn,
+	}
+	fileTransformer, dir := testFileTransformer(t, resp, respCopyDebit)
+
+	// read the file
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
+
+	// verify the "returned" file created
+	retdir := filepath.Join(dir, "returned")
+	fds, err := os.ReadDir(retdir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+	require.NoError(t, err)
+	require.Len(t, found.Batches, 1)
+	require.Len(t, found.Batches[0].GetEntries(), 1)
+	require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
+
+	// verify the timestamp on the file is in the future
+	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Greater(t, fInfo.ModTime(), time.Now())
+
+	// verify the "reconciliation" file created
+	recondir := filepath.Join(dir, "reconciliation")
+	fds, err = os.ReadDir(recondir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	require.Len(t, read.Batches, 1)
+	require.Len(t, read.Batches[0].GetEntries(), 1)
+	require.Equal(t, achIn.Batches[0].GetEntries()[0], read.Batches[0].GetEntries()[0])
+
+	// verify the timestamp on the file is in the past
+	fInfo, err = fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, fInfo.ModTime(), time.Now())
+}
+
+// debit & credit
+func TestFileTransformer_DelayCorrectionOnlyAndCopyOnly(t *testing.T) {
+	resp := service.Response{
+		Match:  matchDebit,
+		Action: actionDelayCorrection,
+	}
+	fileTransformer, dir := testFileTransformer(t, resp, respCopyCredit)
+
+	// read the file
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
+
+	// verify the "returned" file created
+	retdir := filepath.Join(dir, "returned")
+	fds, err := os.ReadDir(retdir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+	require.NoError(t, err)
+	require.Len(t, found.Batches, 1)
+	require.Len(t, found.Batches[0].GetEntries(), 1)
+	require.Equal(t, "C01", found.Batches[0].GetEntries()[0].Addenda98.ChangeCode)
+
+	// verify the timestamp on the file is in the future
+	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Greater(t, fInfo.ModTime(), time.Now())
+
+	// verify the "reconciliation" file created
+	recondir := filepath.Join(dir, "reconciliation")
+	fds, err = os.ReadDir(recondir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	require.Len(t, read.Batches, 1)
+	require.Len(t, read.Batches[0].GetEntries(), 1)
+	require.Equal(t, achIn.Batches[0].GetEntries()[1], read.Batches[0].GetEntries()[0])
+
+	// verify the timestamp on the file is in the past
+	fInfo, err = fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, fInfo.ModTime(), time.Now())
+}
+
+// credit
+func TestFileTransformer_CopyAndDelayReturn(t *testing.T) {
+	resp := service.Response{
+		Match:  matchCredit,
+		Action: actionDelayReturn,
+	}
+	fileTransformer, dir := testFileTransformer(t, resp, respCopyCredit)
+
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021C.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
+
+	// verify the "returned" file created
+	retdir := filepath.Join(dir, "returned")
+	fds, err := os.ReadDir(retdir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+	require.NoError(t, err)
+	require.Len(t, found.Batches, 1)
+	require.Len(t, found.Batches[0].GetEntries(), 1)
+	require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
+
+	// verify the timestamp on the file is in the future
+	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Greater(t, fInfo.ModTime(), time.Now())
+
+	// verify the "reconciliation" file created
+	recondir := filepath.Join(dir, "reconciliation")
+	fds, err = os.ReadDir(recondir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	require.Equal(t, achIn.Batches, read.Batches)
+
+	// verify the timestamp on the file is in the past
+	fInfo, err = fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, fInfo.ModTime(), time.Now())
+}
+
+// debit
+func TestFileTransformer_CopyAndDelayCorrection(t *testing.T) {
+	resp := service.Response{
+		Match:  matchDebit,
+		Action: actionDelayCorrection,
+	}
+	fileTransformer, dir := testFileTransformer(t, resp, respCopyDebit)
+
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021D.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
+
+	// verify the "returned" file created
+	retdir := filepath.Join(dir, "returned")
+	fds, err := os.ReadDir(retdir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+	require.NoError(t, err)
+	require.Len(t, found.Batches, 1)
+	require.Len(t, found.Batches[0].GetEntries(), 1)
+	require.Equal(t, "C01", found.Batches[0].GetEntries()[0].Addenda98.ChangeCode)
+
+	// verify the timestamp on the file is in the future
+	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Greater(t, fInfo.ModTime(), time.Now())
+
+	// verify the "reconciliation" file created
+	recondir := filepath.Join(dir, "reconciliation")
+	fds, err = os.ReadDir(recondir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	require.Equal(t, achIn.Batches, read.Batches)
+
+	// verify the timestamp on the file is in the past
+	fInfo, err = fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, fInfo.ModTime(), time.Now())
+}
+
+// debit & credit
+func TestFileTransformer_CopyAndDelayReturnAndCopyOnly(t *testing.T) {
+	resp := service.Response{
+		Match:  matchDebit,
+		Action: actionDelayReturn,
+	}
+	fileTransformer, dir := testFileTransformer(t, resp, respCopyDebit, respCopyCredit)
+
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
+
+	// verify the "returned" file created
+	retdir := filepath.Join(dir, "returned")
+	fds, err := os.ReadDir(retdir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+	require.NoError(t, err)
+	require.Len(t, found.Batches, 1)
+	require.Len(t, found.Batches[0].GetEntries(), 1)
+	require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
+
+	// verify the timestamp on the file is in the future
+	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Greater(t, fInfo.ModTime(), time.Now())
+
+	// verify the "reconciliation" file created
+	recondir := filepath.Join(dir, "reconciliation")
+	fds, err = os.ReadDir(recondir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	require.Equal(t, achIn.Batches, read.Batches)
+
+	// verify the timestamp on the file is in the past
+	fInfo, err = fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, fInfo.ModTime(), time.Now())
+}
+
+// credit & debit
+func TestFileTransformer_CopyAndDelayCorrectionAndCopyOnly(t *testing.T) {
+	resp := service.Response{
+		Match:  matchCredit,
+		Action: actionDelayCorrection,
+	}
+	fileTransformer, dir := testFileTransformer(t, resp, respCopyCredit, respCopyDebit)
+
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
+
+	// verify the "returned" file created
+	retdir := filepath.Join(dir, "returned")
+	fds, err := os.ReadDir(retdir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+	require.NoError(t, err)
+	require.Len(t, found.Batches, 1)
+	require.Len(t, found.Batches[0].GetEntries(), 1)
+	require.Equal(t, "C01", found.Batches[0].GetEntries()[0].Addenda98.ChangeCode)
+
+	// verify the timestamp on the file is in the future
+	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Greater(t, fInfo.ModTime(), time.Now())
+
+	// verify the "reconciliation" file created
+	recondir := filepath.Join(dir, "reconciliation")
+	fds, err = os.ReadDir(recondir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	require.Equal(t, achIn.Batches, read.Batches)
+
+	// verify the timestamp on the file is in the past
+	fInfo, err = fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, fInfo.ModTime(), time.Now())
+}
+
+// debit & credit
+func TestFileTransformer_DelayCorrectionOnlyAndDelayReturnOnly_sameDelay(t *testing.T) {
+	resp1 := service.Response{
+		Match:  matchDebit,
+		Action: actionDelayCorrection,
+	}
+	resp2 := service.Response{
+		Match:  matchCredit,
+		Action: actionDelayReturn,
+	}
+	fileTransformer, dir := testFileTransformer(t, resp1, resp2)
+
+	// read the file
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
+
+	// verify the "returned" file created
+	retdir := filepath.Join(dir, "returned")
+	fds, err := os.ReadDir(retdir)
+	require.NoError(t, err)
+	require.Len(t, fds, 1)
+	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+	require.NoError(t, err)
+	require.Len(t, found.Batches, 2)
+	// 2 batches, but order is not guaranteed
+	var returnBatch, correctionBatch ach.Batcher
+	for i := range found.Batches {
+		if found.Batches[i].GetEntries()[0].Addenda99 != nil {
+			returnBatch = found.Batches[i]
+		} else if found.Batches[i].GetEntries()[0].Addenda98 != nil {
+			correctionBatch = found.Batches[i]
 		}
-		fileTransformer, dir := testFileTransformer(t, resp)
+	}
+	require.Len(t, returnBatch.GetEntries(), 1)
+	require.Len(t, correctionBatch.GetEntries(), 1)
+	require.Equal(t, "C01", correctionBatch.GetEntries()[0].Addenda98.ChangeCode)
+	require.Equal(t, "R03", returnBatch.GetEntries()[0].Addenda99.ReturnCode)
 
-		// read the file
-		achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "prenote.ach"))
-		require.NoError(t, err)
-		require.NotNil(t, achIn)
+	// verify the timestamp on the file is in the future
+	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Greater(t, fInfo.ModTime(), time.Now())
 
-		// transform the file
-		err = fileTransformer.Transform(achIn)
-		require.NoError(t, err)
+	// verify no "reconciliation" files created
+	recondir := filepath.Join(dir, "reconciliation")
+	_, err = os.ReadDir(recondir)
+	require.Error(t, err)
+}
 
-		// verify no "returned" files created
-		retdir := filepath.Join(dir, "returned")
-		_, err = os.ReadDir(retdir)
-		require.Error(t, err)
+// credit & debit
+func TestFileTransformer_DelayCorrectionOnlyAndDelayReturnOnly_differentDelay(t *testing.T) {
+	resp1 := service.Response{
+		Match:  matchCredit,
+		Action: actionDelayCorrection,
+	}
+	resp2 := service.Response{
+		Match: matchDebit,
+		Action: service.Action{
+			Delay: &delay2,
+			Return: &service.Return{
+				Code: "R03",
+			},
+		},
+	}
+	fileTransformer, dir := testFileTransformer(t, resp1, resp2)
 
-		// verify no "reconciliation" files created
-		recondir := filepath.Join(dir, "reconciliation")
-		_, err = os.ReadDir(recondir)
-		require.Error(t, err)
-	})
+	// read the file
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
 
-	t.Run("CopyOnly", func(t *testing.T) {
-		resp := service.Response{
-			Match:  matchEntry1,
-			Action: actionCopy,
-		}
-		fileTransformer, dir := testFileTransformer(t, resp)
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
 
-		achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20210308-1806-071000301.ach"))
-		require.NoError(t, err)
-		require.NotNil(t, achIn)
+	// verify the "returned" file created
+	retdir := filepath.Join(dir, "returned")
+	fds, err := os.ReadDir(retdir)
+	require.NoError(t, err)
+	require.Len(t, fds, 2)
+	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+	require.NoError(t, err)
+	require.Len(t, found.Batches, 1)
+	require.Len(t, found.Batches[0].GetEntries(), 1)
+	require.Equal(t, "C01", found.Batches[0].GetEntries()[0].Addenda98.ChangeCode)
+	found, err = ach.ReadFile(filepath.Join(retdir, fds[1].Name()))
+	require.NoError(t, err)
+	require.Len(t, found.Batches, 1)
+	require.Len(t, found.Batches[0].GetEntries(), 1)
+	require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
 
-		// transform the file
-		err = fileTransformer.Transform(achIn)
-		require.NoError(t, err)
+	// verify the timestamp on the file is in the future
+	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Greater(t, fInfo.ModTime(), time.Now())
+	fInfo, err = fds[1].Info()
+	require.NoError(t, err)
+	require.Greater(t, fInfo.ModTime(), time.Now())
 
-		// verify no "returned" files created
-		retdir := filepath.Join(dir, "returned")
-		_, err = os.ReadDir(retdir)
-		require.Error(t, err)
-
-		// verify the "reconciliation" file created
-		recondir := filepath.Join(dir, "reconciliation")
-		fds, err := os.ReadDir(recondir)
-		require.NoError(t, err)
-		require.Len(t, fds, 1)
-		found, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name()))
-		require.Equal(t, matchEntry1.IndividualName, strings.Trim(found.Batches[0].GetEntries()[0].IndividualName, " "))
-
-		// verify the timestamp on the file is in the past
-		fInfo, err := fds[0].Info()
-		require.NoError(t, err)
-		require.Less(t, fInfo.ModTime(), time.Now())
-	})
-
-	t.Run("ProcessOnly - Return", func(t *testing.T) {
-		resp := service.Response{
-			Match:  matchPrenote,
-			Action: actionReturn,
-		}
-		fileTransformer, dir := testFileTransformer(t, resp)
-
-		// read the file
-		achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "prenote.ach"))
-		require.NoError(t, err)
-		require.NotNil(t, achIn)
-
-		// transform the file
-		err = fileTransformer.Transform(achIn)
-		require.NoError(t, err)
-
-		// verify the "returned" file created
-		retdir := filepath.Join(dir, "returned")
-		fds, err := os.ReadDir(retdir)
-		require.NoError(t, err)
-		require.Len(t, fds, 1)
-		found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
-		require.NoError(t, err)
-		require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
-
-		// verify the timestamp on the file is in the past
-		fInfo, err := fds[0].Info()
-		require.NoError(t, err)
-		require.Less(t, fInfo.ModTime(), time.Now())
-
-		// verify no "reconciliation" files created
-		recondir := filepath.Join(dir, "reconciliation")
-		_, err = os.ReadDir(recondir)
-		require.Error(t, err)
-	})
-
-	t.Run("ProcessOnly - Correction", func(t *testing.T) {
-		resp := service.Response{
-			Match:  matchPrenote,
-			Action: actionCorrection,
-		}
-		fileTransformer, dir := testFileTransformer(t, resp)
-
-		// read the file
-		achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "prenote.ach"))
-		require.NoError(t, err)
-		require.NotNil(t, achIn)
-
-		// transform the file
-		err = fileTransformer.Transform(achIn)
-		require.NoError(t, err)
-
-		// verify the "returned" file created
-		retdir := filepath.Join(dir, "returned")
-		fds, err := os.ReadDir(retdir)
-		require.NoError(t, err)
-		require.Len(t, fds, 1)
-		found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
-		require.NoError(t, err)
-		require.Equal(t, "C01", found.Batches[0].GetEntries()[0].Addenda98.ChangeCode)
-
-		// verify the timestamp on the file is in the past
-		fInfo, err := fds[0].Info()
-		require.NoError(t, err)
-		require.Less(t, fInfo.ModTime(), time.Now())
-
-		// verify no "reconciliation" files created
-		recondir := filepath.Join(dir, "reconciliation")
-		_, err = os.ReadDir(recondir)
-		require.Error(t, err)
-	})
-
-	t.Run("DelayProcessOnly - Return", func(t *testing.T) {
-		resp := service.Response{
-			Match:  matchEntry1,
-			Action: actionDelayReturn,
-		}
-		fileTransformer, dir := testFileTransformer(t, resp)
-
-		achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20210308-1806-071000301.ach"))
-		require.NoError(t, err)
-		require.NotNil(t, achIn)
-
-		// transform the file
-		err = fileTransformer.Transform(achIn)
-		require.NoError(t, err)
-
-		// verify the "returned" file created
-		retdir := filepath.Join(dir, "returned")
-		fds, err := os.ReadDir(retdir)
-		require.NoError(t, err)
-		require.Len(t, fds, 1)
-		found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
-		require.NoError(t, err)
-		require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
-
-		// verify the timestamp on the file is in the future
-		fInfo, err := fds[0].Info()
-		require.NoError(t, err)
-		require.Greater(t, fInfo.ModTime(), time.Now())
-
-		// verify no "reconciliation" files created
-		recondir := filepath.Join(dir, "reconciliation")
-		_, err = os.ReadDir(recondir)
-		require.Error(t, err)
-	})
-
-	t.Run("DelayProcessOnly - Correction", func(t *testing.T) {
-		resp := service.Response{
-			Match:  matchEntry1,
-			Action: actionDelayCorrection,
-		}
-		fileTransformer, dir := testFileTransformer(t, resp)
-
-		achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20210308-1806-071000301.ach"))
-		require.NoError(t, err)
-		require.NotNil(t, achIn)
-
-		// transform the file
-		err = fileTransformer.Transform(achIn)
-		require.NoError(t, err)
-
-		// verify the "returned" file created
-		retdir := filepath.Join(dir, "returned")
-		fds, err := os.ReadDir(retdir)
-		require.NoError(t, err)
-		require.Len(t, fds, 1)
-		found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
-		require.NoError(t, err)
-		require.Equal(t, "C01", found.Batches[0].GetEntries()[0].Addenda98.ChangeCode)
-
-		// verify the timestamp on the file is in the future
-		fInfo, err := fds[0].Info()
-		require.NoError(t, err)
-		require.Greater(t, fInfo.ModTime(), time.Now())
-
-		// verify no "reconciliation" files created
-		recondir := filepath.Join(dir, "reconciliation")
-		_, err = os.ReadDir(recondir)
-		require.Error(t, err)
-	})
-
-	t.Run("CopyAndDelayProcess - Return", func(t *testing.T) {
-		resp1 := service.Response{
-			Match:  matchEntry1,
-			Action: actionCopy,
-		}
-		resp2 := service.Response{
-			Match:  matchEntry1,
-			Action: actionDelayReturn,
-		}
-		fileTransformer, dir := testFileTransformer(t, resp1, resp2)
-
-		achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20210308-1806-071000301.ach"))
-		require.NoError(t, err)
-		require.NotNil(t, achIn)
-
-		// transform the file
-		err = fileTransformer.Transform(achIn)
-		require.NoError(t, err)
-
-		// verify the "returned" file created
-		retdir := filepath.Join(dir, "returned")
-		fds, err := os.ReadDir(retdir)
-		require.NoError(t, err)
-		require.Len(t, fds, 1)
-		found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
-		require.NoError(t, err)
-		require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
-
-		// verify the timestamp on the file is in the future
-		fInfo, err := fds[0].Info()
-		require.NoError(t, err)
-		require.Greater(t, fInfo.ModTime(), time.Now())
-
-		// verify the "reconciliation" file created
-		recondir := filepath.Join(dir, "reconciliation")
-		fds, err = os.ReadDir(recondir)
-		require.NoError(t, err)
-		require.Len(t, fds, 1)
-		found, _ = ach.ReadFile(filepath.Join(recondir, fds[0].Name()))
-		require.Equal(t, matchEntry1.IndividualName, strings.Trim(found.Batches[0].GetEntries()[0].IndividualName, " "))
-
-		// verify the timestamp on the file is in the past
-		fInfo, err = fds[0].Info()
-		require.NoError(t, err)
-		require.Less(t, fInfo.ModTime(), time.Now())
-	})
-
-	t.Run("CopyAndDelayProcess - Correction", func(t *testing.T) {
-		resp1 := service.Response{
-			Match:  matchEntry1,
-			Action: actionCopy,
-		}
-		resp2 := service.Response{
-			Match:  matchEntry1,
-			Action: actionDelayCorrection,
-		}
-		fileTransformer, dir := testFileTransformer(t, resp1, resp2)
-
-		achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20210308-1806-071000301.ach"))
-		require.NoError(t, err)
-		require.NotNil(t, achIn)
-
-		// transform the file
-		err = fileTransformer.Transform(achIn)
-		require.NoError(t, err)
-
-		// verify the "returned" file created
-		retdir := filepath.Join(dir, "returned")
-		fds, err := os.ReadDir(retdir)
-		require.NoError(t, err)
-		require.Len(t, fds, 1)
-		found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
-		require.NoError(t, err)
-		require.Equal(t, "C01", found.Batches[0].GetEntries()[0].Addenda98.ChangeCode)
-
-		// verify the timestamp on the file is in the future
-		fInfo, err := fds[0].Info()
-		require.NoError(t, err)
-		require.Greater(t, fInfo.ModTime(), time.Now())
-
-		// verify the "reconciliation" file created
-		recondir := filepath.Join(dir, "reconciliation")
-		fds, err = os.ReadDir(recondir)
-		require.NoError(t, err)
-		require.Len(t, fds, 1)
-		found, _ = ach.ReadFile(filepath.Join(recondir, fds[0].Name()))
-		require.Equal(t, matchEntry1.IndividualName, strings.Trim(found.Batches[0].GetEntries()[0].IndividualName, " "))
-
-		// verify the timestamp on the file is in the past
-		fInfo, err = fds[0].Info()
-		require.NoError(t, err)
-		require.Less(t, fInfo.ModTime(), time.Now())
-	})
+	// verify no "reconciliation" files created
+	recondir := filepath.Join(dir, "reconciliation")
+	_, err = os.ReadDir(recondir)
+	require.Error(t, err)
 }
 
 func testFileTransformer(t *testing.T, resp ...service.Response) (*FileTransfomer, string) {
