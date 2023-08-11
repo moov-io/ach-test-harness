@@ -4,11 +4,14 @@ import (
 	"testing"
 
 	"github.com/moov-io/ach-test-harness/pkg/service"
+	"github.com/moov-io/base/log"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRepository(t *testing.T) {
-	repo := NewFTPRepository(&service.FTPConfig{
+	logger := log.NewDefaultLogger()
+
+	repo := NewFTPRepository(logger, &service.FTPConfig{
 		RootPath: "./testdata",
 		Paths: service.Paths{
 			Files:  "/outbound/",
@@ -34,6 +37,16 @@ func TestRepository(t *testing.T) {
 	// outbound/1.ach was created on 1908161059 and has 2 entries
 	entries, err = repo.Search(SearchOptions{
 		CreatedAfter: "2019-08-16T10:56:00+00:00",
+	})
+
+	// expect to get entries from outbound/1.ach
+	require.NoError(t, err)
+	require.Len(t, entries, 2)
+
+	// search by subdirectory in our files:
+	// outbound/1.ach was created on 1908161059 and has 2 entries
+	entries, err = repo.Search(SearchOptions{
+		Path: "outbound",
 	})
 
 	// expect to get entries from outbound/1.ach

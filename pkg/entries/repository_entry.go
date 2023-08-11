@@ -9,6 +9,7 @@ import (
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/response/match"
 	"github.com/moov-io/ach-test-harness/pkg/service"
+	"github.com/moov-io/base/log"
 )
 
 type EntryRepository interface {
@@ -16,11 +17,13 @@ type EntryRepository interface {
 }
 
 type ftpRepository struct {
+	logger   log.Logger
 	rootPath string
 }
 
-func NewFTPRepository(cfg *service.FTPConfig) *ftpRepository {
+func NewFTPRepository(logger log.Logger, cfg *service.FTPConfig) *ftpRepository {
 	return &ftpRepository{
+		logger:   logger,
 		rootPath: cfg.RootPath,
 	}
 }
@@ -38,6 +41,7 @@ func (r *ftpRepository) Search(opts SearchOptions) ([]*ach.EntryDetail, error) {
 			return nil
 		}
 
+		r.logger.Logf("reading %s", path)
 		// read only *.ach files
 		if strings.ToLower(filepath.Ext(path)) != ".ach" {
 			return nil
@@ -51,8 +55,14 @@ func (r *ftpRepository) Search(opts SearchOptions) ([]*ach.EntryDetail, error) {
 		return nil
 	}
 
-	if err := filepath.WalkDir(r.rootPath, search); err != nil {
-		return nil, fmt.Errorf("failed reading directory content %s: %v", r.rootPath, err)
+	var walkingPath = r.rootPath
+	if opts.Path != "" {
+		walkingPath = filepath.Join(r.rootPath, opts.Path)
+	}
+
+	r.logger.Logf("Waling directory %s", walkingPath)
+	if err := filepath.WalkDir(walkingPath, search); err != nil {
+		return nil, fmt.Errorf("failed reading directory content %s: %v", walkingPath, err)
 	}
 
 	return out, nil

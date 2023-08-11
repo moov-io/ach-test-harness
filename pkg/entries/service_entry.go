@@ -28,6 +28,7 @@ type SearchOptions struct {
 	RoutingNumber string
 	TraceNumber   string
 	CreatedAfter  string
+	Path          string
 }
 
 func (opts SearchOptions) fileTooOld(file *ach.File) (bool, error) {
