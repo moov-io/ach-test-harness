@@ -113,7 +113,13 @@ func createResponsePaths(errs chan<- error, logger log.Logger, fact ftp.DriverFa
 }
 
 func bootAdminServer(errs chan<- error, logger log.Logger, config HTTPConfig) *admin.Server {
-	adminServer := admin.NewServer(config.Bind.Address)
+	adminServer, err := admin.New(admin.Opts{
+		Addr: config.Bind.Address,
+	})
+	if err != nil {
+		errs <- logger.Fatal().LogErrorf("problem creating admin server: %v", err).Err()
+		return nil
+	}
 
 	go func() {
 		logger.Info().Log(fmt.Sprintf("listening on %s", adminServer.BindAddr()))
