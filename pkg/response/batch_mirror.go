@@ -3,12 +3,11 @@ package response
 import (
 	"bytes"
 	"fmt"
+	"github.com/moov-io/ach"
+	"github.com/moov-io/ach-test-harness/pkg/service"
 	"path/filepath"
 	"sort"
 	"time"
-
-	"github.com/moov-io/ach"
-	"github.com/moov-io/ach-test-harness/pkg/service"
 )
 
 // batchMirror is an object that will save batches
