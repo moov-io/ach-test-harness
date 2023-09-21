@@ -2,9 +2,9 @@ package response
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"time"
 
 	"github.com/moov-io/ach"
@@ -13,51 +13,105 @@ import (
 
 // batchMirror is an object that will save batches
 type batchMirror struct {
-	header  *ach.BatchHeader
-	entries map[string][]*ach.EntryDetail // filepath -> entries
-	control *ach.BatchControl
+	batches map[batchMirrorKey]map[string]*batchMirrorBatch // path+companyID -> (batch ID -> header+entries+control)
 
 	writer FileWriter
 }
 
-func newBatchMirror(w FileWriter, b ach.Batcher) *batchMirror {
+type batchMirrorKey struct {
+	path      string
+	companyID string
+}
+
+func (key *batchMirrorKey) getFilePathName() string {
+	timestamp := time.Now().Format("20060102-150405.00000")
+	filename := fmt.Sprintf("%s_%s.ach", key.companyID, timestamp)
+	return filepath.Join(key.path, filename)
+}
+
+type batchMirrorBatch struct {
+	header  *ach.BatchHeader
+	entries []*ach.EntryDetail
+	control *ach.BatchControl
+}
+
+func (batch *batchMirrorBatch) write(buf *bytes.Buffer) error {
+	buf.WriteString(batch.header.String() + "\n")
+	for _, entry := range batch.entries {
+		buf.WriteString(entry.String() + "\n")
+	}
+	control, err := calculateControl(batch.header, batch.entries)
+	if err != nil {
+		return fmt.Errorf("problem computing control: %v", err)
+	}
+	buf.WriteString(control + "\n")
+
+	return nil
+}
+
+func newBatchMirror(w FileWriter) *batchMirror {
 	return &batchMirror{
-		header:  b.GetHeader(),
-		entries: make(map[string][]*ach.EntryDetail),
-		control: b.GetControl(),
+		batches: make(map[batchMirrorKey]map[string]*batchMirrorBatch),
 		writer:  w,
 	}
 }
 
-func (bm *batchMirror) saveEntry(copy *service.Copy, ed *ach.EntryDetail) {
-	if copy == nil {
+func (bm *batchMirror) saveEntry(b *ach.Batcher, copy *service.Copy, ed *ach.EntryDetail) {
+	if b == nil || copy == nil || ed == nil {
 		return
 	}
-	bm.entries[copy.Path] = append(bm.entries[copy.Path], ed)
+
+	batcher := *b
+	// Get the batchMirrorKey
+	key := batchMirrorKey{
+		path:      copy.Path,
+		companyID: batcher.GetHeader().CompanyIdentification,
+	}
+	// Create a new batchMirrorBatch map if this key does not exist
+	if _, exists := bm.batches[key]; !exists {
+		bm.batches[key] = make(map[string]*batchMirrorBatch)
+	}
+	// Create an array of batchMirrorBatch if this batch ID does not exist
+	if _, exists := bm.batches[key][batcher.GetHeader().BatchNumberField()]; !exists {
+		bm.batches[key][batcher.GetHeader().BatchNumberField()] = &batchMirrorBatch{
+			header:  batcher.GetHeader(),
+			entries: make([]*ach.EntryDetail, 0),
+			control: batcher.GetControl(),
+		}
+	}
+	// Append this EntryDetail to the batchMirrorBatch's EntryDetails slice for the derived key
+	bm.batches[key][batcher.GetHeader().BatchNumberField()].entries = append(bm.batches[key][batcher.GetHeader().BatchNumberField()].entries, ed)
 }
 
 func (bm *batchMirror) saveFiles() error {
-	if bm.header == nil || len(bm.entries) == 0 {
+	if len(bm.batches) == 0 {
 		return nil
 	}
-	for path, entries := range bm.entries {
-		// Accumulate file contents
+
+	// Write files by Path/CompanyID
+	for key, mirror := range bm.batches {
 		var buf bytes.Buffer
-		buf.WriteString(bm.header.String() + "\n")
-		for i := range entries {
-			buf.WriteString(entries[i].String() + "\n")
+
+		// sort the keys so that the batches appear in the correct order
+		keys := make([]string, 0, len(mirror))
+		for number, _ := range mirror {
+			keys = append(keys, number)
 		}
-		control, err := calculateControl(bm.header, entries)
-		if err != nil {
-			return fmt.Errorf("problem computing control: %v", err)
+		sort.Slice(keys, func(i, j int) bool {
+			return keys[i] < keys[j]
+		})
+
+		for _, val := range keys {
+			batch := mirror[val]
+			if err := batch.write(&buf); err != nil {
+				return err
+			}
 		}
-		buf.WriteString(control)
 
 		// Write the file out
-		if filename, err := bm.filename(); err != nil {
-			return fmt.Errorf("unable to get filename: %v", err)
-		} else {
-			bm.writer.Write(filepath.Join(path, filename), &buf, nil)
+		err := bm.writer.Write(key.getFilePathName(), &buf, nil)
+		if err != nil {
+			return fmt.Errorf("problem writing file: %v", err)
 		}
 	}
 	return nil
@@ -72,12 +126,4 @@ func calculateControl(bh *ach.BatchHeader, entries []*ach.EntryDetail) (string, 
 		return "", fmt.Errorf("error creating batch: %v", err)
 	}
 	return batch.GetControl().String(), nil
-}
-
-func (bm *batchMirror) filename() (string, error) {
-	if bm.header == nil {
-		return "", errors.New("missing BatchHeader")
-	}
-	timestamp := time.Now().Format("20060102-150405.00000")
-	return fmt.Sprintf("%s_%s.ach", bm.header.CompanyIdentification, timestamp), nil
 }

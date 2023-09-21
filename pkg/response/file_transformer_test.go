@@ -3,6 +3,7 @@ package response
 import (
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
 	"time"
 
@@ -137,7 +138,7 @@ func TestFileTransformer_CopyOnly(t *testing.T) {
 }
 
 // debit & credit
-func TestFileTransformer_CopyOnlyAndCopyOnly(t *testing.T) {
+func TestFileTransformer_CopyOnlyAndCopyOnly_SingleBatch(t *testing.T) {
 	fileTransformer, dir := testFileTransformer(t, respCopyDebit, respCopyCredit)
 
 	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021.ach"))
@@ -163,6 +164,54 @@ func TestFileTransformer_CopyOnlyAndCopyOnly(t *testing.T) {
 
 	// verify the timestamp on the file is in the past
 	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, fInfo.ModTime(), time.Now())
+}
+
+// debit & credit
+func TestFileTransformer_CopyOnlyAndCopyOnly_MultipleBatches(t *testing.T) {
+	fileTransformer, dir := testFileTransformer(t, respCopyDebit, respCopyCredit)
+
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021-2Batches.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+	require.Len(t, achIn.Batches, 3)
+
+	// transform the file
+	err = fileTransformer.Transform(achIn)
+	require.NoError(t, err)
+
+	// verify no "returned" files created
+	retdir := filepath.Join(dir, "returned")
+	_, err = os.ReadDir(retdir)
+	require.Error(t, err)
+
+	// verify the "reconciliation" file created
+	recondir := filepath.Join(dir, "reconciliation")
+	fds, err := os.ReadDir(recondir)
+	require.NoError(t, err)
+	require.Len(t, fds, 2)
+	// sort the files by name, so we can reliably compare them
+	sort.Slice(fds, func(i, j int) bool {
+		return fds[i].Name() < fds[j].Name()
+	})
+
+	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	require.Len(t, read.Batches, 2)
+	require.Equal(t, achIn.Batches[0], read.Batches[0])
+	require.Equal(t, achIn.Batches[1], read.Batches[1])
+
+	// verify the timestamp on the file is in the past
+	fInfo, err := fds[0].Info()
+	require.NoError(t, err)
+	require.Less(t, fInfo.ModTime(), time.Now())
+
+	read, _ = ach.ReadFile(filepath.Join(recondir, fds[1].Name())) // ignore the error b/c this file has no header or control record
+	require.Len(t, read.Batches, 1)
+	require.Equal(t, achIn.Batches[2], read.Batches[0])
+
+	// verify the timestamp on the file is in the past
+	fInfo, err = fds[1].Info()
 	require.NoError(t, err)
 	require.Less(t, fInfo.ModTime(), time.Now())
 }
