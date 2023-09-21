@@ -94,7 +94,7 @@ func (bm *batchMirror) saveFiles() error {
 
 		// sort the keys so that the batches appear in the correct order
 		keys := make([]string, 0, len(mirror))
-		for number, _ := range mirror {
+		for number := range mirror {
 			keys = append(keys, number)
 		}
 		sort.Slice(keys, func(i, j int) bool {
