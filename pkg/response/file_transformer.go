@@ -41,9 +41,10 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 	// Track ach.File objects to write based on different delay durations, including a default of "0s"
 	var outFiles = outFiles{}
 
+	// batchMirror is used for copying entires to the reconciliation file (if needed)
+	mirror := newBatchMirror(ft.Writer)
+
 	for i := range file.Batches {
-		// batchMirror is used for copying entires to the reconciliation file (if needed)
-		mirror := newBatchMirror(ft.Writer, file.Batches[i])
 
 		// Track ach.Batcher to write based on different delay durations and whether the batch is for NOC
 		var outBatches = outBatches{}
@@ -57,7 +58,7 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 				logger.Log("Processing matched action")
 
 				// Save this Entry
-				mirror.saveEntry(copyAction.Copy, entries[j])
+				mirror.saveEntry(&file.Batches[i], copyAction.Copy, entries[j])
 			}
 			if processAction != nil {
 				logger := ft.Matcher.Logger.With(processAction)
@@ -89,11 +90,6 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 			}
 		}
 
-		// Save off the entries as requested
-		if err := mirror.saveFiles(); err != nil {
-			return fmt.Errorf("problem saving entries: %v", err)
-		}
-
 		// Create our Batch's Control and other fields
 		for delay, batchesByCategory := range outBatches {
 			for _, batch := range batchesByCategory {
@@ -109,6 +105,11 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 				}
 			}
 		}
+	}
+
+	// Save off the entries as requested
+	if err := mirror.saveFiles(); err != nil {
+		return fmt.Errorf("problem saving entries: %v", err)
 	}
 
 	for delay, out := range outFiles {
