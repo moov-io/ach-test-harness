@@ -1,3 +1,15 @@
+## v0.8.3 (Released 2023-09-22)
+
+IMPROVEMENTS
+
+- feat: generate multiple batches in one reconciliation file
+
+BUILD
+
+- fix(deps): update module github.com/moov-io/ach to v1.32.2
+- fix(deps): update module github.com/moov-io/base to v0.46.0
+- fix(deps): update go version to v1.21.0
+
 ## v0.8.2 (Released 2023-08-11)
 
 IMPROVEMENTS
