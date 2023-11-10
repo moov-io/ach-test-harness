@@ -2,7 +2,7 @@
 
 module github.com/moov-io/ach-test-harness
 
-go 1.20.1
+go 1.21.4
 
 require (
 	github.com/evanphx/json-patch v4.11.0+incompatible
