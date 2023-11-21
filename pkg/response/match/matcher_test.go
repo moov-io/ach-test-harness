@@ -138,6 +138,20 @@ func TestMatchEntryType(t *testing.T) {
 
 		require.Equal(t, tc.want, matchedEntryType(m, ed))
 	}
+
+	t.Run("exact value", func(t *testing.T) {
+		m := service.Match{
+			EntryType: "",
+		}
+		ed := ach.NewEntryDetail()
+		ed.TransactionCode = ach.CheckingCredit
+
+		require.False(t, matchedEntryType(m, ed))
+
+		// Make them match
+		m.EntryType = "22"
+		require.True(t, matchedEntryType(m, ed))
+	})
 }
 
 func TestMatchIndividualName(t *testing.T) {

@@ -108,8 +108,8 @@ match:
   individualName: <string> # Compare the IndividualName on EntryDetail records
   routingNumber: <string>  # Exact match of ABA routing number (RDFIIdentification and CheckDigit)
   traceNumber: <string>    # Exact match of TraceNumber
-  entryType: <string>      # Checks TransactionCode. Accepted values: credit, debit or prenote.
-# Matching will find at most two Actions in the config file order. One Copy Action and one Return/Correction Action. 
+  entryType: <string>      # Checks TransactionCode. Accepted values: credit, debit or prenote. Also can be Nacha value (e.g. 27, 32)
+# Matching will find at most two Actions in the config file order. One Copy Action and one Return/Correction Action.
 # Both actions will be executed if the Return/Correction Action has a delay.
 # Valid combinations include:
 #  1. Copy

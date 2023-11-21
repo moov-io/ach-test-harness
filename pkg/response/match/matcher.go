@@ -1,6 +1,7 @@
 package match
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/moov-io/ach"
@@ -204,7 +205,10 @@ func matchedEntryType(m service.Match, ed *ach.EntryDetail) bool {
 	case m.EntryType == service.EntryTypePrenote && matchedPrenote(m, ed):
 		return true
 	default:
-		return false
+		exists := m.EntryType != ""
+		matches := string(m.EntryType) == fmt.Sprintf("%d", ed.TransactionCode)
+
+		return exists && matches
 	}
 }
 
