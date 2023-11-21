@@ -1,4 +1,16 @@
-## v0.8.3 (Released 2023-09-22)
+## v0.9.0 (Released 2023-11-21)
+
+IMPROVEMENTS
+
+- response: compare entryType directly against TransactionCode as well
+
+BUILD
+
+- chore(deps): update dependency go to v1.21.4
+- fix(deps): update module github.com/gorilla/mux to v1.8.1
+- fix(deps): update module github.com/moov-io/ach to v1.33.3
+- fix(deps): update module github.com/moov-io/base to v0.48.2
+
 ## v0.8.3.1 (Released 2023-09-22)
 
 IMPROVEMENTS
