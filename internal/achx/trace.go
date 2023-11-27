@@ -12,7 +12,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/moov-io/ach"
-	"github.com/pkg/errors"
 )
 
 // TraceNumber returns a trace number from a given routing number
@@ -25,7 +24,7 @@ import (
 func TraceNumber(routingNumber string) (string, error) {
 	n, err := rand.Int(rand.Reader, big.NewInt(1e15))
 	if err != nil {
-		return "", errors.Wrap(err, "ERROR creating trace number")
+		return "", fmt.Errorf("ERROR creating trace number: %w", err)
 	}
 	v := fmt.Sprintf("%s%s", ABA8(routingNumber), n.String())
 	if utf8.RuneCountInString(v) > 15 {
