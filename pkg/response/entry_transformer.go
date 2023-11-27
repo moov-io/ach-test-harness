@@ -68,7 +68,7 @@ func (t *CorrectionTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetai
 	addenda98 := ach.NewAddenda98()
 	addenda98.ChangeCode = action.Correction.Code
 	addenda98.OriginalTrace = ed.TraceNumber
-	addenda98.OriginalDFI = fh.ImmediateDestination
+	addenda98.OriginalDFI = achx.ABA8(ed.RDFIIdentificationField())
 	addenda98.CorrectedData = generateCorrectedData(action.Correction)
 	addenda98.TraceNumber = out.TraceNumber
 
@@ -132,7 +132,7 @@ func (t *ReturnTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, a
 	addenda99 := ach.NewAddenda99()
 	addenda99.ReturnCode = action.Return.Code
 	addenda99.OriginalTrace = ed.TraceNumber
-	addenda99.OriginalDFI = fh.ImmediateDestination
+	addenda99.OriginalDFI = achx.ABA8(ed.RDFIIdentificationField())
 	addenda99.TraceNumber = out.TraceNumber
 
 	if err := addenda99.Validate(); err != nil {
