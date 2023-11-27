@@ -56,8 +56,13 @@ func (t *CorrectionTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetai
 	out.IndividualName = ed.IndividualName
 	out.DiscretionaryData = ed.DiscretionaryData
 	out.AddendaRecordIndicator = 1
-	out.TraceNumber = achx.TraceNumber(fh.ImmediateDestination)
 	out.Category = ach.CategoryNOC
+
+	if trace, err := achx.TraceNumber(ed.RDFIIdentificationField()); err != nil {
+		return out, fmt.Errorf("generating trace number: %w", err)
+	} else {
+		out.TraceNumber = trace
+	}
 
 	// Create the NOC addenda
 	addenda98 := ach.NewAddenda98()
@@ -115,8 +120,13 @@ func (t *ReturnTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, a
 	out.IndividualName = ed.IndividualName
 	out.DiscretionaryData = ed.DiscretionaryData
 	out.AddendaRecordIndicator = 1
-	out.TraceNumber = achx.TraceNumber(fh.ImmediateDestination)
 	out.Category = ach.CategoryReturn
+
+	if trace, err := achx.TraceNumber(ed.RDFIIdentificationField()); err != nil {
+		return out, fmt.Errorf("generating trace number: %w", err)
+	} else {
+		out.TraceNumber = trace
+	}
 
 	// Create the Return addenda
 	addenda99 := ach.NewAddenda99()
