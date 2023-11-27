@@ -58,7 +58,7 @@ func (t *CorrectionTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetai
 	out.AddendaRecordIndicator = 1
 	out.Category = ach.CategoryNOC
 
-	if trace, err := achx.TraceNumber(ed.RDFIIdentificationField()); err != nil {
+	if trace, err := achx.TraceNumber(fh.ImmediateDestination); err != nil {
 		return out, fmt.Errorf("generating trace number: %w", err)
 	} else {
 		out.TraceNumber = trace
@@ -122,7 +122,7 @@ func (t *ReturnTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, a
 	out.AddendaRecordIndicator = 1
 	out.Category = ach.CategoryReturn
 
-	if trace, err := achx.TraceNumber(ed.RDFIIdentificationField()); err != nil {
+	if trace, err := achx.TraceNumber(fh.ImmediateDestination); err != nil {
 		return out, fmt.Errorf("generating trace number: %w", err)
 	} else {
 		out.TraceNumber = trace
