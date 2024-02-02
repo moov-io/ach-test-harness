@@ -39,6 +39,10 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, pr
 		logger.Log("starting EntryDetail matching")
 
 		positive, negative := 0, 0 // Matchers are AND'd together
+
+		positiveMatchers := []string{}
+		negativeMatchers := []string{}
+
 		matcher := m.Responses[i].Match
 		action := m.Responses[i].Action
 
@@ -60,20 +64,22 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, pr
 				"individual_name":      log.String(matcher.IndividualName),
 				"routing_number":       log.String(matcher.RoutingNumber),
 				"matcher_trace_number": log.String(matcher.TraceNumber),
+				"ed.account_number":    log.String(ed.DFIAccountNumber),
+				"ed.entry_type":        log.String(fmt.Sprintf("%d", ed.TransactionCode)),
+				"ed.individual_name":   log.String(ed.IndividualName),
+				"ed.routing_number":    log.String(ed.RDFIIdentification + ed.CheckDigit),
+				"ed.trace_number":      log.String(ed.TraceNumber),
+				"ed.amount":            log.String(fmt.Sprintf("%d", ed.Amount)),
 			})
 		}
 
 		// Trace Number
 		if matcher.TraceNumber != "" {
 			if TraceNumber(matcher, ed) {
-				if m.Debug {
-					logger.Log("TraceNumber positive match")
-				}
+				positiveMatchers = append(positiveMatchers, "TraceNumber")
 				positive++
 			} else {
-				if m.Debug {
-					logger.Log("TraceNumber negative match")
-				}
+				negativeMatchers = append(negativeMatchers, "TraceNumber")
 				negative++
 			}
 		}
@@ -81,14 +87,10 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, pr
 		// Account Number
 		if matcher.AccountNumber != "" {
 			if AccountNumber(matcher, ed) {
-				if m.Debug {
-					logger.Log("DFIAccountNumber positive match")
-				}
+				positiveMatchers = append(positiveMatchers, "DFIAccountNumber")
 				positive++
 			} else {
-				if m.Debug {
-					logger.Log("DFIAccountNumber negative match")
-				}
+				negativeMatchers = append(negativeMatchers, "DFIAccountNumber")
 				negative++
 			}
 		}
@@ -96,14 +98,10 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, pr
 		// Routing Number
 		if matcher.RoutingNumber != "" {
 			if RoutingNumber(matcher, ed) {
-				if m.Debug {
-					logger.Log("RDFIIdentification positive match")
-				}
+				positiveMatchers = append(positiveMatchers, "RDFIIdentification")
 				positive++
 			} else {
-				if m.Debug {
-					logger.Log("RDFIIdentification negative match")
-				}
+				negativeMatchers = append(negativeMatchers, "RDFIIdentification")
 				negative++
 			}
 		}
@@ -111,14 +109,10 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, pr
 		// Check if the Amount matches
 		if matcher.Amount != nil {
 			if Amount(matcher, ed) {
-				if m.Debug {
-					logger.Log("Amount positive match")
-				}
+				positiveMatchers = append(positiveMatchers, "Amount")
 				positive++
 			} else {
-				if m.Debug {
-					logger.Log("Amount negative match")
-				}
+				negativeMatchers = append(negativeMatchers, "Amount")
 				negative++
 			}
 		}
@@ -126,34 +120,30 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, pr
 		// Check if this Entry is a debit
 		if matcher.EntryType != service.EntryTypeEmpty {
 			if matchedEntryType(matcher, ed) {
-				if m.Debug {
-					logger.Log("TransactionCode type positive match")
-				}
+				positiveMatchers = append(positiveMatchers, "TransactionCode")
 				positive++
 			} else {
-				if m.Debug {
-					logger.Log("TransactionCode type negative match")
-				}
+				negativeMatchers = append(negativeMatchers, "TransactionCode")
 				negative++
 			}
 		}
 
 		if matcher.IndividualName != "" {
 			if matchedIndividualName(matcher, ed) {
-				if m.Debug {
-					logger.Log("IndividualName positive match")
-				}
+				positiveMatchers = append(positiveMatchers, "IndividualName")
 				positive++
 			} else {
-				if m.Debug {
-					logger.Log("IndividualName negative match")
-				}
+				negativeMatchers = append(negativeMatchers, "IndividualName")
 				negative++
 			}
 		}
 
 		// Return the Action if we've still matched
-		logger.Logf("FINAL matching score negative=%d positive=%d", negative, positive)
+		logger.Logf(
+			"FINAL matching score negative=%d (%s) positive=%d (%s)",
+			negative, strings.Join(negativeMatchers, ", "),
+			positive, strings.Join(positiveMatchers, ", "),
+		)
 
 		if negative == 0 && positive > 0 {
 			// Action is valid, figure out where it belongs
