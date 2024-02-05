@@ -58,18 +58,18 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, pr
 
 		if m.Debug {
 			logger = logger.With(log.Fields{
-				"response_idx":         log.Int(i),
-				"account_number":       log.String(matcher.AccountNumber),
-				"entry_type":           log.String(string(matcher.EntryType)),
-				"individual_name":      log.String(matcher.IndividualName),
-				"routing_number":       log.String(matcher.RoutingNumber),
-				"matcher_trace_number": log.String(matcher.TraceNumber),
-				"ed.account_number":    log.String(ed.DFIAccountNumber),
-				"ed.entry_type":        log.String(fmt.Sprintf("%d", ed.TransactionCode)),
-				"ed.individual_name":   log.String(ed.IndividualName),
-				"ed.routing_number":    log.String(ed.RDFIIdentification + ed.CheckDigit),
-				"ed.trace_number":      log.String(ed.TraceNumber),
-				"ed.amount":            log.String(fmt.Sprintf("%d", ed.Amount)),
+				"matcher.response_idx":    log.Int(i),
+				"matcher.account_number":  log.String(matcher.AccountNumber),
+				"matcher.entry_type":      log.String(string(matcher.EntryType)),
+				"matcher.individual_name": log.String(matcher.IndividualName),
+				"matcher.routing_number":  log.String(matcher.RoutingNumber),
+				"matcher.trace_number":    log.String(matcher.TraceNumber),
+				"ed.account_number":       log.String(ed.DFIAccountNumber),
+				"ed.entry_type":           log.String(fmt.Sprintf("%d", ed.TransactionCode)),
+				"ed.individual_name":      log.String(ed.IndividualName),
+				"ed.routing_number":       log.String(ed.RDFIIdentification + ed.CheckDigit),
+				"ed.trace_number":         log.String(ed.TraceNumber),
+				"ed.amount":               log.String(fmt.Sprintf("%d", ed.Amount)),
 			})
 		}
 
@@ -138,13 +138,22 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, pr
 			}
 		}
 
-		// Return the Action if we've still matched
-		logger.Logf(
-			"FINAL matching score negative=%d (%s) positive=%d (%s)",
-			negative, strings.Join(negativeMatchers, ", "),
-			positive, strings.Join(positiveMatchers, ", "),
-		)
+		// format the list of negative and positive matchers for logging
+		var b strings.Builder
 
+		b.WriteString(fmt.Sprintf("FINAL matching score negative=%d", negative))
+		if len(negativeMatchers) > 0 {
+			b.WriteString(fmt.Sprintf(" (%s)", strings.Join(negativeMatchers, ", ")))
+		}
+
+		b.WriteString(fmt.Sprintf(" positive=%d", positive))
+		if len(positiveMatchers) > 0 {
+			b.WriteString(fmt.Sprintf(" (%s)", strings.Join(positiveMatchers, ", ")))
+		}
+
+		logger.Log(b.String())
+
+		// Return the Action if we've still matched
 		if negative == 0 && positive > 0 {
 			// Action is valid, figure out where it belongs
 			if m.Responses[i].Action.Copy != nil {

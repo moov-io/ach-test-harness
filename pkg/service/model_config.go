@@ -116,7 +116,7 @@ func (m Match) Context() map[string]log.Valuer {
 
 	if m.Amount != nil {
 		var amount = m.Amount.Value
-		logFields["amount"] = log.Int(amount)
+		logFields["matcher.amount"] = log.Int(amount)
 	}
 
 	return logFields
