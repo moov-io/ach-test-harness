@@ -1,4 +1,18 @@
+## v0.10.0 (Released 2024-02-08)
+
+IMPROVEMENTS
+
+- fix: cleanup matching logs, one log per entry
+
+BUILD
+
+- fix(deps): update module github.com/moov-io/ach to v1.34.2
+- fix(deps): update module github.com/moov-io/base to v0.48.5
+- test: run on macos 13.x (Intel) and 14.x (M1/ARM)
+- chore(deps): update golang docker tag to v1.22
+
 ## v0.9.1 (Released 2023-11-27)
+
 IMPROVEMENTS
 
 - achx: fix ABA8 panic, generate correction/return trace numbers from RDFIIdentification
