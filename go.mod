@@ -8,7 +8,7 @@ require (
 	github.com/evanphx/json-patch v4.11.0+incompatible
 	github.com/gorilla/mux v1.8.1
 	github.com/markbates/pkger v0.17.1
-	github.com/moov-io/ach v1.34.0
+	github.com/moov-io/ach v1.34.2
 	github.com/moov-io/base v0.48.5
 	github.com/stretchr/testify v1.8.4
 	goftp.io/server v0.4.1
