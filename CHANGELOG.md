@@ -1,3 +1,9 @@
+## v0.10.1 (Released 2024-02-12)
+
+BUILD
+
+- build: fix issue when releasing on ARM macos
+
 ## v0.10.0 (Released 2024-02-08)
 
 IMPROVEMENTS
