@@ -2,6 +2,10 @@
 # generated-from:9b190835b2d77961188fa78aaa24d9c1730f764e3db70f91a664febb2e938681 DO NOT REMOVE, DO UPDATE
 
 PLATFORM=$(shell uname -s | tr '[:upper:]' '[:lower:]')
+ARCH=$(shell uname -m)
+ifeq ($(ARCH),x86_64)
+	ARCH=amd64
+endif
 PWD := $(shell pwd)
 
 ifndef VERSION
@@ -97,7 +101,7 @@ AUTHORS:
 
 dist: clean build
 ifeq ($(OS),Windows_NT)
-	CGO_ENABLED=1 GOOS=windows go build -o bin/ach-test-harness.exe cmd/ach-test-harness/*
+	CGO_ENABLED=1 GOOS=windows go build -mod=vendor -ldflags "-X github.com/moov-io/ach-test-harness.Version=${VERSION}" -o bin/ach-test-harness.exe cmd/ach-test-harness/*
 else
-	CGO_ENABLED=1 GOOS=$(PLATFORM) go build -o bin/ach-test-harness-$(PLATFORM)-amd64 cmd/ach-test-harness/*
+	CGO_ENABLED=1 GOOS=$(PLATFORM) go build -mod=vendor -ldflags "-X github.com/moov-io/ach-test-harness.Version=${VERSION}" -o bin/ach-test-harness-$(PLATFORM)-$(ARCH) cmd/ach-test-harness/*
 endif
