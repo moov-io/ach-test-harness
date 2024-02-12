@@ -105,7 +105,7 @@ jobs:
         asset_content_type: application/octet-stream
 
     - name: Upload macOS Intel Binary
-      if: runner.os == 'macOS' && runner.arch == 'X86'
+      if: runner.os == 'macOS' && !contains(runner.arch, 'ARM')
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
