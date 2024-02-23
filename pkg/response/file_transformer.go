@@ -70,7 +70,7 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 				}
 
 				// Get the appropriate ach.Batch object to update
-				batch, err := outBatches.getOutBatch(processAction.Delay, entry.Category, *file.Batches[i].GetHeader(), i)
+				batch, err := outBatches.getOutBatch(processAction.Delay, entry.Category, file.Header, *file.Batches[i].GetHeader(), i)
 				if err != nil {
 					return err
 				}
@@ -159,7 +159,7 @@ func (outFiles outFiles) getOutFile(delay *time.Duration, file *ach.File, opts *
 
 type outBatches map[*time.Duration]map[bool]*ach.Batcher
 
-func (outBatches outBatches) getOutBatch(delay *time.Duration, category string, bh ach.BatchHeader, i int) (*ach.Batcher, error) {
+func (outBatches outBatches) getOutBatch(delay *time.Duration, category string, fh ach.FileHeader, bh ach.BatchHeader, i int) (*ach.Batcher, error) {
 	var batchesByCategory = outBatches[delay]
 	if batchesByCategory == nil {
 		batchesByCategory = make(map[bool]*ach.Batcher)
@@ -172,6 +172,10 @@ func (outBatches outBatches) getOutBatch(delay *time.Duration, category string, 
 		if category == ach.CategoryNOC {
 			bh.StandardEntryClassCode = ach.COR
 		}
+
+		// We need to flip the Origin / Destination values when setting up the out batch
+		bh.ODFIIdentification = fh.ImmediateDestination
+
 		batch, err := ach.NewBatch(&bh)
 		if err != nil {
 			return nil, fmt.Errorf("transform batch[%d] problem creating Batch: %v", i, err)

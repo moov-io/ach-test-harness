@@ -4,10 +4,12 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/moov-io/ach"
+	"github.com/moov-io/ach-test-harness/internal/achx"
 	"github.com/moov-io/ach-test-harness/pkg/service"
 	"github.com/moov-io/base/log"
 
@@ -162,6 +164,10 @@ func TestFileTransformer_CopyOnlyAndCopyOnly_SingleBatch(t *testing.T) {
 	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
 	require.Equal(t, achIn.Batches, read.Batches)
 
+	trace1 := achIn.Batches[0].GetEntries()[0].TraceNumber
+	trace2 := read.Batches[0].GetEntries()[0].TraceNumber
+	require.Equal(t, trace1, trace2)
+
 	// verify the timestamp on the file is in the past
 	fInfo, err := fds[0].Info()
 	require.NoError(t, err)
@@ -251,6 +257,8 @@ func TestFileTransformer_ReturnOnly(t *testing.T) {
 	require.Equal(t, "R03", entries[0].Addenda99.ReturnCode)
 	require.Equal(t, "22147578", entries[0].Addenda99.OriginalDFI)
 
+	hasPrefix(t, entries[0].TraceNumber, achx.ABA8(achIn.Header.ImmediateDestination))
+
 	// verify the timestamp on the file is in the past
 	fInfo, err := fds[0].Info()
 	require.NoError(t, err)
@@ -297,6 +305,8 @@ func TestFileTransformer_CorrectionOnly(t *testing.T) {
 	require.Equal(t, "C01", entries[0].Addenda98.ChangeCode)
 	require.Equal(t, "10200002", entries[0].Addenda98.OriginalDFI)
 
+	hasPrefix(t, entries[0].TraceNumber, achx.ABA8(achIn.Header.ImmediateDestination))
+
 	// verify the timestamp on the file is in the past
 	fInfo, err := fds[0].Info()
 	require.NoError(t, err)
@@ -333,8 +343,12 @@ func TestFileTransformer_ReturnOnlyAndCopyOnly(t *testing.T) {
 	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
 	require.NoError(t, err)
 	require.Len(t, found.Batches, 1)
-	require.Len(t, found.Batches[0].GetEntries(), 1)
-	require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
+
+	entries := found.Batches[0].GetEntries()
+	require.Len(t, entries, 1)
+	require.Equal(t, "R03", entries[0].Addenda99.ReturnCode)
+
+	hasPrefix(t, entries[0].TraceNumber, achx.ABA8(achIn.Header.ImmediateDestination))
 
 	// verify the timestamp on the file is in the past
 	fInfo, err := fds[0].Info()
@@ -382,8 +396,11 @@ func TestFileTransformer_CorrectionOnlyAndCopyOnly(t *testing.T) {
 	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
 	require.NoError(t, err)
 	require.Len(t, found.Batches, 1)
-	require.Len(t, found.Batches[0].GetEntries(), 1)
-	require.Equal(t, "C01", found.Batches[0].GetEntries()[0].Addenda98.ChangeCode)
+	entries := found.Batches[0].GetEntries()
+	require.Len(t, entries, 1)
+	require.Equal(t, "C01", entries[0].Addenda98.ChangeCode)
+
+	hasPrefix(t, entries[0].TraceNumber, achx.ABA8(achIn.Header.ImmediateDestination))
 
 	// verify the timestamp on the file is in the past
 	fInfo, err := fds[0].Info()
@@ -430,8 +447,11 @@ func TestFileTransformer_DelayReturnOnly(t *testing.T) {
 	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
 	require.NoError(t, err)
 	require.Len(t, found.Batches, 1)
-	require.Len(t, found.Batches[0].GetEntries(), 1)
-	require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
+	entries := found.Batches[0].GetEntries()
+	require.Len(t, entries, 1)
+	require.Equal(t, "R03", entries[0].Addenda99.ReturnCode)
+
+	hasPrefix(t, entries[0].TraceNumber, achx.ABA8(achIn.Header.ImmediateDestination))
 
 	// verify the timestamp on the file is in the future
 	fInfo, err := fds[0].Info()
@@ -468,8 +488,11 @@ func TestFileTransformer_DelayCorrectionOnly(t *testing.T) {
 	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
 	require.NoError(t, err)
 	require.Len(t, found.Batches, 1)
-	require.Len(t, found.Batches[0].GetEntries(), 1)
-	require.Equal(t, "C01", found.Batches[0].GetEntries()[0].Addenda98.ChangeCode)
+	entries := found.Batches[0].GetEntries()
+	require.Len(t, entries, 1)
+	require.Equal(t, "C01", entries[0].Addenda98.ChangeCode)
+
+	hasPrefix(t, entries[0].TraceNumber, achx.ABA8(achIn.Header.ImmediateDestination))
 
 	// verify the timestamp on the file is in the future
 	fInfo, err := fds[0].Info()
@@ -507,8 +530,11 @@ func TestFileTransformer_DelayReturnOnlyAndCopyOnly(t *testing.T) {
 	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
 	require.NoError(t, err)
 	require.Len(t, found.Batches, 1)
-	require.Len(t, found.Batches[0].GetEntries(), 1)
-	require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
+	entries := found.Batches[0].GetEntries()
+	require.Len(t, entries, 1)
+	require.Equal(t, "R03", entries[0].Addenda99.ReturnCode)
+
+	hasPrefix(t, entries[0].TraceNumber, achx.ABA8(achIn.Header.ImmediateDestination))
 
 	// verify the timestamp on the file is in the future
 	fInfo, err := fds[0].Info()
@@ -556,8 +582,11 @@ func TestFileTransformer_DelayCorrectionOnlyAndCopyOnly(t *testing.T) {
 	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
 	require.NoError(t, err)
 	require.Len(t, found.Batches, 1)
-	require.Len(t, found.Batches[0].GetEntries(), 1)
-	require.Equal(t, "C01", found.Batches[0].GetEntries()[0].Addenda98.ChangeCode)
+	entries := found.Batches[0].GetEntries()
+	require.Len(t, entries, 1)
+	require.Equal(t, "C01", entries[0].Addenda98.ChangeCode)
+
+	hasPrefix(t, entries[0].TraceNumber, achx.ABA8(achIn.Header.ImmediateDestination))
 
 	// verify the timestamp on the file is in the future
 	fInfo, err := fds[0].Info()
@@ -604,8 +633,11 @@ func TestFileTransformer_CopyAndDelayReturn(t *testing.T) {
 	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
 	require.NoError(t, err)
 	require.Len(t, found.Batches, 1)
-	require.Len(t, found.Batches[0].GetEntries(), 1)
-	require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
+	entries := found.Batches[0].GetEntries()
+	require.Len(t, entries, 1)
+	require.Equal(t, "R03", entries[0].Addenda99.ReturnCode)
+
+	hasPrefix(t, entries[0].TraceNumber, achx.ABA8(achIn.Header.ImmediateDestination))
 
 	// verify the timestamp on the file is in the future
 	fInfo, err := fds[0].Info()
@@ -650,8 +682,11 @@ func TestFileTransformer_CopyAndDelayCorrection(t *testing.T) {
 	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
 	require.NoError(t, err)
 	require.Len(t, found.Batches, 1)
-	require.Len(t, found.Batches[0].GetEntries(), 1)
-	require.Equal(t, "C01", found.Batches[0].GetEntries()[0].Addenda98.ChangeCode)
+	entries := found.Batches[0].GetEntries()
+	require.Len(t, entries, 1)
+	require.Equal(t, "C01", entries[0].Addenda98.ChangeCode)
+
+	hasPrefix(t, entries[0].TraceNumber, achx.ABA8(achIn.Header.ImmediateDestination))
 
 	// verify the timestamp on the file is in the future
 	fInfo, err := fds[0].Info()
@@ -696,8 +731,11 @@ func TestFileTransformer_CopyAndDelayReturnAndCopyOnly(t *testing.T) {
 	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
 	require.NoError(t, err)
 	require.Len(t, found.Batches, 1)
-	require.Len(t, found.Batches[0].GetEntries(), 1)
-	require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
+	entries := found.Batches[0].GetEntries()
+	require.Len(t, entries, 1)
+	require.Equal(t, "R03", entries[0].Addenda99.ReturnCode)
+
+	hasPrefix(t, entries[0].TraceNumber, achx.ABA8(achIn.Header.ImmediateDestination))
 
 	// verify the timestamp on the file is in the future
 	fInfo, err := fds[0].Info()
@@ -742,8 +780,11 @@ func TestFileTransformer_CopyAndDelayCorrectionAndCopyOnly(t *testing.T) {
 	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
 	require.NoError(t, err)
 	require.Len(t, found.Batches, 1)
-	require.Len(t, found.Batches[0].GetEntries(), 1)
-	require.Equal(t, "C01", found.Batches[0].GetEntries()[0].Addenda98.ChangeCode)
+	entries := found.Batches[0].GetEntries()
+	require.Len(t, entries, 1)
+	require.Equal(t, "C01", entries[0].Addenda98.ChangeCode)
+
+	hasPrefix(t, entries[0].TraceNumber, achx.ABA8(achIn.Header.ImmediateDestination))
 
 	// verify the timestamp on the file is in the future
 	fInfo, err := fds[0].Info()
@@ -857,8 +898,11 @@ func TestFileTransformer_DelayCorrectionOnlyAndDelayReturnOnly_differentDelay(t 
 	found, err = ach.ReadFile(filepath.Join(retdir, fds[1].Name()))
 	require.NoError(t, err)
 	require.Len(t, found.Batches, 1)
-	require.Len(t, found.Batches[0].GetEntries(), 1)
-	require.Equal(t, "R03", found.Batches[0].GetEntries()[0].Addenda99.ReturnCode)
+	entries := found.Batches[0].GetEntries()
+	require.Len(t, entries, 1)
+	require.Equal(t, "R03", entries[0].Addenda99.ReturnCode)
+
+	hasPrefix(t, entries[0].TraceNumber, achx.ABA8(achIn.Header.ImmediateDestination))
 
 	// verify the timestamp on the file is in the future
 	fInfo, err := fds[0].Info()
@@ -898,4 +942,18 @@ func testFileTransformer(t *testing.T, resp ...service.Response) (*FileTransfome
 	w := NewFileWriter(logger, cfg.Servers, ftpServer)
 
 	return NewFileTransformer(logger, cfg, responses, w), dir
+}
+
+func hasPrefix(t *testing.T, s, prefix string) {
+	t.Helper()
+
+	if !strings.HasPrefix(s, prefix) {
+		t.Errorf("%q does not contain %q", s, prefix)
+	}
+}
+
+func TestHasPrefix(t *testing.T) {
+	hasPrefix(t, "abc", "a")
+	hasPrefix(t, "abc", "ab")
+	hasPrefix(t, "abc", "abc")
 }
