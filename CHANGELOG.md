@@ -1,3 +1,9 @@
+## v0.10.2 (Released 2024-02-23)
+
+IMPROVEMENTS
+
+- fix: use RDFI in batch header for returns/corrections/etc
+
 ## v0.10.1 (Released 2024-02-12)
 
 BUILD
