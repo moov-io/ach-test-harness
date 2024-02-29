@@ -8,7 +8,7 @@ require (
 	github.com/evanphx/json-patch v4.11.0+incompatible
 	github.com/gorilla/mux v1.8.1
 	github.com/markbates/pkger v0.17.1
-	github.com/moov-io/ach v1.34.4
+	github.com/moov-io/ach v1.35.0
 	github.com/moov-io/base v0.48.5
 	github.com/stretchr/testify v1.8.4
 	goftp.io/server v0.4.1
@@ -30,9 +30,9 @@ require (
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_golang v1.18.0 // indirect
+	github.com/prometheus/client_golang v1.19.0 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
-	github.com/prometheus/common v0.45.0 // indirect
+	github.com/prometheus/common v0.48.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rickar/cal/v2 v2.1.13 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
