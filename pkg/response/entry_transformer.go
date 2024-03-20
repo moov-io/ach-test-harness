@@ -107,6 +107,11 @@ func (t *ReturnTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, a
 	switch ed.TransactionCode {
 	case ach.CheckingCredit, ach.CheckingDebit, ach.SavingsCredit, ach.SavingsDebit:
 		out.TransactionCode = ed.TransactionCode - 1
+
+	case ach.CheckingPrenoteCredit, ach.CheckingPrenoteDebit, ach.SavingsPrenoteCredit, ach.SavingsPrenoteDebit,
+		ach.GLPrenoteCredit, ach.GLPrenoteDebit, ach.LoanPrenoteCredit:
+		out.TransactionCode = ed.TransactionCode - 2
+
 	default:
 		out.TransactionCode = ed.TransactionCode
 	}
