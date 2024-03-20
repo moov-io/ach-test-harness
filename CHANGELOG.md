@@ -1,3 +1,15 @@
+## v0.10.3 (Released 2024-03-20)
+
+IMPROVEMENTS
+
+- fix: adjust TransactionCode code for prenote returns
+
+BUILD
+
+- chore(deps): update dependency go to v1.22.1
+- fix(deps): update module github.com/moov-io/ach to v1.36.1
+- fix(deps): update module github.com/stretchr/testify to v1.9.0
+
 ## v0.10.2 (Released 2024-02-23)
 
 IMPROVEMENTS
