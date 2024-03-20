@@ -73,3 +73,52 @@ func TestMorphEntry__Return(t *testing.T) {
 	require.Equal(t, "R01", out.Addenda99.ReturnCode)
 	require.Equal(t, "23138010", out.Addenda99.OriginalDFI)
 }
+
+func TestMorphEntry__Prenote(t *testing.T) {
+	file, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "prenote.ach"))
+	require.NoError(t, err)
+
+	t.Run("correction", func(t *testing.T) {
+		action := service.Action{
+			Correction: &service.Correction{
+				Code: "C01",
+				Data: "45111616",
+			},
+		}
+		ed := file.Batches[0].GetEntries()[0]
+		ed.TransactionCode = ach.CheckingPrenoteCredit
+
+		xform := &CorrectionTransformer{}
+		out, err := xform.MorphEntry(file.Header, ed, &action)
+		require.NoError(t, err)
+
+		require.Equal(t, ach.CheckingReturnNOCCredit, out.TransactionCode)
+		require.NotEqual(t, ed.TraceNumber, out.TraceNumber)
+		require.Equal(t, ed.TraceNumber, out.Addenda98.OriginalTrace)
+
+		require.NotNil(t, out.Addenda98)
+		require.Equal(t, "C01", out.Addenda98.ChangeCode)
+		require.Equal(t, "45111616", out.Addenda98.CorrectedData)
+	})
+
+	t.Run("return", func(t *testing.T) {
+		action := service.Action{
+			Return: &service.Return{
+				Code: "R01",
+			},
+		}
+		ed := file.Batches[0].GetEntries()[0]
+		ed.TransactionCode = ach.CheckingPrenoteCredit
+
+		xform := &ReturnTransformer{}
+		out, err := xform.MorphEntry(file.Header, ed, &action)
+		require.NoError(t, err)
+
+		require.Equal(t, ach.CheckingReturnNOCCredit, out.TransactionCode)
+		require.NotEqual(t, ed.TraceNumber, out.TraceNumber)
+
+		require.NotNil(t, out.Addenda99)
+		require.Equal(t, ed.TraceNumber, out.Addenda99.OriginalTrace)
+		require.Equal(t, "R01", out.Addenda99.ReturnCode)
+	})
+}
