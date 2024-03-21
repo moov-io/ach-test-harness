@@ -1,6 +1,7 @@
 package response
 
 import (
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -78,6 +79,11 @@ func TestMorphEntry__Prenote(t *testing.T) {
 	file, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "prenote.ach"))
 	require.NoError(t, err)
 
+	transactionCodes := []int{
+		ach.CheckingPrenoteCredit, ach.CheckingPrenoteDebit,
+		ach.SavingsPrenoteCredit, ach.SavingsPrenoteDebit,
+	}
+
 	t.Run("correction", func(t *testing.T) {
 		action := service.Action{
 			Correction: &service.Correction{
@@ -85,20 +91,25 @@ func TestMorphEntry__Prenote(t *testing.T) {
 				Data: "45111616",
 			},
 		}
-		ed := file.Batches[0].GetEntries()[0]
-		ed.TransactionCode = ach.CheckingPrenoteCredit
 
-		xform := &CorrectionTransformer{}
-		out, err := xform.MorphEntry(file.Header, ed, &action)
-		require.NoError(t, err)
+		for _, txnCode := range transactionCodes {
+			msg := fmt.Sprintf("input TransactionCode=%d", txnCode)
 
-		require.Equal(t, ach.CheckingReturnNOCCredit, out.TransactionCode)
-		require.NotEqual(t, ed.TraceNumber, out.TraceNumber)
-		require.Equal(t, ed.TraceNumber, out.Addenda98.OriginalTrace)
+			ed := file.Batches[0].GetEntries()[0]
+			ed.TransactionCode = ach.CheckingPrenoteCredit
 
-		require.NotNil(t, out.Addenda98)
-		require.Equal(t, "C01", out.Addenda98.ChangeCode)
-		require.Equal(t, "45111616", out.Addenda98.CorrectedData)
+			xform := &CorrectionTransformer{}
+			out, err := xform.MorphEntry(file.Header, ed, &action)
+			require.NoError(t, err, msg)
+
+			require.Equal(t, ach.CheckingReturnNOCCredit, out.TransactionCode, msg)
+			require.NotEqual(t, ed.TraceNumber, out.TraceNumber, msg)
+			require.Equal(t, ed.TraceNumber, out.Addenda98.OriginalTrace, msg)
+
+			require.NotNil(t, out.Addenda98, msg)
+			require.Equal(t, "C01", out.Addenda98.ChangeCode, msg)
+			require.Equal(t, "45111616", out.Addenda98.CorrectedData, msg)
+		}
 	})
 
 	t.Run("return", func(t *testing.T) {
@@ -107,18 +118,23 @@ func TestMorphEntry__Prenote(t *testing.T) {
 				Code: "R01",
 			},
 		}
-		ed := file.Batches[0].GetEntries()[0]
-		ed.TransactionCode = ach.CheckingPrenoteCredit
 
-		xform := &ReturnTransformer{}
-		out, err := xform.MorphEntry(file.Header, ed, &action)
-		require.NoError(t, err)
+		for _, txnCode := range transactionCodes {
+			msg := fmt.Sprintf("input TransactionCode=%d", txnCode)
 
-		require.Equal(t, ach.CheckingReturnNOCCredit, out.TransactionCode)
-		require.NotEqual(t, ed.TraceNumber, out.TraceNumber)
+			ed := file.Batches[0].GetEntries()[0]
+			ed.TransactionCode = ach.CheckingPrenoteCredit
 
-		require.NotNil(t, out.Addenda99)
-		require.Equal(t, ed.TraceNumber, out.Addenda99.OriginalTrace)
-		require.Equal(t, "R01", out.Addenda99.ReturnCode)
+			xform := &ReturnTransformer{}
+			out, err := xform.MorphEntry(file.Header, ed, &action)
+			require.NoError(t, err, msg)
+
+			require.Equal(t, ach.CheckingReturnNOCCredit, out.TransactionCode, msg)
+			require.NotEqual(t, ed.TraceNumber, out.TraceNumber, msg)
+
+			require.NotNil(t, out.Addenda99, msg)
+			require.Equal(t, ed.TraceNumber, out.Addenda99.OriginalTrace, msg)
+			require.Equal(t, "R01", out.Addenda99.ReturnCode, msg)
+		}
 	})
 }
