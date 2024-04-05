@@ -234,6 +234,8 @@ func TestFileTransformer_ReturnOnly(t *testing.T) {
 	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021C.ach"))
 	require.NoError(t, err)
 	require.NotNil(t, achIn)
+	require.Equal(t, "221475786", achIn.Header.ImmediateOrigin)
+	require.Equal(t, "102000021", achIn.Header.ImmediateDestination)
 
 	// transform the file
 	err = fileTransformer.Transform(achIn)
@@ -244,13 +246,20 @@ func TestFileTransformer_ReturnOnly(t *testing.T) {
 	fds, err := os.ReadDir(retdir)
 	require.NoError(t, err)
 	require.Len(t, fds, 1)
+
 	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
 	require.NoError(t, err)
 	require.NoError(t, found.Create())
 	require.NoError(t, found.Validate())
+	require.Equal(t, "102000021", found.Header.ImmediateOrigin)
 	require.Equal(t, "221475786", found.Header.ImmediateDestination)
 	require.Len(t, found.Batches, 1)
-	entries := found.Batches[0].GetEntries()
+
+	batch := found.Batches[0]
+	bh := batch.GetHeader()
+	require.Equal(t, "10200002", bh.ODFIIdentification)
+
+	entries := batch.GetEntries()
 	require.Len(t, entries, 1)
 	require.Equal(t, "10200002", entries[0].RDFIIdentification)
 	require.Equal(t, "1", entries[0].CheckDigit)
@@ -282,6 +291,8 @@ func TestFileTransformer_CorrectionOnly(t *testing.T) {
 	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "20230809-144155-102000021D.ach"))
 	require.NoError(t, err)
 	require.NotNil(t, achIn)
+	require.Equal(t, "221475786", achIn.Header.ImmediateOrigin)
+	require.Equal(t, "102000021", achIn.Header.ImmediateDestination)
 
 	// transform the file
 	err = fileTransformer.Transform(achIn)
@@ -292,13 +303,19 @@ func TestFileTransformer_CorrectionOnly(t *testing.T) {
 	fds, err := os.ReadDir(retdir)
 	require.NoError(t, err)
 	require.Len(t, fds, 1)
+
 	found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
 	require.NoError(t, err)
 	require.NoError(t, found.Create())
 	require.NoError(t, found.Validate())
 	require.Equal(t, "221475786", found.Header.ImmediateDestination)
 	require.Len(t, found.Batches, 1)
-	entries := found.Batches[0].GetEntries()
+
+	batch := found.Batches[0]
+	bh := batch.GetHeader()
+	require.Equal(t, "10200002", bh.ODFIIdentification)
+
+	entries := batch.GetEntries()
 	require.Len(t, entries, 1)
 	require.Equal(t, "10200002", entries[0].RDFIIdentification)
 	require.Equal(t, "1", entries[0].CheckDigit)
