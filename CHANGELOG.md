@@ -1,3 +1,16 @@
+## v0.10.4 (Released 2024-04-11)
+
+IMPROVEMENTS
+
+- response: fixup ODFI and RDFI Identification on corrections and returns
+- test: verify ODFIIdentification in return/correction BatchHeader
+- test: verify every prenote correction and return transaction code
+
+BUILD
+
+- chore(deps): update dependency go to v1.22.2
+- fix(deps): update module github.com/moov-io/ach to v1.37.2
+
 ## v0.10.3 (Released 2024-03-20)
 
 IMPROVEMENTS
