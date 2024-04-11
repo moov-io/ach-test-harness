@@ -9,15 +9,15 @@ import (
 )
 
 type EntryTransformer interface {
-	MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error)
+	MorphEntry(fh ach.FileHeader, bh *ach.BatchHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error)
 }
 
 type EntryTransformers []EntryTransformer
 
-func (et EntryTransformers) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error) {
+func (et EntryTransformers) MorphEntry(fh ach.FileHeader, bh *ach.BatchHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error) {
 	var err error
 	for i := range et {
-		ed, err = et[i].MorphEntry(fh, ed, action)
+		ed, err = et[i].MorphEntry(fh, bh, ed, action)
 		if err != nil {
 			return ed, fmt.Errorf("%T: %v", et, err)
 		}
@@ -27,7 +27,7 @@ func (et EntryTransformers) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, a
 
 type CorrectionTransformer struct{}
 
-func (t *CorrectionTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error) {
+func (t *CorrectionTransformer) MorphEntry(fh ach.FileHeader, bh *ach.BatchHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error) {
 	if action.Correction == nil {
 		return ed, nil
 	}
@@ -48,8 +48,8 @@ func (t *CorrectionTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetai
 	}
 
 	// Set the fields from the original EntryDetail
-	out.RDFIIdentification = achx.ABA8(fh.ImmediateDestination)
-	out.CheckDigit = achx.ABACheckDigit(fh.ImmediateDestination)
+	out.RDFIIdentification = achx.ABA8(bh.ODFIIdentification)
+	out.CheckDigit = achx.ABACheckDigit(bh.ODFIIdentification)
 	out.DFIAccountNumber = ed.DFIAccountNumber
 	out.Amount = 0 // NOC's are always zero-dollar Entries
 	out.IdentificationNumber = ed.IdentificationNumber
@@ -96,7 +96,7 @@ func generateCorrectedData(cor *service.Correction) string {
 
 type ReturnTransformer struct{}
 
-func (t *ReturnTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error) {
+func (t *ReturnTransformer) MorphEntry(fh ach.FileHeader, bh *ach.BatchHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error) {
 	if action.Return == nil {
 		return ed, nil
 	}
@@ -117,8 +117,8 @@ func (t *ReturnTransformer) MorphEntry(fh ach.FileHeader, ed *ach.EntryDetail, a
 	}
 
 	// Set the fields from the original EntryDetail
-	out.RDFIIdentification = achx.ABA8(fh.ImmediateDestination)
-	out.CheckDigit = achx.ABACheckDigit(fh.ImmediateDestination)
+	out.RDFIIdentification = achx.ABA8(bh.ODFIIdentification)
+	out.CheckDigit = achx.ABACheckDigit(bh.ODFIIdentification)
 	out.DFIAccountNumber = ed.DFIAccountNumber
 	out.Amount = ed.Amount
 	out.IdentificationNumber = ed.IdentificationNumber
