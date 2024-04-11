@@ -49,6 +49,7 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 		// Track ach.Batcher to write based on different delay durations and whether the batch is for NOC
 		var outBatches = outBatches{}
 
+		bh := file.Batches[i].GetHeader()
 		entries := file.Batches[i].GetEntries()
 		for j := range entries {
 			// Check if there's a matching Action and perform it. There may also be a future-dated action to execute.
@@ -64,7 +65,7 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 				logger := ft.Matcher.Logger.With(processAction)
 				logger.Log("Processing matched action")
 
-				entry, err := ft.Entry.MorphEntry(file.Header, entries[j], processAction)
+				entry, err := ft.Entry.MorphEntry(file.Header, bh, entries[j], processAction)
 				if err != nil {
 					return fmt.Errorf("transform batch[%d] morph entry[%d] error: %v", i, j, err)
 				}

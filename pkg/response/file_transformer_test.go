@@ -236,6 +236,8 @@ func TestFileTransformer_ReturnOnly(t *testing.T) {
 	require.NotNil(t, achIn)
 	require.Equal(t, "221475786", achIn.Header.ImmediateOrigin)
 	require.Equal(t, "102000021", achIn.Header.ImmediateDestination)
+	require.Equal(t, "22147578", achIn.Batches[0].GetHeader().ODFIIdentification)
+	require.Equal(t, "10200002", achIn.Batches[0].GetEntries()[0].RDFIIdentification)
 
 	// transform the file
 	err = fileTransformer.Transform(achIn)
@@ -261,10 +263,10 @@ func TestFileTransformer_ReturnOnly(t *testing.T) {
 
 	entries := batch.GetEntries()
 	require.Len(t, entries, 1)
-	require.Equal(t, "10200002", entries[0].RDFIIdentification)
-	require.Equal(t, "1", entries[0].CheckDigit)
+	require.Equal(t, "22147578", entries[0].RDFIIdentification)
+	require.Equal(t, "6", entries[0].CheckDigit)
 	require.Equal(t, "R03", entries[0].Addenda99.ReturnCode)
-	require.Equal(t, "22147578", entries[0].Addenda99.OriginalDFI)
+	require.Equal(t, "10200002", entries[0].Addenda99.OriginalDFI)
 
 	hasPrefix(t, entries[0].TraceNumber, achx.ABA8(achIn.Header.ImmediateDestination))
 
@@ -293,6 +295,8 @@ func TestFileTransformer_CorrectionOnly(t *testing.T) {
 	require.NotNil(t, achIn)
 	require.Equal(t, "221475786", achIn.Header.ImmediateOrigin)
 	require.Equal(t, "102000021", achIn.Header.ImmediateDestination)
+	require.Equal(t, "22147578", achIn.Batches[0].GetHeader().ODFIIdentification)
+	require.Equal(t, "10200002", achIn.Batches[0].GetEntries()[0].RDFIIdentification)
 
 	// transform the file
 	err = fileTransformer.Transform(achIn)
@@ -317,8 +321,8 @@ func TestFileTransformer_CorrectionOnly(t *testing.T) {
 
 	entries := batch.GetEntries()
 	require.Len(t, entries, 1)
-	require.Equal(t, "10200002", entries[0].RDFIIdentification)
-	require.Equal(t, "1", entries[0].CheckDigit)
+	require.Equal(t, "22147578", entries[0].RDFIIdentification)
+	require.Equal(t, "6", entries[0].CheckDigit)
 	require.Equal(t, "C01", entries[0].Addenda98.ChangeCode)
 	require.Equal(t, "10200002", entries[0].Addenda98.OriginalDFI)
 

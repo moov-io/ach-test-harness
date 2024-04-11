@@ -24,8 +24,9 @@ func TestMorphEntry__Correction(t *testing.T) {
 			Data: "45111616",
 		},
 	}
+	bh := file.Batches[0].GetHeader()
 	ed := file.Batches[0].GetEntries()[0]
-	out, err := xform.MorphEntry(file.Header, ed, &action)
+	out, err := xform.MorphEntry(file.Header, bh, ed, &action)
 	require.NoError(t, err)
 
 	if out.Addenda98 == nil {
@@ -37,8 +38,8 @@ func TestMorphEntry__Correction(t *testing.T) {
 	require.Equal(t, "45111616", out.Addenda98.CorrectedData)
 	require.Equal(t, "23138010", out.Addenda98.OriginalDFI)
 
-	require.Equal(t, "12345678", out.RDFIIdentification)
-	require.Equal(t, "0", out.CheckDigit)
+	require.Equal(t, "12104288", out.RDFIIdentification)
+	require.Equal(t, "2", out.CheckDigit)
 
 	if out.Addenda99 != nil {
 		t.Fatal("unexpected Addenda99")
@@ -57,8 +58,9 @@ func TestMorphEntry__Return(t *testing.T) {
 			Code: "R01",
 		},
 	}
+	bh := file.Batches[0].GetHeader()
 	ed := file.Batches[0].GetEntries()[0]
-	out, err := xform.MorphEntry(file.Header, ed, &action)
+	out, err := xform.MorphEntry(file.Header, bh, ed, &action)
 	require.NoError(t, err)
 
 	if out.Addenda98 != nil {
@@ -68,8 +70,8 @@ func TestMorphEntry__Return(t *testing.T) {
 		t.Fatal("exected Addenda99 record")
 	}
 	require.NotEqual(t, ed.TraceNumber, out.TraceNumber)
-	require.Equal(t, "12345678", out.RDFIIdentification)
-	require.Equal(t, "0", out.CheckDigit)
+	require.Equal(t, "12104288", out.RDFIIdentification)
+	require.Equal(t, "2", out.CheckDigit)
 	require.Equal(t, ed.TraceNumber, out.Addenda99.OriginalTrace)
 	require.Equal(t, "R01", out.Addenda99.ReturnCode)
 	require.Equal(t, "23138010", out.Addenda99.OriginalDFI)
@@ -95,11 +97,12 @@ func TestMorphEntry__Prenote(t *testing.T) {
 		for _, txnCode := range transactionCodes {
 			msg := fmt.Sprintf("input TransactionCode=%d", txnCode)
 
+			bh := file.Batches[0].GetHeader()
 			ed := file.Batches[0].GetEntries()[0]
 			ed.TransactionCode = ach.CheckingPrenoteCredit
 
 			xform := &CorrectionTransformer{}
-			out, err := xform.MorphEntry(file.Header, ed, &action)
+			out, err := xform.MorphEntry(file.Header, bh, ed, &action)
 			require.NoError(t, err, msg)
 
 			require.Equal(t, ach.CheckingReturnNOCCredit, out.TransactionCode, msg)
@@ -122,11 +125,12 @@ func TestMorphEntry__Prenote(t *testing.T) {
 		for _, txnCode := range transactionCodes {
 			msg := fmt.Sprintf("input TransactionCode=%d", txnCode)
 
+			bh := file.Batches[0].GetHeader()
 			ed := file.Batches[0].GetEntries()[0]
 			ed.TransactionCode = ach.CheckingPrenoteCredit
 
 			xform := &ReturnTransformer{}
-			out, err := xform.MorphEntry(file.Header, ed, &action)
+			out, err := xform.MorphEntry(file.Header, bh, ed, &action)
 			require.NoError(t, err, msg)
 
 			require.Equal(t, ach.CheckingReturnNOCCredit, out.TransactionCode, msg)
