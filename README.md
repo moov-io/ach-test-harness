@@ -15,7 +15,6 @@
 
 [![GoDoc](https://godoc.org/github.com/moov-io/ach-test-harness?status.svg)](https://godoc.org/github.com/moov-io/ach-test-harness)
 [![Build Status](https://github.com/moov-io/ach-test-harness/workflows/Go/badge.svg)](https://github.com/moov-io/ach-test-harness/actions)
-[![Coverage Status](https://codecov.io/gh/moov-io/ach-test-harness/branch/master/graph/badge.svg)](https://codecov.io/gh/moov-io/ach-test-harness)
 [![Go Report Card](https://goreportcard.com/badge/github.com/moov-io/ach-test-harness)](https://goreportcard.com/report/github.com/moov-io/ach-test-harness)
 [![Apache 2 licensed](https://img.shields.io/badge/license-Apache2-blue.svg)](https://raw.githubusercontent.com/moov-io/ach-test-harness/master/LICENSE)
 
