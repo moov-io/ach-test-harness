@@ -978,3 +978,64 @@ func TestHasPrefix(t *testing.T) {
 	hasPrefix(t, "abc", "ab")
 	hasPrefix(t, "abc", "abc")
 }
+
+func TestFileTransformer_CTX(t *testing.T) {
+	// ATX and CTX batches have their AddendaCount in a slightly different location
+	resp := service.Response{
+		Match: service.Match{
+			EntryType: service.EntryTypeDebit,
+		},
+		Action: actionReturn,
+	}
+	fileTransformer, dir := testFileTransformer(t, resp)
+
+	// read the file
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "ctx-debit.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	t.Run("return", func(t *testing.T) {
+		// transform
+		err := fileTransformer.Transform(achIn)
+		require.NoError(t, err)
+
+		retdir := filepath.Join(dir, "returned")
+
+		// verify a return was created
+		fds, err := os.ReadDir(retdir)
+		require.NoError(t, err)
+		require.Len(t, fds, 1)
+		found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+		require.NoError(t, err)
+		require.Len(t, found.Batches, 1)
+		entries := found.Batches[0].GetEntries()
+		require.Len(t, entries, 1)
+		require.NotNil(t, entries[0].Addenda99)
+		require.Equal(t, "R03", entries[0].Addenda99.ReturnCode)
+		require.NoError(t, os.Remove(filepath.Join(retdir, fds[0].Name()))) // delete file for next stage
+	})
+
+	// Update response to send a Correction
+	resp.Action = actionCorrection
+	fileTransformer, dir = testFileTransformer(t, resp)
+
+	t.Run("correction", func(t *testing.T) {
+		// transform
+		err := fileTransformer.Transform(achIn)
+		require.NoError(t, err)
+
+		retdir := filepath.Join(dir, "returned")
+
+		// verify a correction was created
+		fds, err := os.ReadDir(retdir)
+		require.NoError(t, err)
+		require.Len(t, fds, 1)
+		found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+		require.NoError(t, err)
+		require.Len(t, found.Batches, 1)
+		entries := found.Batches[0].GetEntries()
+		require.Len(t, entries, 1)
+		require.NotNil(t, entries[0].Addenda98)
+		require.Equal(t, "C01", entries[0].Addenda98.ChangeCode)
+	})
+}
