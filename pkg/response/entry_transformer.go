@@ -58,6 +58,11 @@ func (t *CorrectionTransformer) MorphEntry(fh ach.FileHeader, bh *ach.BatchHeade
 	out.AddendaRecordIndicator = 1
 	out.Category = ach.CategoryNOC
 
+	switch bh.StandardEntryClassCode {
+	case ach.ATX, ach.CTX:
+		out.SetCATXAddendaRecords(1)
+	}
+
 	if trace, err := achx.TraceNumber(fh.ImmediateDestination); err != nil {
 		return out, fmt.Errorf("generating trace number: %w", err)
 	} else {
@@ -126,6 +131,11 @@ func (t *ReturnTransformer) MorphEntry(fh ach.FileHeader, bh *ach.BatchHeader, e
 	out.DiscretionaryData = ed.DiscretionaryData
 	out.AddendaRecordIndicator = 1
 	out.Category = ach.CategoryReturn
+
+	switch bh.StandardEntryClassCode {
+	case ach.ATX, ach.CTX:
+		out.SetCATXAddendaRecords(1)
+	}
 
 	if trace, err := achx.TraceNumber(fh.ImmediateDestination); err != nil {
 		return out, fmt.Errorf("generating trace number: %w", err)
