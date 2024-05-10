@@ -1,3 +1,14 @@
+## v0.10.5 (Released 2024-05-10)
+
+IMPROVEMENTS
+
+- response: fix ATX/CTX AddendaCount in entry transformer
+
+BUILD
+
+- fix(deps): update module github.com/moov-io/ach to v1.39.2
+- fix(deps): update module github.com/moov-io/base to v0.49.2
+
 ## v0.10.4 (Released 2024-04-11)
 
 IMPROVEMENTS
