@@ -3,7 +3,6 @@ package batches
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/moov-io/base/log"
 
@@ -57,9 +56,6 @@ func readSearchOptions(r *http.Request) SearchOptions {
 		TraceNumber:   query.Get("traceNumber"),
 		CreatedAfter:  query.Get("createdAfter"),
 		Path:          query.Get("path"),
-	}
-	if n, _ := strconv.ParseInt(query.Get("amount"), 10, 32); n > 0 {
-		opts.Amount = int(n)
 	}
 	return opts
 }

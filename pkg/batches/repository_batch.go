@@ -81,9 +81,6 @@ func filterBatches(path string, opts SearchOptions) ([]ach.Batcher, error) {
 
 	mm := service.Match{
 		AccountNumber: opts.AccountNumber,
-		Amount: &service.Amount{
-			Value: opts.Amount,
-		},
 		RoutingNumber: opts.RoutingNumber,
 		TraceNumber:   opts.TraceNumber,
 	}
@@ -97,7 +94,7 @@ func filterBatches(path string, opts SearchOptions) ([]ach.Batcher, error) {
 		}
 		for j := range entries {
 			if match.TraceNumber(mm, entries[j]) || match.AccountNumber(mm, entries[j]) ||
-				match.RoutingNumber(mm, entries[j]) || match.Amount(mm, entries[j]) {
+				match.RoutingNumber(mm, entries[j]) {
 				// accumulate batch
 				out = append(out, file.Batches[i])
 				continue

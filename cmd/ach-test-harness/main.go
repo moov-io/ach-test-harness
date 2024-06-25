@@ -3,10 +3,10 @@
 package main
 
 import (
-	"github.com/moov-io/ach-test-harness/pkg/batches"
 	"os"
 
 	achtestharness "github.com/moov-io/ach-test-harness"
+	"github.com/moov-io/ach-test-harness/pkg/batches"
 	"github.com/moov-io/ach-test-harness/pkg/entries"
 	"github.com/moov-io/ach-test-harness/pkg/response"
 	"github.com/moov-io/ach-test-harness/pkg/service"
