@@ -45,7 +45,10 @@ func (opts SearchOptions) fileTooOld(file *ach.File) (bool, error) {
 		return false, err
 	}
 
-	fileCreated, _ := time.Parse("0601021504", file.Header.FileCreationDate+file.Header.FileCreationTime)
+	fileCreated, err := time.Parse("0601021504", file.Header.FileCreationDate+file.Header.FileCreationTime)
+	if err != nil {
+		return false, err
+	}
 
 	return fileCreated.Before(tt), nil
 }

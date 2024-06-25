@@ -37,9 +37,6 @@ func (r *batchRepository) Search(opts SearchOptions) ([]ach.Batcher, error) {
 		if d.IsDir() {
 			return nil
 		}
-		if err != nil {
-			return nil
-		}
 
 		r.logger.Logf("reading %s", path)
 		// read only *.ach files
