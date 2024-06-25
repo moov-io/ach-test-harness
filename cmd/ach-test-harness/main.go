@@ -3,6 +3,7 @@
 package main
 
 import (
+	"github.com/moov-io/ach-test-harness/pkg/batches"
 	"os"
 
 	achtestharness "github.com/moov-io/ach-test-harness"
@@ -36,6 +37,11 @@ func main() {
 	entryService := entries.NewEntryService(entryRepository)
 	entryController := entries.NewEntryController(env.Logger, entryService)
 	entryController.AppendRoutes(env.Router)
+
+	batchRepository := batches.NewFTPRepository(env.Logger, env.Config.Servers.FTP)
+	batchService := batches.NewBatchService(batchRepository)
+	batchController := batches.NewBatchController(env.Logger, batchService)
+	batchController.AppendRoutes(env.Router)
 
 	fileWriter := response.NewFileWriter(env.Logger, env.Config.Servers, env.FTPServer)
 	fileTransformer := response.NewFileTransformer(env.Logger, env.Config, env.Config.Responses, fileWriter)
