@@ -1,3 +1,14 @@
+## v0.11.0 (Released 2024-06-26)
+
+IMPROVEMENTS
+
+- feat: batches endpoint for searching files and returning batches
+
+BUILD
+
+- fix(deps): update module github.com/moov-io/ach to v1.40.3
+- fix(deps): update module github.com/moov-io/base to v0.50.0
+
 ## v0.10.5 (Released 2024-05-10)
 
 IMPROVEMENTS
