@@ -9,7 +9,6 @@ import (
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/response/match"
 	"github.com/moov-io/ach-test-harness/pkg/service"
-	"github.com/moov-io/base/log"
 )
 
 type BatchRepository interface {
@@ -17,13 +16,11 @@ type BatchRepository interface {
 }
 
 type batchRepository struct {
-	logger   log.Logger
 	rootPath string
 }
 
-func NewFTPRepository(logger log.Logger, cfg *service.FTPConfig) *batchRepository {
+func NewFTPRepository(cfg *service.FTPConfig) *batchRepository {
 	return &batchRepository{
-		logger:   logger,
 		rootPath: cfg.RootPath,
 	}
 }
@@ -38,11 +35,9 @@ func (r *batchRepository) Search(opts SearchOptions) ([]ach.Batcher, error) {
 			return nil
 		}
 		if err != nil {
-			r.logger.Logf("error walking dir %s. %v", d.Name(), err)
 			return nil
 		}
 
-		r.logger.Logf("reading %s", path)
 		// read only *.ach files
 		if strings.ToLower(filepath.Ext(path)) != ".ach" {
 			return nil
@@ -61,7 +56,6 @@ func (r *batchRepository) Search(opts SearchOptions) ([]ach.Batcher, error) {
 		walkingPath = filepath.Join(r.rootPath, opts.Path)
 	}
 
-	r.logger.Logf("Waling directory %s", walkingPath)
 	if err := filepath.WalkDir(walkingPath, search); err != nil {
 		return nil, fmt.Errorf("failed reading directory content %s: %v", walkingPath, err)
 	}

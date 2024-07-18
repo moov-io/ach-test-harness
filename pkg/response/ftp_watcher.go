@@ -22,7 +22,7 @@ func Register(
 			transformer:  transformer,
 		})
 	} else {
-		logger.Info().Log("unable to register transformer")
+		logger.Error().Log("unable to register transformer")
 	}
 }
 
@@ -44,25 +44,27 @@ func (notify *FTPWatcher) AfterFilePut(conn *ftp.Conn, dstPath string, size int6
 	// Grab a file descriptor
 	driver, err := conn.ServerOpts().Factory.NewDriver()
 	if err != nil {
-		notify.logger.Info().Log(fmt.Sprintf("ftp: error getting driver for file %s: %v", dstPath, err))
+		notify.logger.Error().Log(fmt.Sprintf("ftp: error getting driver for file %s: %v", dstPath, err))
 	}
 	_, fd, err := driver.GetFile(dstPath, 0)
 	if err != nil {
-		notify.logger.Info().Log(fmt.Sprintf("ftp: error reading file %s: %v", dstPath, err))
+		notify.logger.Error().Log(fmt.Sprintf("ftp: error reading file %s: %v", dstPath, err))
 	}
 	// Read the file that was uploaded
 	reader := ach.NewReader(fd)
 	reader.SetValidation(notify.validateOpts)
 
+	// TODO(adam): ACH file Iterator
+
 	file, err := reader.Read()
 	if err != nil {
-		notify.logger.Info().Log(fmt.Sprintf("ftp: error reading ACH file %s: %v", dstPath, err))
+		notify.logger.Error().Log(fmt.Sprintf("ftp: error reading ACH file %s: %v", dstPath, err))
 	}
 	if err := file.Create(); err != nil {
-		notify.logger.Info().Log(fmt.Sprintf("ftp: error creating file %s: %v", dstPath, err))
+		notify.logger.Error().Log(fmt.Sprintf("ftp: error creating file %s: %v", dstPath, err))
 	}
 
 	if err := notify.transformer.Transform(&file); err != nil {
-		notify.logger.Info().Log(fmt.Sprintf("ftp: error transforming file %s: %v", dstPath, err))
+		notify.logger.Error().Log(fmt.Sprintf("ftp: error transforming file %s: %v", dstPath, err))
 	}
 }

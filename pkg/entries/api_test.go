@@ -19,7 +19,7 @@ func TestEntryController(t *testing.T) {
 	logger := log.NewDefaultLogger()
 
 	t.Run("/entries returns list of entries", func(t *testing.T) {
-		repo := NewFTPRepository(logger, &service.FTPConfig{
+		repo := NewFTPRepository(&service.FTPConfig{
 			RootPath: "./testdata",
 		})
 		service := NewEntryService(repo)

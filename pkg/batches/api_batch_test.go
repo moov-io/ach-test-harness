@@ -19,7 +19,7 @@ func TestBatchController(t *testing.T) {
 	logger := log.NewDefaultLogger()
 
 	t.Run("/batches returns list of batches", func(t *testing.T) {
-		repo := NewFTPRepository(logger, &service.FTPConfig{
+		repo := NewFTPRepository(&service.FTPConfig{
 			RootPath: "./testdata",
 		})
 		newBatchService := NewBatchService(repo)

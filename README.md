@@ -69,6 +69,7 @@ ACHTestHarness:
       Bind:
         Address: ":3333"
   Matching:
+    # Enable for verbose logging of incoming entries and the matches/actions.
     Debug: false
   # ValidateOpts can use all values from https://pkg.go.dev/github.com/moov-io/ach#ValidateOpts
   ValidateOpts: {}

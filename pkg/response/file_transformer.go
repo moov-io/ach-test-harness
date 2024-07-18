@@ -55,16 +55,10 @@ func (ft *FileTransfomer) Transform(file *ach.File) error {
 			// Check if there's a matching Action and perform it. There may also be a future-dated action to execute.
 			copyAction, processAction := ft.Matcher.FindAction(entries[j])
 			if copyAction != nil {
-				logger := ft.Matcher.Logger.With(copyAction)
-				logger.Log("Processing matched action")
-
 				// Save this Entry
 				mirror.saveEntry(&file.Batches[i], copyAction.Copy, entries[j])
 			}
 			if processAction != nil {
-				logger := ft.Matcher.Logger.With(processAction)
-				logger.Log("Processing matched action")
-
 				entry, err := ft.Entry.MorphEntry(file.Header, bh, entries[j], processAction)
 				if err != nil {
 					return fmt.Errorf("transform batch[%d] morph entry[%d] error: %v", i, j, err)

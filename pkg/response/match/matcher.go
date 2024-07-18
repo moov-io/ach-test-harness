@@ -36,7 +36,9 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, pr
 		logger := m.Logger.With(log.Fields{
 			"entry_trace_number": log.String(ed.TraceNumber),
 		})
-		logger.Log("starting EntryDetail matching")
+		if m.Debug {
+			logger.Info().Log("starting EntryDetail matching")
+		}
 
 		positive, negative := 0, 0 // Matchers are AND'd together
 
@@ -151,7 +153,9 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, pr
 			b.WriteString(fmt.Sprintf(" (%s)", strings.Join(positiveMatchers, ", ")))
 		}
 
-		logger.Log(b.String())
+		if m.Debug {
+			logger.Log(b.String())
+		}
 
 		// Return the Action if we've still matched
 		if negative == 0 && positive > 0 {

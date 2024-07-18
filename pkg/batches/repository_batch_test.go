@@ -4,14 +4,11 @@ import (
 	"testing"
 
 	"github.com/moov-io/ach-test-harness/pkg/service"
-	"github.com/moov-io/base/log"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRepository(t *testing.T) {
-	logger := log.NewDefaultLogger()
-
-	repo := NewFTPRepository(logger, &service.FTPConfig{
+	repo := NewFTPRepository(&service.FTPConfig{
 		RootPath: "./testdata",
 		Paths: service.Paths{
 			Files:  "/outbound/",
