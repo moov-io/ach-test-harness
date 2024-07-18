@@ -1,3 +1,14 @@
+## v0.12.0 (Released 2024-07-18)
+
+IMPROVEMENTS
+
+- feat: simplify green path logging
+
+BUILD
+
+- fix(deps): update module github.com/moov-io/base to v0.51.1
+- fix(deps): update module github.com/moov-io/ach to v1.40.1
+
 ## v0.11.0 (Released 2024-06-26)
 
 IMPROVEMENTS
