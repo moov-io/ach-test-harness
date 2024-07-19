@@ -59,6 +59,7 @@ func bootFTPServer(errs chan<- error, logger log.Logger, cfg *FTPConfig, respons
 			Password: cfg.Auth.Password,
 		},
 		PassivePorts: cfg.PassivePorts,
+		Logger:       &ftp.DiscardLogger{},
 	}
 	server := ftp.NewServer(opts)
 
