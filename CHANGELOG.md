@@ -1,3 +1,9 @@
+## v0.12.1 (Released 2024-07-19)
+
+IMPROVEMENTS
+
+- service: switch logging to DiscardLogger
+
 ## v0.12.0 (Released 2024-07-18)
 
 IMPROVEMENTS
