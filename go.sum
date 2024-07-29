@@ -53,6 +53,8 @@ github.com/mitchellh/mapstructure v1.5.0 h1:jeMsZIYE/09sWLaz43PL7Gy6RuMjD2eJVyua
 github.com/mitchellh/mapstructure v1.5.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/moov-io/ach v1.40.4 h1:cukk+h+JslhhGPpce0qyj3jDbkjxAKUO8AmHSMVLDLI=
 github.com/moov-io/ach v1.40.4/go.mod h1:WHAaoIYr8L64S2qyzQ/dT4ATMViwbu+aO8GV0naFIMk=
+github.com/moov-io/ach v1.41.0 h1:vi+IyI15difGdzaR1LbH5kGfMfWa0nviSJYDBjfFtmk=
+github.com/moov-io/ach v1.41.0/go.mod h1:WHAaoIYr8L64S2qyzQ/dT4ATMViwbu+aO8GV0naFIMk=
 github.com/moov-io/base v0.51.1 h1:Dwv7QKluvtHKBIrRcA1t+Sc6hOFTvmswgP5pGMK198E=
 github.com/moov-io/base v0.51.1/go.mod h1:xTpQ584ny4VO9zNLmPn+rux6KRXtfQJgvphj4UfORJg=
 github.com/moov-io/iso4217 v0.3.0 h1:xAxeJEn7QIpEy971eElEGiaLNdj81UwOcCcvE6j2ZAo=
