@@ -1,3 +1,13 @@
+## v0.13.0 (Released 2024-08-12)
+
+IMPROVEMENTS
+
+- meta: add telemetry via OpenTracing
+
+BUILD
+
+- fix(deps): update module github.com/moov-io/ach to v1.41.0
+
 ## v0.12.1 (Released 2024-07-19)
 
 IMPROVEMENTS
