@@ -1,6 +1,7 @@
 package batches
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"path/filepath"
@@ -9,10 +10,14 @@ import (
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/response/match"
 	"github.com/moov-io/ach-test-harness/pkg/service"
+	"github.com/moov-io/base/telemetry"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type BatchRepository interface {
-	Search(opts SearchOptions) ([]ach.Batcher, error)
+	Search(ctx context.Context, opts SearchOptions) ([]ach.Batcher, error)
 }
 
 type batchRepository struct {
@@ -25,8 +30,13 @@ func NewFTPRepository(cfg *service.FTPConfig) *batchRepository {
 	}
 }
 
-func (r *batchRepository) Search(opts SearchOptions) ([]ach.Batcher, error) {
+func (r *batchRepository) Search(ctx context.Context, opts SearchOptions) ([]ach.Batcher, error) {
+	_, span := telemetry.StartSpan(ctx, "repo-batch-search")
+	defer span.End()
+
 	out := make([]ach.Batcher, 0)
+
+	var filesProcessed int
 
 	//nolint:gosimple
 	var search fs.WalkDirFunc
@@ -42,14 +52,26 @@ func (r *batchRepository) Search(opts SearchOptions) ([]ach.Batcher, error) {
 		if strings.ToLower(filepath.Ext(path)) != ".ach" {
 			return nil
 		}
+		filesProcessed += 1
 
 		batches, err := filterBatches(path, opts)
 		if err != nil {
 			return err
 		}
-		out = append(out, batches...)
+
+		if len(batches) > 0 {
+			span.AddEvent("found-batches", trace.WithAttributes(
+				attribute.Int("search.batches", len(batches)),
+				attribute.String("search.filename", path),
+			))
+
+			out = append(out, batches...)
+		}
 		return nil
 	}
+	span.SetAttributes(
+		attribute.Int("search.files_processed", filesProcessed),
+	)
 
 	var walkingPath = r.rootPath
 	if opts.Path != "" {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/moov-io/ach"
 	"github.com/moov-io/base/log"
+	"github.com/moov-io/base/telemetry"
 )
 
 type GlobalConfig struct {
@@ -21,7 +22,9 @@ func (gc *GlobalConfig) Validate() error {
 
 // Config defines all the configuration for the app
 type Config struct {
-	Servers      ServerConfig
+	Servers   ServerConfig
+	Telemetry telemetry.Config
+
 	ValidateOpts *ach.ValidateOpts
 	Matching     Matching
 	Responses    []Response

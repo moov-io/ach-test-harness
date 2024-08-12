@@ -1,23 +1,28 @@
 package response
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/internal/achx"
 	"github.com/moov-io/ach-test-harness/pkg/service"
+	"github.com/moov-io/base/telemetry"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type EntryTransformer interface {
-	MorphEntry(fh ach.FileHeader, bh *ach.BatchHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error)
+	MorphEntry(ctx context.Context, fh ach.FileHeader, bh *ach.BatchHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error)
 }
 
 type EntryTransformers []EntryTransformer
 
-func (et EntryTransformers) MorphEntry(fh ach.FileHeader, bh *ach.BatchHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error) {
+func (et EntryTransformers) MorphEntry(ctx context.Context, fh ach.FileHeader, bh *ach.BatchHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error) {
 	var err error
 	for i := range et {
-		ed, err = et[i].MorphEntry(fh, bh, ed, action)
+		ed, err = et[i].MorphEntry(ctx, fh, bh, ed, action)
 		if err != nil {
 			return ed, fmt.Errorf("%T: %v", et, err)
 		}
@@ -27,10 +32,16 @@ func (et EntryTransformers) MorphEntry(fh ach.FileHeader, bh *ach.BatchHeader, e
 
 type CorrectionTransformer struct{}
 
-func (t *CorrectionTransformer) MorphEntry(fh ach.FileHeader, bh *ach.BatchHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error) {
+func (t *CorrectionTransformer) MorphEntry(ctx context.Context, fh ach.FileHeader, bh *ach.BatchHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error) {
 	if action.Correction == nil {
 		return ed, nil
 	}
+
+	_, span := telemetry.StartSpan(ctx, "entry-correction-transformer", trace.WithAttributes(
+		attribute.String("action.correction_code", action.Correction.Code),
+		attribute.String("entry.trace_number", ed.TraceNumber),
+	))
+	defer span.End()
 
 	out := ach.NewEntryDetail()
 
@@ -101,10 +112,16 @@ func generateCorrectedData(cor *service.Correction) string {
 
 type ReturnTransformer struct{}
 
-func (t *ReturnTransformer) MorphEntry(fh ach.FileHeader, bh *ach.BatchHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error) {
+func (t *ReturnTransformer) MorphEntry(ctx context.Context, fh ach.FileHeader, bh *ach.BatchHeader, ed *ach.EntryDetail, action *service.Action) (*ach.EntryDetail, error) {
 	if action.Return == nil {
 		return ed, nil
 	}
+
+	_, span := telemetry.StartSpan(ctx, "entry-return-transformer", trace.WithAttributes(
+		attribute.String("action.return_code", action.Return.Code),
+		attribute.String("entry.trace_number", ed.TraceNumber),
+	))
+	defer span.End()
 
 	out := ach.NewEntryDetail()
 

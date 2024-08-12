@@ -6,8 +6,10 @@ import (
 	"strconv"
 
 	"github.com/moov-io/base/log"
+	"github.com/moov-io/base/telemetry"
 
 	"github.com/gorilla/mux"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func NewEntryController(logger log.Logger, service EntryService) *entryController {
@@ -34,9 +36,17 @@ func (c *entryController) AppendRoutes(router *mux.Router) *mux.Router {
 
 func (c *entryController) Search() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, span := telemetry.StartSpan(r.Context(), "api-entry-search")
+		defer span.End()
+
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-		entries, err := c.service.Search(readSearchOptions(r))
+		opts := readSearchOptions(r)
+		span.SetAttributes(
+			attribute.String("search.trace_number", opts.TraceNumber),
+		)
+
+		entries, err := c.service.Search(ctx, opts)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})

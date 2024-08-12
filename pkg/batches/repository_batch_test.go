@@ -1,6 +1,7 @@
 package batches
 
 import (
+	"context"
 	"testing"
 
 	"github.com/moov-io/ach-test-harness/pkg/service"
@@ -8,6 +9,8 @@ import (
 )
 
 func TestRepository(t *testing.T) {
+	ctx := context.Background()
+
 	repo := NewFTPRepository(&service.FTPConfig{
 		RootPath: "./testdata",
 		Paths: service.Paths{
@@ -17,12 +20,12 @@ func TestRepository(t *testing.T) {
 	})
 
 	// return all
-	batches, err := repo.Search(SearchOptions{})
+	batches, err := repo.Search(ctx, SearchOptions{})
 	require.NoError(t, err)
 	require.Len(t, batches, 2)
 
 	// search by account number
-	batches, err = repo.Search(SearchOptions{
+	batches, err = repo.Search(ctx, SearchOptions{
 		AccountNumber: "987654321",
 	})
 
@@ -32,7 +35,7 @@ func TestRepository(t *testing.T) {
 	// search by timestamp in our files:
 	// returned/2.ach was created on 1908161055 and has 1 entry
 	// outbound/1.ach was created on 1908161059 and has 2 batches
-	batches, err = repo.Search(SearchOptions{
+	batches, err = repo.Search(ctx, SearchOptions{
 		CreatedAfter: "2019-08-16T10:56:00+00:00",
 	})
 
@@ -42,7 +45,7 @@ func TestRepository(t *testing.T) {
 
 	// search by subdirectory in our files:
 	// outbound/1.ach was created on 1908161059 and has 2 batches
-	batches, err = repo.Search(SearchOptions{
+	batches, err = repo.Search(ctx, SearchOptions{
 		Path: "outbound",
 	})
 

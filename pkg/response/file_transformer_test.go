@@ -1,6 +1,7 @@
 package response
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"sort"
@@ -94,7 +95,7 @@ func TestFileTransformer_NoMatch(t *testing.T) {
 	require.NotNil(t, achIn)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify no "returned" files created
@@ -117,7 +118,7 @@ func TestFileTransformer_CopyOnly(t *testing.T) {
 	require.NotNil(t, achIn)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify no "returned" files created
@@ -148,7 +149,7 @@ func TestFileTransformer_CopyOnlyAndCopyOnly_SingleBatch(t *testing.T) {
 	require.NotNil(t, achIn)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify no "returned" files created
@@ -184,7 +185,7 @@ func TestFileTransformer_CopyOnlyAndCopyOnly_MultipleBatches(t *testing.T) {
 	require.Len(t, achIn.Batches, 3)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify no "returned" files created
@@ -240,7 +241,7 @@ func TestFileTransformer_ReturnOnly(t *testing.T) {
 	require.Equal(t, "10200002", achIn.Batches[0].GetEntries()[0].RDFIIdentification)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify the "returned" file created
@@ -299,7 +300,7 @@ func TestFileTransformer_CorrectionOnly(t *testing.T) {
 	require.Equal(t, "10200002", achIn.Batches[0].GetEntries()[0].RDFIIdentification)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify the "returned" file created
@@ -353,7 +354,7 @@ func TestFileTransformer_ReturnOnlyAndCopyOnly(t *testing.T) {
 	require.NotNil(t, achIn)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify the "returned" file created
@@ -406,7 +407,7 @@ func TestFileTransformer_CorrectionOnlyAndCopyOnly(t *testing.T) {
 	require.NotNil(t, achIn)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify the "returned" file created
@@ -457,7 +458,7 @@ func TestFileTransformer_DelayReturnOnly(t *testing.T) {
 	require.NotNil(t, achIn)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify the "returned" file created
@@ -498,7 +499,7 @@ func TestFileTransformer_DelayCorrectionOnly(t *testing.T) {
 	require.NotNil(t, achIn)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify the "returned" file created
@@ -540,7 +541,7 @@ func TestFileTransformer_DelayReturnOnlyAndCopyOnly(t *testing.T) {
 	require.NotNil(t, achIn)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify the "returned" file created
@@ -592,7 +593,7 @@ func TestFileTransformer_DelayCorrectionOnlyAndCopyOnly(t *testing.T) {
 	require.NotNil(t, achIn)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify the "returned" file created
@@ -643,7 +644,7 @@ func TestFileTransformer_CopyAndDelayReturn(t *testing.T) {
 	require.NotNil(t, achIn)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify the "returned" file created
@@ -692,7 +693,7 @@ func TestFileTransformer_CopyAndDelayCorrection(t *testing.T) {
 	require.NotNil(t, achIn)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify the "returned" file created
@@ -741,7 +742,7 @@ func TestFileTransformer_CopyAndDelayReturnAndCopyOnly(t *testing.T) {
 	require.NotNil(t, achIn)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify the "returned" file created
@@ -790,7 +791,7 @@ func TestFileTransformer_CopyAndDelayCorrectionAndCopyOnly(t *testing.T) {
 	require.NotNil(t, achIn)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify the "returned" file created
@@ -844,7 +845,7 @@ func TestFileTransformer_DelayCorrectionOnlyAndDelayReturnOnly_sameDelay(t *test
 	require.NotNil(t, achIn)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify the "returned" file created
@@ -903,7 +904,7 @@ func TestFileTransformer_DelayCorrectionOnlyAndDelayReturnOnly_differentDelay(t 
 	require.NotNil(t, achIn)
 
 	// transform the file
-	err = fileTransformer.Transform(achIn)
+	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
 	// verify the "returned" file created
@@ -996,7 +997,7 @@ func TestFileTransformer_CTX(t *testing.T) {
 
 	t.Run("return", func(t *testing.T) {
 		// transform
-		err := fileTransformer.Transform(achIn)
+		err := fileTransformer.Transform(context.Background(), achIn)
 		require.NoError(t, err)
 
 		retdir := filepath.Join(dir, "returned")
@@ -1021,7 +1022,7 @@ func TestFileTransformer_CTX(t *testing.T) {
 
 	t.Run("correction", func(t *testing.T) {
 		// transform
-		err := fileTransformer.Transform(achIn)
+		err := fileTransformer.Transform(context.Background(), achIn)
 		require.NoError(t, err)
 
 		retdir := filepath.Join(dir, "returned")

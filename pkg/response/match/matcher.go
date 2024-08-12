@@ -1,6 +1,7 @@
 package match
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -8,6 +9,10 @@ import (
 	"github.com/moov-io/ach-test-harness/internal/achx"
 	"github.com/moov-io/ach-test-harness/pkg/service"
 	"github.com/moov-io/base/log"
+	"github.com/moov-io/base/telemetry"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type Matcher struct {
@@ -28,7 +33,12 @@ func New(logger log.Logger, cfg service.Matching, responses []service.Response) 
 	}
 }
 
-func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, processAction *service.Action) {
+func (m Matcher) FindAction(ctx context.Context, ed *ach.EntryDetail) (copyAction *service.Action, processAction *service.Action) {
+	ctx, span := telemetry.StartSpan(ctx, "matcher-find-action", trace.WithAttributes(
+		attribute.String("entry.trace_number", ed.TraceNumber),
+	))
+	defer span.End()
+
 	/*
 	 * See https://github.com/moov-io/ach-test-harness#config-schema for more details on how to configure.
 	 */
@@ -156,6 +166,11 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, pr
 		if m.Debug {
 			logger.Log(b.String())
 		}
+		span.AddEvent("match-results", trace.WithAttributes(
+			attribute.String("results", b.String()),
+			attribute.String("match.positive", strings.Join(positiveMatchers, ", ")),
+			attribute.String("match.negative", strings.Join(negativeMatchers, ", ")),
+		))
 
 		// Return the Action if we've still matched
 		if negative == 0 && positive > 0 {

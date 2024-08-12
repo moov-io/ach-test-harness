@@ -3,14 +3,17 @@
 package service
 
 import (
-	ftp "goftp.io/server/core"
+	"context"
+	"fmt"
 
-	"github.com/gorilla/mux"
+	achtestharness "github.com/moov-io/ach-test-harness"
 	"github.com/moov-io/base/config"
 	"github.com/moov-io/base/log"
 	"github.com/moov-io/base/stime"
+	"github.com/moov-io/base/telemetry"
 
-	_ "github.com/moov-io/ach-test-harness"
+	"github.com/gorilla/mux"
+	ftp "goftp.io/server/core"
 )
 
 // Environment - Contains everything thats been instantiated for this service.
@@ -48,6 +51,16 @@ func NewEnvironment(env *Environment) (*Environment, error) {
 
 	if env.TimeService == nil {
 		env.TimeService = stime.NewSystemTimeService()
+	}
+
+	telemetryShutdownFunc, err := telemetry.SetupTelemetry(context.Background(), env.Config.Telemetry, achtestharness.Version)
+	if err != nil {
+		return env, fmt.Errorf("setting up telemetry failed: %w", err)
+	}
+	prev := env.Shutdown
+	env.Shutdown = func() {
+		prev()
+		telemetryShutdownFunc()
 	}
 
 	return env, nil

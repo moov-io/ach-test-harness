@@ -1,6 +1,7 @@
 package entries
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 )
 
 type EntryService interface {
-	Search(ops SearchOptions) ([]*ach.EntryDetail, error)
+	Search(ctx context.Context, ops SearchOptions) ([]*ach.EntryDetail, error)
 }
 
 type entryService struct {
@@ -57,6 +58,6 @@ func parseTimestamp(when string) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("unable to parse '%s'", when)
 }
 
-func (s *entryService) Search(opts SearchOptions) ([]*ach.EntryDetail, error) {
-	return s.repository.Search(opts)
+func (s *entryService) Search(ctx context.Context, opts SearchOptions) ([]*ach.EntryDetail, error) {
+	return s.repository.Search(ctx, opts)
 }

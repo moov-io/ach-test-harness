@@ -36,7 +36,7 @@ build:
 
 .PHONY: setup
 setup:
-	docker-compose up -d --force-recreate --remove-orphans
+	docker compose up -d --force-recreate --remove-orphans
 
 .PHONY: check
 check:
@@ -50,7 +50,7 @@ endif
 
 .PHONY: teardown
 teardown:
-	-docker-compose down --remove-orphans
+	-docker compose down --remove-orphans
 
 docker: update
 	docker build --pull --build-arg VERSION=${VERSION} -t moov/ach-test-harness:${VERSION} -f Dockerfile .

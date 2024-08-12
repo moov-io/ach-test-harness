@@ -1,6 +1,7 @@
 package batches
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 )
 
 type BatchService interface {
-	Search(ops SearchOptions) ([]ach.Batcher, error)
+	Search(ctx context.Context, ops SearchOptions) ([]ach.Batcher, error)
 }
 
 type batchService struct {
@@ -31,8 +32,8 @@ type SearchOptions struct {
 	Path          string
 }
 
-func (s *batchService) Search(opts SearchOptions) ([]ach.Batcher, error) {
-	return s.repository.Search(opts)
+func (s *batchService) Search(ctx context.Context, opts SearchOptions) ([]ach.Batcher, error) {
+	return s.repository.Search(ctx, opts)
 }
 
 func (opts SearchOptions) fileTooOld(file *ach.File) (bool, error) {
