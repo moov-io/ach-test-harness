@@ -1,6 +1,7 @@
 package response
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"testing"
@@ -26,7 +27,7 @@ func TestMorphEntry__Correction(t *testing.T) {
 	}
 	bh := file.Batches[0].GetHeader()
 	ed := file.Batches[0].GetEntries()[0]
-	out, err := xform.MorphEntry(file.Header, bh, ed, &action)
+	out, err := xform.MorphEntry(context.Background(), file.Header, bh, ed, &action)
 	require.NoError(t, err)
 
 	if out.Addenda98 == nil {
@@ -60,7 +61,7 @@ func TestMorphEntry__Return(t *testing.T) {
 	}
 	bh := file.Batches[0].GetHeader()
 	ed := file.Batches[0].GetEntries()[0]
-	out, err := xform.MorphEntry(file.Header, bh, ed, &action)
+	out, err := xform.MorphEntry(context.Background(), file.Header, bh, ed, &action)
 	require.NoError(t, err)
 
 	if out.Addenda98 != nil {
@@ -102,7 +103,7 @@ func TestMorphEntry__Prenote(t *testing.T) {
 			ed.TransactionCode = ach.CheckingPrenoteCredit
 
 			xform := &CorrectionTransformer{}
-			out, err := xform.MorphEntry(file.Header, bh, ed, &action)
+			out, err := xform.MorphEntry(context.Background(), file.Header, bh, ed, &action)
 			require.NoError(t, err, msg)
 
 			require.Equal(t, ach.CheckingReturnNOCCredit, out.TransactionCode, msg)
@@ -130,7 +131,7 @@ func TestMorphEntry__Prenote(t *testing.T) {
 			ed.TransactionCode = ach.CheckingPrenoteCredit
 
 			xform := &ReturnTransformer{}
-			out, err := xform.MorphEntry(file.Header, bh, ed, &action)
+			out, err := xform.MorphEntry(context.Background(), file.Header, bh, ed, &action)
 			require.NoError(t, err, msg)
 
 			require.Equal(t, ach.CheckingReturnNOCCredit, out.TransactionCode, msg)

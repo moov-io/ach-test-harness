@@ -1,11 +1,15 @@
 package response
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/moov-io/ach"
 	"github.com/moov-io/base/log"
+	"github.com/moov-io/base/telemetry"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	ftp "goftp.io/server/core"
 )
 
@@ -35,6 +39,12 @@ type FTPWatcher struct {
 }
 
 func (notify *FTPWatcher) AfterFilePut(conn *ftp.Conn, dstPath string, size int64, err error) {
+	ctx, span := telemetry.StartSpan(context.Background(), "after-file-put", trace.WithAttributes(
+		attribute.String("ftp.destination", dstPath),
+		attribute.Int64("ftp.file_size_bytes", size),
+	))
+	defer span.End()
+
 	notify.logger.Info().Log(fmt.Sprintf("accepting file at %s", dstPath))
 
 	if err != nil {
@@ -58,13 +68,14 @@ func (notify *FTPWatcher) AfterFilePut(conn *ftp.Conn, dstPath string, size int6
 
 	file, err := reader.Read()
 	if err != nil {
+		span.RecordError(err)
 		notify.logger.Error().Log(fmt.Sprintf("ftp: error reading ACH file %s: %v", dstPath, err))
 	}
 	if err := file.Create(); err != nil {
 		notify.logger.Error().Log(fmt.Sprintf("ftp: error creating file %s: %v", dstPath, err))
 	}
 
-	if err := notify.transformer.Transform(&file); err != nil {
+	if err := notify.transformer.Transform(ctx, &file); err != nil {
 		notify.logger.Error().Log(fmt.Sprintf("ftp: error transforming file %s: %v", dstPath, err))
 	}
 }

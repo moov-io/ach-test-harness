@@ -2,6 +2,7 @@ package response
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -9,6 +10,9 @@ import (
 
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/service"
+	"github.com/moov-io/base/telemetry"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // batchMirror is an object that will save batches
@@ -56,10 +60,13 @@ func newBatchMirror(w FileWriter) *batchMirror {
 	}
 }
 
-func (bm *batchMirror) saveEntry(b *ach.Batcher, copy *service.Copy, ed *ach.EntryDetail) {
+func (bm *batchMirror) saveEntry(ctx context.Context, b *ach.Batcher, copy *service.Copy, ed *ach.EntryDetail) {
 	if b == nil || copy == nil || ed == nil {
 		return
 	}
+
+	ctx, span := telemetry.StartSpan(ctx, "batch-mirror-save-entry")
+	defer span.End()
 
 	batcher := *b
 	// Get the batchMirrorKey
@@ -67,6 +74,10 @@ func (bm *batchMirror) saveEntry(b *ach.Batcher, copy *service.Copy, ed *ach.Ent
 		path:      copy.Path,
 		companyID: batcher.GetHeader().CompanyIdentification,
 	}
+	span.SetAttributes(
+		attribute.String("batch.company_id", key.companyID),
+	)
+
 	// Create a new batchMirrorBatch map if this key does not exist
 	if _, exists := bm.batches[key]; !exists {
 		bm.batches[key] = make(map[string]*batchMirrorBatch)
@@ -83,10 +94,15 @@ func (bm *batchMirror) saveEntry(b *ach.Batcher, copy *service.Copy, ed *ach.Ent
 	bm.batches[key][batcher.GetHeader().BatchNumberField()].entries = append(bm.batches[key][batcher.GetHeader().BatchNumberField()].entries, ed)
 }
 
-func (bm *batchMirror) saveFiles() error {
+func (bm *batchMirror) saveFiles(ctx context.Context) error {
 	if len(bm.batches) == 0 {
 		return nil
 	}
+
+	_, span := telemetry.StartSpan(ctx, "batch-mirror-save-files", trace.WithAttributes(
+		attribute.Int("mirror.batches", len(bm.batches)),
+	))
+	defer span.End()
 
 	// Write files by Path/CompanyID
 	for key, mirror := range bm.batches {

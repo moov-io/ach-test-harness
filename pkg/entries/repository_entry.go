@@ -1,6 +1,7 @@
 package entries
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"path/filepath"
@@ -9,10 +10,14 @@ import (
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/response/match"
 	"github.com/moov-io/ach-test-harness/pkg/service"
+	"github.com/moov-io/base/telemetry"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type EntryRepository interface {
-	Search(opts SearchOptions) ([]*ach.EntryDetail, error)
+	Search(ctx context.Context, opts SearchOptions) ([]*ach.EntryDetail, error)
 }
 
 type ftpRepository struct {
@@ -25,8 +30,13 @@ func NewFTPRepository(cfg *service.FTPConfig) *ftpRepository {
 	}
 }
 
-func (r *ftpRepository) Search(opts SearchOptions) ([]*ach.EntryDetail, error) {
+func (r *ftpRepository) Search(ctx context.Context, opts SearchOptions) ([]*ach.EntryDetail, error) {
+	_, span := telemetry.StartSpan(ctx, "repo-entry-search")
+	defer span.End()
+
 	out := make([]*ach.EntryDetail, 0)
+
+	var filesProcessed int
 
 	//nolint:gosimple
 	var search fs.WalkDirFunc
@@ -42,14 +52,26 @@ func (r *ftpRepository) Search(opts SearchOptions) ([]*ach.EntryDetail, error) {
 		if strings.ToLower(filepath.Ext(path)) != ".ach" {
 			return nil
 		}
+		filesProcessed += 1
 
 		entries, err := filterEntries(path, opts)
 		if err != nil {
 			return err
 		}
-		out = append(out, entries...)
+
+		if len(entries) > 0 {
+			span.AddEvent("found-entries", trace.WithAttributes(
+				attribute.Int("search.entries", len(entries)),
+				attribute.String("search.filename", path),
+			))
+
+			out = append(out, entries...)
+		}
 		return nil
 	}
+	span.SetAttributes(
+		attribute.Int("search.files_processed", filesProcessed),
+	)
 
 	var walkingPath = r.rootPath
 	if opts.Path != "" {

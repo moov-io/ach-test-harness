@@ -5,8 +5,10 @@ import (
 	"net/http"
 
 	"github.com/moov-io/base/log"
+	"github.com/moov-io/base/telemetry"
 
 	"github.com/gorilla/mux"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func NewBatchController(logger log.Logger, service BatchService) *batchController {
@@ -33,9 +35,17 @@ func (c *batchController) AppendRoutes(router *mux.Router) *mux.Router {
 
 func (c *batchController) Search() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, span := telemetry.StartSpan(r.Context(), "api-batch-search")
+		defer span.End()
+
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-		batches, err := c.service.Search(readSearchOptions(r))
+		opts := readSearchOptions(r)
+		span.SetAttributes(
+			attribute.String("search.trace_number", opts.TraceNumber),
+		)
+
+		batches, err := c.service.Search(ctx, opts)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
