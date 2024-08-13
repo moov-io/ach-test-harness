@@ -1,3 +1,9 @@
+## v0.13.1 (Released 2024-08-13)
+
+IMPROVEMENTS
+
+- response: remove noisy match spans
+
 ## v0.13.0 (Released 2024-08-12)
 
 IMPROVEMENTS
