@@ -1,7 +1,6 @@
 package match
 
 import (
-	"context"
 	"path/filepath"
 	"testing"
 	"time"
@@ -192,8 +191,6 @@ func TestMatchTraceNumber(t *testing.T) {
 // TransactionCode  RDFIIdentification  AccountNumber      Amount  Name                    TraceNumber      Category
 // 22               27397636            273976369          100     Incorrect Name          273976367520469
 func TestMultiMatch(t *testing.T) {
-	ctx := context.Background()
-
 	var delay, err = time.ParseDuration("12h")
 	require.NoError(t, err)
 
@@ -241,12 +238,12 @@ func TestMultiMatch(t *testing.T) {
 		entries := file.Batches[0].GetEntries()
 
 		// Find our Action
-		copyAction, processAction := matcher.FindAction(ctx, entries[0])
+		copyAction, processAction := matcher.FindAction(entries[0])
 		require.Nil(t, copyAction)
 		require.Nil(t, processAction)
 
 		// Find our Action
-		copyAction, processAction = matcher.FindAction(ctx, entries[1])
+		copyAction, processAction = matcher.FindAction(entries[1])
 		require.Nil(t, copyAction)
 		require.Nil(t, processAction)
 	})
@@ -269,12 +266,12 @@ func TestMultiMatch(t *testing.T) {
 		entries := file.Batches[0].GetEntries()
 
 		// Find our Action
-		copyAction, processAction := matcher.FindAction(ctx, entries[0])
+		copyAction, processAction := matcher.FindAction(entries[0])
 		require.Nil(t, copyAction)
 		require.Nil(t, processAction)
 
 		// Find our Action
-		copyAction, processAction = matcher.FindAction(ctx, entries[1])
+		copyAction, processAction = matcher.FindAction(entries[1])
 		require.NotNil(t, copyAction)
 		require.Equal(t, actionCopy, *copyAction)
 		require.Nil(t, processAction)
@@ -298,12 +295,12 @@ func TestMultiMatch(t *testing.T) {
 		entries := file.Batches[0].GetEntries()
 
 		// Find our Action
-		copyAction, processAction := matcher.FindAction(ctx, entries[0])
+		copyAction, processAction := matcher.FindAction(entries[0])
 		require.Nil(t, copyAction)
 		require.Nil(t, processAction)
 
 		// Find our Action
-		copyAction, processAction = matcher.FindAction(ctx, entries[1])
+		copyAction, processAction = matcher.FindAction(entries[1])
 		require.Nil(t, copyAction)
 		require.NotNil(t, processAction)
 		require.Equal(t, actionReturn, *processAction)
@@ -335,12 +332,12 @@ func TestMultiMatch(t *testing.T) {
 		entries := file.Batches[0].GetEntries()
 
 		// Find our Action
-		copyAction, processAction := matcher.FindAction(ctx, entries[0])
+		copyAction, processAction := matcher.FindAction(entries[0])
 		require.Nil(t, copyAction)
 		require.Nil(t, processAction)
 
 		// Find our Action
-		copyAction, processAction = matcher.FindAction(ctx, entries[1])
+		copyAction, processAction = matcher.FindAction(entries[1])
 		require.NotNil(t, copyAction)
 		require.Equal(t, actionCopy, *copyAction)
 		require.NotNil(t, processAction)

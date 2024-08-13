@@ -60,13 +60,10 @@ func newBatchMirror(w FileWriter) *batchMirror {
 	}
 }
 
-func (bm *batchMirror) saveEntry(ctx context.Context, b *ach.Batcher, copy *service.Copy, ed *ach.EntryDetail) {
+func (bm *batchMirror) saveEntry(b *ach.Batcher, copy *service.Copy, ed *ach.EntryDetail) {
 	if b == nil || copy == nil || ed == nil {
 		return
 	}
-
-	ctx, span := telemetry.StartSpan(ctx, "batch-mirror-save-entry")
-	defer span.End()
 
 	batcher := *b
 	// Get the batchMirrorKey
@@ -74,9 +71,6 @@ func (bm *batchMirror) saveEntry(ctx context.Context, b *ach.Batcher, copy *serv
 		path:      copy.Path,
 		companyID: batcher.GetHeader().CompanyIdentification,
 	}
-	span.SetAttributes(
-		attribute.String("batch.company_id", key.companyID),
-	)
 
 	// Create a new batchMirrorBatch map if this key does not exist
 	if _, exists := bm.batches[key]; !exists {

@@ -12,6 +12,9 @@ import (
 	"github.com/moov-io/ach-test-harness/pkg/service"
 	"github.com/moov-io/base/log"
 	"github.com/moov-io/base/telemetry"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type FileTransfomer struct {
@@ -40,7 +43,9 @@ func NewFileTransformer(logger log.Logger, cfg *service.Config, responses []serv
 }
 
 func (ft *FileTransfomer) Transform(ctx context.Context, file *ach.File) error {
-	ctx, span := telemetry.StartSpan(ctx, "file-transform")
+	ctx, span := telemetry.StartSpan(ctx, "file-transform", trace.WithAttributes(
+		attribute.Int("file.batches", len(file.Batches)),
+	))
 	defer span.End()
 
 	// Track ach.File objects to write based on different delay durations, including a default of "0s"
@@ -58,10 +63,10 @@ func (ft *FileTransfomer) Transform(ctx context.Context, file *ach.File) error {
 		entries := file.Batches[i].GetEntries()
 		for j := range entries {
 			// Check if there's a matching Action and perform it. There may also be a future-dated action to execute.
-			copyAction, processAction := ft.Matcher.FindAction(ctx, entries[j])
+			copyAction, processAction := ft.Matcher.FindAction(entries[j])
 			if copyAction != nil {
 				// Save this Entry
-				mirror.saveEntry(ctx, &file.Batches[i], copyAction.Copy, entries[j])
+				mirror.saveEntry(&file.Batches[i], copyAction.Copy, entries[j])
 			}
 			if processAction != nil {
 				entry, err := ft.Entry.MorphEntry(ctx, file.Header, bh, entries[j], processAction)
