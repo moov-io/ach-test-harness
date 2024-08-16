@@ -1,6 +1,8 @@
 # generated-from:e09dee96ebf4666ccbcec622d28d1772a2c1f53310b3395b4114a1fce494a91f DO NOT REMOVE, DO UPDATE
 
 ACHTestHarness:
+  Telemetry:
+    ServiceName: "ach-test-harness"
   Servers:
     FTP:
       RootPath: "./data"
