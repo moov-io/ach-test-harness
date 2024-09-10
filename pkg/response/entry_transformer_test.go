@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/service"
@@ -34,6 +35,7 @@ func TestMorphEntry__Correction(t *testing.T) {
 		t.Fatal("exected Addenda98 record")
 	}
 	require.NotEqual(t, ed.TraceNumber, out.TraceNumber)
+	require.Equal(t, ach.CheckingReturnNOCDebit, out.TransactionCode)
 	require.Equal(t, ed.TraceNumber, out.Addenda98.OriginalTrace)
 	require.Equal(t, "C01", out.Addenda98.ChangeCode)
 	require.Equal(t, "45111616", out.Addenda98.CorrectedData)
@@ -71,11 +73,94 @@ func TestMorphEntry__Return(t *testing.T) {
 		t.Fatal("exected Addenda99 record")
 	}
 	require.NotEqual(t, ed.TraceNumber, out.TraceNumber)
+	require.Equal(t, ach.CheckingReturnNOCDebit, out.TransactionCode)
 	require.Equal(t, "12104288", out.RDFIIdentification)
 	require.Equal(t, "2", out.CheckDigit)
 	require.Equal(t, ed.TraceNumber, out.Addenda99.OriginalTrace)
 	require.Equal(t, "R01", out.Addenda99.ReturnCode)
 	require.Equal(t, "23138010", out.Addenda99.OriginalDFI)
+}
+
+func TestMorphEntry_Return_GL(t *testing.T) {
+	file, err := ach.ReadFile(filepath.Join("..", "..", "examples", "gl-debit.ach"))
+	require.NoError(t, err)
+
+	xform := &ReturnTransformer{}
+	action := service.Action{
+		Return: &service.Return{
+			Code: "R03",
+		},
+	}
+	bh := file.Batches[0].GetHeader()
+	ed := file.Batches[0].GetEntries()[0]
+	out, err := xform.MorphEntry(context.Background(), file.Header, bh, ed, &action)
+	require.NoError(t, err)
+
+	if out.Addenda98 != nil {
+		t.Fatal("unexpected Addenda98")
+	}
+	if out.Addenda99 == nil {
+		t.Fatal("exected Addenda99 record")
+	}
+	require.NotEqual(t, ed.TraceNumber, out.TraceNumber)
+	require.Equal(t, ach.GLReturnNOCDebit, out.TransactionCode)
+	require.Equal(t, "12104288", out.RDFIIdentification)
+	require.Equal(t, "2", out.CheckDigit)
+	require.Equal(t, ed.TraceNumber, out.Addenda99.OriginalTrace)
+	require.Equal(t, "R03", out.Addenda99.ReturnCode)
+	require.Equal(t, "23138010", out.Addenda99.OriginalDFI)
+
+	// Try the reversal
+	err = file.Reversal(time.Now())
+	require.NoError(t, err)
+
+	bh = file.Batches[0].GetHeader()
+	ed = file.Batches[0].GetEntries()[0]
+
+	out, err = xform.MorphEntry(context.Background(), file.Header, bh, ed, &action)
+	require.NoError(t, err)
+	require.Equal(t, ach.GLReturnNOCCredit, out.TransactionCode)
+}
+
+func TestMorphEntry_Return_Loan(t *testing.T) {
+	file, err := ach.ReadFile(filepath.Join("..", "..", "examples", "loan-credit.ach"))
+	require.NoError(t, err)
+
+	xform := &ReturnTransformer{}
+	action := service.Action{
+		Return: &service.Return{
+			Code: "R03",
+		},
+	}
+	bh := file.Batches[0].GetHeader()
+	ed := file.Batches[0].GetEntries()[0]
+	out, err := xform.MorphEntry(context.Background(), file.Header, bh, ed, &action)
+	require.NoError(t, err)
+
+	if out.Addenda98 != nil {
+		t.Fatal("unexpected Addenda98")
+	}
+	if out.Addenda99 == nil {
+		t.Fatal("exected Addenda99 record")
+	}
+	require.NotEqual(t, ed.TraceNumber, out.TraceNumber)
+	require.Equal(t, ach.LoanReturnNOCCredit, out.TransactionCode)
+	require.Equal(t, "12104288", out.RDFIIdentification)
+	require.Equal(t, "2", out.CheckDigit)
+	require.Equal(t, ed.TraceNumber, out.Addenda99.OriginalTrace)
+	require.Equal(t, "R03", out.Addenda99.ReturnCode)
+	require.Equal(t, "23138010", out.Addenda99.OriginalDFI)
+
+	// Try the reversal
+	err = file.Reversal(time.Now())
+	require.NoError(t, err)
+
+	bh = file.Batches[0].GetHeader()
+	ed = file.Batches[0].GetEntries()[0]
+
+	out, err = xform.MorphEntry(context.Background(), file.Header, bh, ed, &action)
+	require.NoError(t, err)
+	require.Equal(t, ach.LoanReturnNOCDebit, out.TransactionCode)
 }
 
 func TestMorphEntry__Prenote(t *testing.T) {
@@ -141,5 +226,13 @@ func TestMorphEntry__Prenote(t *testing.T) {
 			require.Equal(t, ed.TraceNumber, out.Addenda99.OriginalTrace, msg)
 			require.Equal(t, "R01", out.Addenda99.ReturnCode, msg)
 		}
+	})
+
+	t.Run("loan", func(t *testing.T) {
+		// TODO(adam):
+	})
+
+	t.Run("general-ledger", func(t *testing.T) {
+		// TODO(adam):
 	})
 }

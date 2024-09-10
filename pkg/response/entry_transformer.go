@@ -47,8 +47,12 @@ func (t *CorrectionTransformer) MorphEntry(ctx context.Context, fh ach.FileHeade
 
 	// Set the TransactionCode from the EntryDetail
 	switch ed.TransactionCode {
-	case ach.CheckingCredit, ach.CheckingDebit, ach.SavingsCredit, ach.SavingsDebit:
+	case ach.CheckingCredit, ach.CheckingDebit, ach.SavingsCredit, ach.SavingsDebit,
+		ach.GLCredit, ach.GLDebit, ach.LoanCredit:
 		out.TransactionCode = ed.TransactionCode - 1
+
+	case ach.LoanDebit:
+		out.TransactionCode += 1 // LoanDebit (55) -> LoanReturnNOCDebit (56)
 
 	case ach.CheckingPrenoteCredit, ach.CheckingPrenoteDebit, ach.SavingsPrenoteCredit, ach.SavingsPrenoteDebit,
 		ach.GLPrenoteCredit, ach.GLPrenoteDebit, ach.LoanPrenoteCredit:
@@ -127,8 +131,12 @@ func (t *ReturnTransformer) MorphEntry(ctx context.Context, fh ach.FileHeader, b
 
 	// Set the TransactionCode from the EntryDetail
 	switch ed.TransactionCode {
-	case ach.CheckingCredit, ach.CheckingDebit, ach.SavingsCredit, ach.SavingsDebit:
+	case ach.CheckingCredit, ach.CheckingDebit, ach.SavingsCredit, ach.SavingsDebit,
+		ach.GLCredit, ach.GLDebit, ach.LoanCredit:
 		out.TransactionCode = ed.TransactionCode - 1
+
+	case ach.LoanDebit:
+		out.TransactionCode = ed.TransactionCode + 1 // LoanDebit (55) -> LoanReturnNOCDebit (56)
 
 	case ach.CheckingPrenoteCredit, ach.CheckingPrenoteDebit, ach.SavingsPrenoteCredit, ach.SavingsPrenoteDebit,
 		ach.GLPrenoteCredit, ach.GLPrenoteDebit, ach.LoanPrenoteCredit:
