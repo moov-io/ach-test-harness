@@ -1,3 +1,19 @@
+## v0.14.0 (Released 2024-09-11)
+
+IMPROVEMENTS
+
+- configs: set up default service name for telemetry
+- feat: support GL and Loan transaction codes for Returns/NOCs
+
+BUILD
+
+- (deps): update opentelemetry-go monorepo to v1.29.0
+- chore(deps): update actions/checkout action to v4
+- chore(deps): update actions/setup-go action to v5
+- chore(deps): update github/codeql-action action to v3
+- chore(deps): update golang docker tag to v1.23
+- fix(deps): update module github.com/moov-io/ach to v1.42.0
+
 ## v0.13.1 (Released 2024-08-13)
 
 IMPROVEMENTS
