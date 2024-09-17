@@ -117,13 +117,21 @@ func (ft *FileTransfomer) Transform(ctx context.Context, file *ach.File) error {
 		return fmt.Errorf("problem saving entries: %v", err)
 	}
 
+	var outFileCount int
 	for delay, out := range outFiles {
+		outFileCount += 1
+
 		if out != nil && len(out.Batches) > 0 {
 			if err := out.Create(); err != nil {
 				return fmt.Errorf("transform out create: %v", err)
 			}
 			if err := out.Validate(); err == nil {
 				generatedFilePath := filepath.Join(ft.returnPath, generateFilename(out)) // TODO(adam): need to determine return path
+
+				span.SetAttributes(
+					attribute.String(fmt.Sprintf("outfile.%d.path", outFileCount), generatedFilePath),
+				)
+
 				if err := ft.Writer.WriteFile(generatedFilePath, out, delay); err != nil {
 					return fmt.Errorf("transform write %s: %v", generatedFilePath, err)
 				}
@@ -197,14 +205,15 @@ var (
 )
 
 func generateFilename(file *ach.File) string {
+	timestamp := time.Now().Format("20060102-150405.00000")
 	if file == nil {
-		return fmt.Sprintf("MISSING_%d.ach", randomFilenameSource.Int63())
+		return fmt.Sprintf("MISSING_%s_%d.ach", timestamp, randomFilenameSource.Int63())
 	}
 	for i := range file.Batches {
 		bh := file.Batches[i].GetHeader()
 		if bh.StandardEntryClassCode == ach.COR {
-			return fmt.Sprintf("CORRECTION_%d.ach", randomFilenameSource.Int63())
+			return fmt.Sprintf("CORRECTION_%s_%d.ach", timestamp, randomFilenameSource.Int63())
 		}
 	}
-	return fmt.Sprintf("RETURN_%d.ach", randomFilenameSource.Int63())
+	return fmt.Sprintf("RETURN_%s_%d.ach", timestamp, randomFilenameSource.Int63())
 }
