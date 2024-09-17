@@ -1,3 +1,13 @@
+## v0.14.3 (Released 2024-09-17)
+
+IMPROVEMENTS
+
+- response: include more uniqness in generated filenames
+
+BUILD
+
+- fix(deps): update opentelemetry-go monorepo to v1.30.0
+
 ## v0.14.2 (Released 2024-09-11)
 
 IMPROVEMENTS
