@@ -3,6 +3,7 @@ package response
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -11,6 +12,7 @@ import (
 	"github.com/moov-io/ach"
 	"github.com/moov-io/ach-test-harness/pkg/service"
 	"github.com/moov-io/base/telemetry"
+
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -27,9 +29,13 @@ type batchMirrorKey struct {
 	companyID string
 }
 
-func (key *batchMirrorKey) getFilePathName() string {
+func (key *batchMirrorKey) getFilepath(data []byte) string {
+	hash := fmt.Sprintf("%X", sha256.Sum256(data))
+	if len(hash) > 8 {
+		hash = hash[:8]
+	}
 	timestamp := time.Now().Format("20060102-150405.00000")
-	filename := fmt.Sprintf("%s_%s.ach", key.companyID, timestamp)
+	filename := fmt.Sprintf("%s_%s_%s.ach", key.companyID, timestamp, hash)
 	return filepath.Join(key.path, filename)
 }
 
@@ -99,7 +105,10 @@ func (bm *batchMirror) saveFiles(ctx context.Context) error {
 	defer span.End()
 
 	// Write files by Path/CompanyID
+	var batchCount int
 	for key, mirror := range bm.batches {
+		batchCount += 1
+
 		var buf bytes.Buffer
 
 		// sort the keys so that the batches appear in the correct order
@@ -119,9 +128,14 @@ func (bm *batchMirror) saveFiles(ctx context.Context) error {
 		}
 
 		// Write the file out
-		err := bm.writer.Write(key.getFilePathName(), &buf, nil)
+		path := key.getFilepath(buf.Bytes())
+		span.SetAttributes(
+			attribute.String(fmt.Sprintf("saved-files.%d.path", batchCount), path),
+		)
+
+		err := bm.writer.Write(path, &buf, nil)
 		if err != nil {
-			return fmt.Errorf("problem writing file: %v", err)
+			return fmt.Errorf("writing %s failed: %v", path, err)
 		}
 	}
 	return nil
