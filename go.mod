@@ -5,7 +5,7 @@ module github.com/moov-io/ach-test-harness
 go 1.22.2
 
 require (
-	github.com/evanphx/json-patch v4.12.0+incompatible
+	github.com/evanphx/json-patch v5.9.0+incompatible
 	github.com/gorilla/mux v1.8.1
 	github.com/markbates/pkger v0.17.1
 	github.com/moov-io/ach v1.42.0
@@ -14,6 +14,7 @@ require (
 	go.opentelemetry.io/otel v1.30.0
 	go.opentelemetry.io/otel/trace v1.30.0
 	goftp.io/server v0.4.1
+	goftp.io/server/v2 v2.0.1
 )
 
 require (
