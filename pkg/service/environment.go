@@ -16,16 +16,16 @@ import (
 	ftp "goftp.io/server/core"
 )
 
-// Environment - Contains everything thats been instantiated for this service.
+// Environment - Contains everything that has been instantiated for this service.
 type Environment struct {
 	Logger      log.Logger
 	Config      *Config
 	TimeService stime.TimeService
-	Router      *mux.Router
+	Routers     map[ServerName]*mux.Router
 
-	// ftp or sftp server
-	FTPServer *ftp.Server
-	Shutdown  func()
+	// ftp or sftp servers
+	FTPServers map[ServerName]*ftp.Server
+	Shutdown   func()
 }
 
 // NewEnvironment - Generates a new default environment. Overrides can be specified via configs.

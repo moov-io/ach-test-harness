@@ -9,11 +9,15 @@ import (
 
 func TestConfig__Config(t *testing.T) {
 	cfg := &Config{
-		Responses: []Response{
+		Servers: []ServerConfig{
 			{
-				Action: Action{
-					Copy:   &Copy{Path: "/reconciliation/"},
-					Return: &Return{Code: "R01"},
+				Responses: []Response{
+					{
+						Action: Action{
+							Copy:   &Copy{Path: "/reconciliation/"},
+							Return: &Return{Code: "R01"},
+						},
+					},
 				},
 			},
 		},

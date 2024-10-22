@@ -22,38 +22,42 @@ func (gc *GlobalConfig) Validate() error {
 
 // Config defines all the configuration for the app
 type Config struct {
-	Servers   ServerConfig
+	Servers   []ServerConfig
 	Telemetry telemetry.Config
-
-	ValidateOpts *ach.ValidateOpts
-	Matching     Matching
-	Responses    []Response
 }
 
 func (cfg *Config) Validate() error {
-	for i := range cfg.Responses {
-		if err := cfg.Responses[i].Validate(); err != nil {
-			return err
+	for i := range cfg.Servers {
+		for j := range cfg.Servers[i].Responses {
+			if err := cfg.Servers[i].Responses[j].Validate(); err != nil {
+				return err
+			}
 		}
 	}
 
 	return nil
 }
 
-func (cfg *Config) responsePaths() []string {
-	var out []string
-	for i := range cfg.Responses {
-		if cfg.Responses[i].Action.Copy != nil {
-			out = append(out, cfg.Responses[i].Action.Copy.Path)
-		}
-	}
-	return out
-}
+type ServerName string
 
 // ServerConfig - Groups all the http configs for the servers and ports that get opened.
 type ServerConfig struct {
-	FTP   *FTPConfig
-	Admin HTTPConfig
+	Name         ServerName
+	FTP          *FTPConfig
+	Admin        HTTPConfig
+	ValidateOpts *ach.ValidateOpts
+	Matching     Matching
+	Responses    []Response
+}
+
+func (sc *ServerConfig) responsePaths() []string {
+	var out []string
+	for i := range sc.Responses {
+		if sc.Responses[i].Action.Copy != nil {
+			out = append(out, sc.Responses[i].Action.Copy.Path)
+		}
+	}
+	return out
 }
 
 // FTPConfig configuration for running an FTP server

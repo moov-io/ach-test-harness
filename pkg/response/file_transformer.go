@@ -26,9 +26,9 @@ type FileTransfomer struct {
 	returnPath string
 }
 
-func NewFileTransformer(logger log.Logger, cfg *service.Config, responses []service.Response, writer FileWriter) *FileTransfomer {
+func NewFileTransformer(logger log.Logger, cfg *service.ServerConfig, writer FileWriter) *FileTransfomer {
 	xform := &FileTransfomer{
-		Matcher: match.New(logger, cfg.Matching, responses),
+		Matcher: match.New(logger, cfg.Matching, cfg.Responses),
 		Entry: EntryTransformers([]EntryTransformer{
 			&CorrectionTransformer{},
 			&ReturnTransformer{},
@@ -36,8 +36,8 @@ func NewFileTransformer(logger log.Logger, cfg *service.Config, responses []serv
 		Writer:       writer,
 		ValidateOpts: cfg.ValidateOpts,
 	}
-	if cfg.Servers.FTP != nil {
-		xform.returnPath = cfg.Servers.FTP.Paths.Return
+	if cfg.FTP != nil {
+		xform.returnPath = cfg.FTP.Paths.Return
 	}
 	return xform
 }

@@ -946,24 +946,26 @@ func testFileTransformer(t *testing.T, resp ...service.Response) (*FileTransfome
 	dir, ftpServer := fileBackedFtpServer(t)
 
 	cfg := &service.Config{
-		Matching: service.Matching{
-			Debug: true,
-		},
-		Servers: service.ServerConfig{
-			FTP: &service.FTPConfig{
-				RootPath: dir,
-				Paths: service.Paths{
-					Return: "./returned/",
+		Servers: []service.ServerConfig{
+			{
+				FTP: &service.FTPConfig{
+					RootPath: dir,
+					Paths: service.Paths{
+						Return: "./returned/",
+					},
 				},
+				Matching: service.Matching{
+					Debug: true,
+				},
+				Responses: resp,
 			},
 		},
 	}
-	responses := resp
 
 	logger := log.NewTestLogger()
-	w := NewFileWriter(logger, cfg.Servers, ftpServer)
+	w := NewFileWriter(logger, cfg.Servers[0], ftpServer)
 
-	return NewFileTransformer(logger, cfg, responses, w), dir
+	return NewFileTransformer(logger, &cfg.Servers[0], w), dir
 }
 
 func hasPrefix(t *testing.T, s, prefix string) {

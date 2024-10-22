@@ -4,6 +4,7 @@ ACHTestHarness:
   Telemetry:
     ServiceName: "ach-test-harness"
   Servers:
+    Name: "test"
     FTP:
       RootPath: "./data"
       Hostname: "0.0.0.0"
@@ -18,7 +19,7 @@ ACHTestHarness:
     Admin:
       Bind:
         Address: ":3333"
-  Matching:
-    Debug: false
-  ValidateOpts: {}
-  Responses: []
+    Matching:
+      Debug: false
+    ValidateOpts: {}
+    Responses: []

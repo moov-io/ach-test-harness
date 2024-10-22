@@ -33,19 +33,21 @@ func main() {
 	defer stopServers()
 
 	// Initialize our responders
-	entryRepository := entries.NewFTPRepository(env.Config.Servers.FTP)
-	entryService := entries.NewEntryService(entryRepository)
-	entryController := entries.NewEntryController(env.Logger, entryService)
-	entryController.AppendRoutes(env.Router)
+	for _, cfg := range env.Config.Servers {
+		entryRepository := entries.NewFTPRepository(cfg.FTP)
+		entryService := entries.NewEntryService(entryRepository)
+		entryController := entries.NewEntryController(env.Logger, entryService)
+		entryController.AppendRoutes(env.Routers[cfg.Name])
 
-	batchRepository := batches.NewFTPRepository(env.Config.Servers.FTP)
-	batchService := batches.NewBatchService(batchRepository)
-	batchController := batches.NewBatchController(env.Logger, batchService)
-	batchController.AppendRoutes(env.Router)
+		batchRepository := batches.NewFTPRepository(cfg.FTP)
+		batchService := batches.NewBatchService(batchRepository)
+		batchController := batches.NewBatchController(env.Logger, batchService)
+		batchController.AppendRoutes(env.Routers[cfg.Name])
 
-	fileWriter := response.NewFileWriter(env.Logger, env.Config.Servers, env.FTPServer)
-	fileTransformer := response.NewFileTransformer(env.Logger, env.Config, env.Config.Responses, fileWriter)
-	response.Register(env.Logger, env.Config.ValidateOpts, env.FTPServer, fileTransformer)
+		fileWriter := response.NewFileWriter(env.Logger, cfg, env.FTPServers[cfg.Name])
+		fileTransformer := response.NewFileTransformer(env.Logger, &cfg, fileWriter)
+		response.Register(env.Logger, cfg.ValidateOpts, env.FTPServers[cfg.Name], fileTransformer)
+	}
 
 	// Block for a signal to shutdown
 	service.AwaitTermination(env.Logger, termListener)

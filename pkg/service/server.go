@@ -20,21 +20,31 @@ import (
 
 // RunServers - Boots up all the servers and awaits till they are stopped.
 func (env *Environment) RunServers(terminationListener chan error) func() {
-	adminServer := bootAdminServer(terminationListener, env.Logger, env.Config.Servers.Admin)
-	env.serveConfig(adminServer)
+	serverShutdown := make(map[*admin.Server]func())
 
-	env.Router = adminServer.Subrouter("/api")
+	for _, cfg := range env.Config.Servers {
+		adminServer := bootAdminServer(terminationListener, env.Logger, cfg.Admin)
+		env.serveConfig(adminServer)
 
-	var shutdownFTPServer func()
-	if env.Config.Servers.FTP != nil {
-		ftpServer, shutdown := bootFTPServer(terminationListener, env.Logger, env.Config.Servers.FTP, env.Config.responsePaths())
-		env.FTPServer = ftpServer
-		shutdownFTPServer = shutdown
+		env.Routers[cfg.Name] = adminServer.Subrouter("/api")
+
+		var shutdownFTPServer func()
+		if cfg.FTP != nil {
+			ftpServer, shutdown := bootFTPServer(terminationListener, env.Logger, cfg.FTP, cfg.responsePaths())
+			env.FTPServers[cfg.Name] = ftpServer
+			shutdownFTPServer = shutdown
+		}
+
+		serverShutdown[adminServer] = shutdownFTPServer
 	}
 
 	return func() {
-		adminServer.Shutdown()
-		shutdownFTPServer()
+		for server, shutdown := range serverShutdown {
+			server.Shutdown()
+			if shutdown != nil {
+				shutdown()
+			}
+		}
 	}
 }
 
