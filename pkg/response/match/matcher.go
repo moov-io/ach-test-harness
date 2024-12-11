@@ -28,7 +28,7 @@ func New(logger log.Logger, cfg service.Matching, responses []service.Response) 
 	}
 }
 
-func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, processAction *service.Action) {
+func (m Matcher) FindAction(bh *ach.BatchHeader, ed *ach.EntryDetail) (copyAction *service.Action, processAction *service.Action) {
 	/*
 	 * See https://github.com/moov-io/ach-test-harness#config-schema for more details on how to configure.
 	 */
@@ -140,6 +140,26 @@ func (m Matcher) FindAction(ed *ach.EntryDetail) (copyAction *service.Action, pr
 			}
 		}
 
+		// BatchHeader fields
+		if matcher.CompanyIdentification != "" {
+			if matchedCompanyIdentification(matcher, bh) {
+				positiveMatchers = append(positiveMatchers, "CompanyIdentification")
+				positive++
+			} else {
+				negativeMatchers = append(negativeMatchers, "CompanyIdentification")
+				negative++
+			}
+		}
+		if matcher.CompanyEntryDescription != "" {
+			if matchedCompanyEntryDescription(matcher, bh) {
+				positiveMatchers = append(positiveMatchers, "CompanyEntryDescription")
+				positive++
+			} else {
+				negativeMatchers = append(negativeMatchers, "CompanyEntryDescription")
+				negative++
+			}
+		}
+
 		// format the list of negative and positive matchers for logging
 		var b strings.Builder
 
@@ -243,4 +263,12 @@ func matchedPrenote(m service.Match, ed *ach.EntryDetail) bool {
 
 func matchedIndividualName(m service.Match, ed *ach.EntryDetail) bool {
 	return strings.TrimSpace(ed.IndividualName) == m.IndividualName
+}
+
+func matchedCompanyIdentification(m service.Match, bh *ach.BatchHeader) bool {
+	return strings.EqualFold(strings.TrimSpace(m.CompanyIdentification), strings.TrimSpace(bh.CompanyIdentification))
+}
+
+func matchedCompanyEntryDescription(m service.Match, bh *ach.BatchHeader) bool {
+	return strings.EqualFold(strings.TrimSpace(m.CompanyEntryDescription), strings.TrimSpace(bh.CompanyEntryDescription))
 }

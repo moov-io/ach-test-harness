@@ -112,6 +112,9 @@ type Match struct {
 	IndividualName string
 	RoutingNumber  string
 	TraceNumber    string
+
+	CompanyIdentification   string
+	CompanyEntryDescription string
 }
 
 func (m Match) Context() map[string]log.Valuer {
