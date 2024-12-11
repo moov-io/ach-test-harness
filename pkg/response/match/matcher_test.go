@@ -225,6 +225,10 @@ func TestMultiMatch(t *testing.T) {
 	var actionDelayCorrection = actionCorrection
 	actionDelayCorrection.Delay = &delay
 
+	bh := ach.NewBatchHeader()
+	bh.CompanyIdentification = "Classbook"
+	bh.CompanyEntryDescription = "Payment"
+
 	t.Run("No Match", func(t *testing.T) {
 		var matcher Matcher
 		matcher.Logger = log.NewTestLogger()
@@ -238,12 +242,12 @@ func TestMultiMatch(t *testing.T) {
 		entries := file.Batches[0].GetEntries()
 
 		// Find our Action
-		copyAction, processAction := matcher.FindAction(entries[0])
+		copyAction, processAction := matcher.FindAction(bh, entries[0])
 		require.Nil(t, copyAction)
 		require.Nil(t, processAction)
 
 		// Find our Action
-		copyAction, processAction = matcher.FindAction(entries[1])
+		copyAction, processAction = matcher.FindAction(bh, entries[1])
 		require.Nil(t, copyAction)
 		require.Nil(t, processAction)
 	})
@@ -266,12 +270,12 @@ func TestMultiMatch(t *testing.T) {
 		entries := file.Batches[0].GetEntries()
 
 		// Find our Action
-		copyAction, processAction := matcher.FindAction(entries[0])
+		copyAction, processAction := matcher.FindAction(bh, entries[0])
 		require.Nil(t, copyAction)
 		require.Nil(t, processAction)
 
 		// Find our Action
-		copyAction, processAction = matcher.FindAction(entries[1])
+		copyAction, processAction = matcher.FindAction(bh, entries[1])
 		require.NotNil(t, copyAction)
 		require.Equal(t, actionCopy, *copyAction)
 		require.Nil(t, processAction)
@@ -295,12 +299,12 @@ func TestMultiMatch(t *testing.T) {
 		entries := file.Batches[0].GetEntries()
 
 		// Find our Action
-		copyAction, processAction := matcher.FindAction(entries[0])
+		copyAction, processAction := matcher.FindAction(bh, entries[0])
 		require.Nil(t, copyAction)
 		require.Nil(t, processAction)
 
 		// Find our Action
-		copyAction, processAction = matcher.FindAction(entries[1])
+		copyAction, processAction = matcher.FindAction(bh, entries[1])
 		require.Nil(t, copyAction)
 		require.NotNil(t, processAction)
 		require.Equal(t, actionReturn, *processAction)
@@ -332,15 +336,60 @@ func TestMultiMatch(t *testing.T) {
 		entries := file.Batches[0].GetEntries()
 
 		// Find our Action
-		copyAction, processAction := matcher.FindAction(entries[0])
+		copyAction, processAction := matcher.FindAction(bh, entries[0])
 		require.Nil(t, copyAction)
 		require.Nil(t, processAction)
 
 		// Find our Action
-		copyAction, processAction = matcher.FindAction(entries[1])
+		copyAction, processAction = matcher.FindAction(bh, entries[1])
 		require.NotNil(t, copyAction)
 		require.Equal(t, actionCopy, *copyAction)
 		require.NotNil(t, processAction)
 		require.Equal(t, actionDelayCorrection, *processAction)
+	})
+
+	t.Run("Match BatchHeader Fields", func(t *testing.T) {
+		var matcher Matcher
+		matcher.Logger = log.NewTestLogger()
+		matcher.Responses = []service.Response{}
+
+		// Read our test file
+		file, err := ach.ReadFile(filepath.Join("..", "..", "..", "testdata", "20230809-144155-102000021.ach"))
+		require.NoError(t, err)
+		require.NotNil(t, file)
+		require.True(t, len(file.Batches) > 0)
+
+		bh := file.Batches[0].GetHeader()
+		entries := file.Batches[0].GetEntries()
+
+		// Match no entries
+		copyAction, processAction := matcher.FindAction(bh, entries[0])
+		require.Nil(t, copyAction)
+		require.Nil(t, processAction)
+
+		// Match based on CompanyID
+		matcher.Responses = append(matcher.Responses, service.Response{
+			Match: service.Match{
+				CompanyIdentification: "Classbook",
+			},
+			Action: actionReturn,
+		})
+		copyAction, processAction = matcher.FindAction(bh, entries[0])
+		require.Nil(t, copyAction)
+		require.NotNil(t, processAction)
+		require.Equal(t, actionReturn, *processAction)
+
+		// Match based on CompanyEntryDescription
+		matcher.Responses = nil
+		matcher.Responses = append(matcher.Responses, service.Response{
+			Match: service.Match{
+				CompanyEntryDescription: "Payment",
+			},
+			Action: actionReturn,
+		})
+		copyAction, processAction = matcher.FindAction(bh, entries[0])
+		require.Nil(t, copyAction)
+		require.NotNil(t, processAction)
+		require.Equal(t, actionReturn, *processAction)
 	})
 }

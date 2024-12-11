@@ -63,7 +63,7 @@ func (ft *FileTransfomer) Transform(ctx context.Context, file *ach.File) error {
 		entries := file.Batches[i].GetEntries()
 		for j := range entries {
 			// Check if there's a matching Action and perform it. There may also be a future-dated action to execute.
-			copyAction, processAction := ft.Matcher.FindAction(entries[j])
+			copyAction, processAction := ft.Matcher.FindAction(bh, entries[j])
 			if copyAction != nil {
 				// Save this Entry
 				mirror.saveEntry(&file.Batches[i], copyAction.Copy, entries[j])
