@@ -1,3 +1,15 @@
+## v0.15.0 (Released 2024-12-11)
+
+IMPROVEMENTS
+
+- response: add companyID and companyEntryDescription as matcher fields
+- response/match: add "NOT" matcher conditions
+
+BUILD
+
+- fix(deps): update module github.com/moov-io/ach to v1.44.2 (#268)
+- fix(deps): update opentelemetry-go monorepo to v1.32.0 (#264)
+
 ## v0.14.3 (Released 2024-09-17)
 
 IMPROVEMENTS
