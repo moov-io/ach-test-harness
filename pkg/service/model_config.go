@@ -95,6 +95,7 @@ type Matching struct {
 
 type Response struct {
 	Match  Match
+	Not    Match
 	Action Action
 }
 

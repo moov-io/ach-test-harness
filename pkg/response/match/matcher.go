@@ -32,158 +32,41 @@ func (m Matcher) FindAction(bh *ach.BatchHeader, ed *ach.EntryDetail) (copyActio
 	/*
 	 * See https://github.com/moov-io/ach-test-harness#config-schema for more details on how to configure.
 	 */
-	for i := range m.Responses {
+	for idx, resp := range m.Responses {
 		logger := m.Logger.With(log.Fields{
-			"entry_trace_number": log.String(ed.TraceNumber),
+			"matcher.response_idx": log.Int(idx),
+			"entry_trace_number":   log.String(ed.TraceNumber),
 		})
 		if m.Debug {
 			logger.Info().Log("starting EntryDetail matching")
 		}
 
-		positive, negative := 0, 0 // Matchers are AND'd together
-
-		positiveMatchers := []string{}
-		negativeMatchers := []string{}
-
-		matcher := m.Responses[i].Match
-		action := m.Responses[i].Action
-
-		if copyAction != nil && action.Copy != nil {
+		if copyAction != nil && resp.Action.Copy != nil {
 			continue // skip, we already have a copy action
 		}
-		if processAction != nil && action.Return != nil {
+		if processAction != nil && resp.Action.Return != nil {
 			continue // skip, we already have a process action
 		}
 
-		logger = logger.With(action)
-		logger = logger.With(matcher)
+		// Run .Match and .Not matchers
+		positiveMatches, negativeMatches := m.runMatchers(logger, resp.Match, bh, ed)
 
-		if m.Debug {
-			logger = logger.With(log.Fields{
-				"matcher.response_idx":    log.Int(i),
-				"matcher.account_number":  log.String(matcher.AccountNumber),
-				"matcher.entry_type":      log.String(string(matcher.EntryType)),
-				"matcher.individual_name": log.String(matcher.IndividualName),
-				"matcher.routing_number":  log.String(matcher.RoutingNumber),
-				"matcher.trace_number":    log.String(matcher.TraceNumber),
-				"ed.account_number":       log.String(ed.DFIAccountNumber),
-				"ed.entry_type":           log.String(fmt.Sprintf("%d", ed.TransactionCode)),
-				"ed.individual_name":      log.String(ed.IndividualName),
-				"ed.routing_number":       log.String(ed.RDFIIdentification + ed.CheckDigit),
-				"ed.trace_number":         log.String(ed.TraceNumber),
-				"ed.amount":               log.String(fmt.Sprintf("%d", ed.Amount)),
-			})
-		}
+		// The Not matchers need to be inverted from the affirmative
+		notPositiveMatches, notNegativeMatches := m.runMatchers(logger, resp.Not, bh, ed)
 
-		// Trace Number
-		if matcher.TraceNumber != "" {
-			if TraceNumber(matcher, ed) {
-				positiveMatchers = append(positiveMatchers, "TraceNumber")
-				positive++
-			} else {
-				negativeMatchers = append(negativeMatchers, "TraceNumber")
-				negative++
-			}
-		}
+		// Add the affirmative positive matches with the populated Not matches
+		positive := len(positiveMatches) + len(notNegativeMatches)
 
-		// Account Number
-		if matcher.AccountNumber != "" {
-			if AccountNumber(matcher, ed) {
-				positiveMatchers = append(positiveMatchers, "DFIAccountNumber")
-				positive++
-			} else {
-				negativeMatchers = append(negativeMatchers, "DFIAccountNumber")
-				negative++
-			}
-		}
-
-		// Routing Number
-		if matcher.RoutingNumber != "" {
-			if RoutingNumber(matcher, ed) {
-				positiveMatchers = append(positiveMatchers, "RDFIIdentification")
-				positive++
-			} else {
-				negativeMatchers = append(negativeMatchers, "RDFIIdentification")
-				negative++
-			}
-		}
-
-		// Check if the Amount matches
-		if matcher.Amount != nil {
-			if Amount(matcher, ed) {
-				positiveMatchers = append(positiveMatchers, "Amount")
-				positive++
-			} else {
-				negativeMatchers = append(negativeMatchers, "Amount")
-				negative++
-			}
-		}
-
-		// Check if this Entry is a debit
-		if matcher.EntryType != service.EntryTypeEmpty {
-			if matchedEntryType(matcher, ed) {
-				positiveMatchers = append(positiveMatchers, "TransactionCode")
-				positive++
-			} else {
-				negativeMatchers = append(negativeMatchers, "TransactionCode")
-				negative++
-			}
-		}
-
-		if matcher.IndividualName != "" {
-			if matchedIndividualName(matcher, ed) {
-				positiveMatchers = append(positiveMatchers, "IndividualName")
-				positive++
-			} else {
-				negativeMatchers = append(negativeMatchers, "IndividualName")
-				negative++
-			}
-		}
-
-		// BatchHeader fields
-		if matcher.CompanyIdentification != "" {
-			if matchedCompanyIdentification(matcher, bh) {
-				positiveMatchers = append(positiveMatchers, "CompanyIdentification")
-				positive++
-			} else {
-				negativeMatchers = append(negativeMatchers, "CompanyIdentification")
-				negative++
-			}
-		}
-		if matcher.CompanyEntryDescription != "" {
-			if matchedCompanyEntryDescription(matcher, bh) {
-				positiveMatchers = append(positiveMatchers, "CompanyEntryDescription")
-				positive++
-			} else {
-				negativeMatchers = append(negativeMatchers, "CompanyEntryDescription")
-				negative++
-			}
-		}
-
-		// format the list of negative and positive matchers for logging
-		var b strings.Builder
-
-		b.WriteString(fmt.Sprintf("FINAL matching score negative=%d", negative))
-		if len(negativeMatchers) > 0 {
-			b.WriteString(fmt.Sprintf(" (%s)", strings.Join(negativeMatchers, ", ")))
-		}
-
-		b.WriteString(fmt.Sprintf(" positive=%d", positive))
-		if len(positiveMatchers) > 0 {
-			b.WriteString(fmt.Sprintf(" (%s)", strings.Join(positiveMatchers, ", ")))
-		}
-
-		if m.Debug {
-			logger.Log(b.String())
-		}
+		// Add the affirmative negative matches with the populated Not negative matches
+		negative := len(negativeMatches) + len(notPositiveMatches)
 
 		// Return the Action if we've still matched
 		if negative == 0 && positive > 0 {
 			// Action is valid, figure out where it belongs
-			if m.Responses[i].Action.Copy != nil {
-				copyAction = &m.Responses[i].Action
+			if resp.Action.Copy != nil {
+				copyAction = &resp.Action
 			} else {
-				processAction = &m.Responses[i].Action
+				processAction = &resp.Action
 				// A non-Copy (process) Action with no Delay supersedes everything else
 				if processAction.Delay == nil {
 					return nil, processAction
@@ -191,6 +74,115 @@ func (m Matcher) FindAction(bh *ach.BatchHeader, ed *ach.EntryDetail) (copyActio
 			}
 		}
 	}
+
+	return
+}
+
+func (m Matcher) runMatchers(logger log.Logger, matcher service.Match, bh *ach.BatchHeader, ed *ach.EntryDetail) (positiveMatchers, negativeMatchers []string) {
+	logger = logger.With(matcher)
+
+	if m.Debug {
+		logger = logger.With(log.Fields{
+			"matcher.account_number":  log.String(matcher.AccountNumber),
+			"matcher.entry_type":      log.String(string(matcher.EntryType)),
+			"matcher.individual_name": log.String(matcher.IndividualName),
+			"matcher.routing_number":  log.String(matcher.RoutingNumber),
+			"matcher.trace_number":    log.String(matcher.TraceNumber),
+			"ed.account_number":       log.String(ed.DFIAccountNumber),
+			"ed.entry_type":           log.String(fmt.Sprintf("%d", ed.TransactionCode)),
+			"ed.individual_name":      log.String(ed.IndividualName),
+			"ed.routing_number":       log.String(ed.RDFIIdentification + ed.CheckDigit),
+			"ed.trace_number":         log.String(ed.TraceNumber),
+			"ed.amount":               log.String(fmt.Sprintf("%d", ed.Amount)),
+		})
+	}
+
+	// Trace Number
+	if matcher.TraceNumber != "" {
+		if TraceNumber(matcher, ed) {
+			positiveMatchers = append(positiveMatchers, "TraceNumber")
+		} else {
+			negativeMatchers = append(negativeMatchers, "TraceNumber")
+		}
+	}
+
+	// Account Number
+	if matcher.AccountNumber != "" {
+		if AccountNumber(matcher, ed) {
+			positiveMatchers = append(positiveMatchers, "DFIAccountNumber")
+		} else {
+			negativeMatchers = append(negativeMatchers, "DFIAccountNumber")
+		}
+	}
+
+	// Routing Number
+	if matcher.RoutingNumber != "" {
+		if RoutingNumber(matcher, ed) {
+			positiveMatchers = append(positiveMatchers, "RDFIIdentification")
+		} else {
+			negativeMatchers = append(negativeMatchers, "RDFIIdentification")
+		}
+	}
+
+	// Check if the Amount matches
+	if matcher.Amount != nil {
+		if Amount(matcher, ed) {
+			positiveMatchers = append(positiveMatchers, "Amount")
+		} else {
+			negativeMatchers = append(negativeMatchers, "Amount")
+		}
+	}
+
+	// Check if this Entry is a debit
+	if matcher.EntryType != service.EntryTypeEmpty {
+		if matchedEntryType(matcher, ed) {
+			positiveMatchers = append(positiveMatchers, "TransactionCode")
+		} else {
+			negativeMatchers = append(negativeMatchers, "TransactionCode")
+		}
+	}
+
+	if matcher.IndividualName != "" {
+		if matchedIndividualName(matcher, ed) {
+			positiveMatchers = append(positiveMatchers, "IndividualName")
+		} else {
+			negativeMatchers = append(negativeMatchers, "IndividualName")
+		}
+	}
+
+	// BatchHeader fields
+	if matcher.CompanyIdentification != "" {
+		if matchedCompanyIdentification(matcher, bh) {
+			positiveMatchers = append(positiveMatchers, "CompanyIdentification")
+		} else {
+			negativeMatchers = append(negativeMatchers, "CompanyIdentification")
+		}
+	}
+	if matcher.CompanyEntryDescription != "" {
+		if matchedCompanyEntryDescription(matcher, bh) {
+			positiveMatchers = append(positiveMatchers, "CompanyEntryDescription")
+		} else {
+			negativeMatchers = append(negativeMatchers, "CompanyEntryDescription")
+		}
+	}
+
+	// format the list of negative and positive matchers for logging
+	var b strings.Builder
+
+	b.WriteString(fmt.Sprintf("FINAL matching score negative=%d", len(negativeMatchers)))
+	if len(negativeMatchers) > 0 {
+		b.WriteString(fmt.Sprintf(" (%s)", strings.Join(negativeMatchers, ", ")))
+	}
+
+	b.WriteString(fmt.Sprintf(" positive=%d", len(positiveMatchers)))
+	if len(positiveMatchers) > 0 {
+		b.WriteString(fmt.Sprintf(" (%s)", strings.Join(positiveMatchers, ", ")))
+	}
+
+	if m.Debug {
+		logger.Log(b.String())
+	}
+
 	return
 }
 

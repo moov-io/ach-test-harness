@@ -392,4 +392,45 @@ func TestMultiMatch(t *testing.T) {
 		require.NotNil(t, processAction)
 		require.Equal(t, actionReturn, *processAction)
 	})
+
+	t.Run("Match with NOT", func(t *testing.T) {
+		var matcher Matcher
+		matcher.Logger = log.NewTestLogger()
+		matcher.Responses = []service.Response{}
+
+		// Read our test file
+		file, err := ach.ReadFile(filepath.Join("..", "..", "..", "testdata", "20230809-144155-102000021.ach"))
+		require.NoError(t, err)
+		require.NotNil(t, file)
+		require.True(t, len(file.Batches) > 0)
+
+		bh := file.Batches[0].GetHeader()
+		entries := file.Batches[0].GetEntries()
+
+		// Match no entries
+		copyAction, processAction := matcher.FindAction(bh, entries[0])
+		require.Nil(t, copyAction)
+		require.Nil(t, processAction)
+
+		// Match based on CompanyID but NOT when CompanyEntryDescription == "Payment"
+		matcher.Responses = append(matcher.Responses, service.Response{
+			Match: service.Match{
+				CompanyIdentification: "Classbook",
+			},
+			Not: service.Match{
+				CompanyEntryDescription: "Payment",
+			},
+			Action: actionReturn,
+		})
+		copyAction, processAction = matcher.FindAction(bh, entries[0])
+		require.Nil(t, copyAction)
+		require.Nil(t, processAction)
+
+		// Change the Not matcher so we return the entry
+		matcher.Responses[0].Not.CompanyEntryDescription = "Other"
+		copyAction, processAction = matcher.FindAction(bh, entries[0])
+		require.Nil(t, copyAction)
+		require.NotNil(t, processAction)
+		require.Equal(t, actionReturn, *processAction)
+	})
 }
