@@ -97,7 +97,7 @@ ACHTestHarness:
 The full config for Responses is below:
 
 ```yaml
-# All populated fields must match for the action to be applied to the EntryDetail
+# All populated fields must match for the action to be applied to the BatchHeader and EntryDetail
 match:
   # Match the DFIAccountNumber on the EntryDetail
   accountNumber: <string>
@@ -113,6 +113,25 @@ match:
   # Match on BatchHeader fields
   companyIdentification: <string>
   companyEntryDescription: <string>
+
+# The not block acts as exclusionary matches on BatchHeader and EntryDetail to prevent matching certain values.
+# Any match here will prevent the action from being selected and ran.
+not:
+  # Match the DFIAccountNumber on the EntryDetail
+  accountNumber: <string>
+  amount:
+    min: <integer>
+    max: <integer>
+    value: <integer>       # Either min AND max OR value is used
+  individualName: <string> # Compare the IndividualName on EntryDetail records
+  routingNumber: <string>  # Exact match of ABA routing number (RDFIIdentification and CheckDigit)
+  traceNumber: <string>    # Exact match of TraceNumber
+  entryType: <string>      # Checks TransactionCode. Accepted values: credit, debit or prenote. Also can be Nacha value (e.g. 27, 32)
+
+  # Match on BatchHeader fields
+  companyIdentification: <string>
+  companyEntryDescription: <string>
+
 
 # Matching will find at most two Actions in the config file order. One Copy Action and one Return/Correction Action.
 # Both actions will be executed if the Return/Correction Action has a delay.
