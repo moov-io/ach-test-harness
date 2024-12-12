@@ -132,7 +132,8 @@ func (m Match) Context() map[string]log.Valuer {
 func (m Match) Empty() bool {
 	return m.AccountNumber == "" && m.Amount.Empty() &&
 		string(m.EntryType) == "" && m.IndividualName == "" &&
-		m.RoutingNumber == "" && m.TraceNumber == ""
+		m.RoutingNumber == "" && m.TraceNumber == "" &&
+		m.CompanyIdentification == "" && m.CompanyEntryDescription == ""
 }
 
 type Amount struct {
