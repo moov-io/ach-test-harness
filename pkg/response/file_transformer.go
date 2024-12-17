@@ -71,12 +71,16 @@ func (ft *FileTransfomer) Transform(ctx context.Context, file *ach.File) error {
 			if processAction != nil {
 				entry, err := ft.Entry.MorphEntry(ctx, file.Header, bh, entries[j], processAction)
 				if err != nil {
-					return fmt.Errorf("transform batch[%d] morph entry[%d] error: %v", i, j, err)
+					err = fmt.Errorf("transform batch[%d] morph entry[%d] error: %w", i, j, err)
+					span.RecordError(err)
+					return err
 				}
 
 				// Get the appropriate ach.Batch object to update
 				batch, err := outBatches.getOutBatch(processAction.Delay, entry.Category, file.Header, *file.Batches[i].GetHeader(), i)
 				if err != nil {
+					err = fmt.Errorf("transform batch[%d] morph entry[%d] getOutBatch error: %w", i, j, err)
+					span.RecordError(err)
 					return err
 				}
 
@@ -89,6 +93,8 @@ func (ft *FileTransfomer) Transform(ctx context.Context, file *ach.File) error {
 					// Get the ach.File object corresponding to this delay to write to.
 					// We don't use this ach.File yet, but it needs to be initialized for later.
 					if _, err = outFiles.getOutFile(processAction.Delay, file, ft.ValidateOpts); err != nil {
+						err = fmt.Errorf("transform batch[%d] morph entry[%d] getOutFile (delay) error: %w", i, j, err)
+						span.RecordError(err)
 						return err
 					}
 				}
@@ -100,10 +106,14 @@ func (ft *FileTransfomer) Transform(ctx context.Context, file *ach.File) error {
 			for _, batch := range batchesByCategory {
 				if entries = (*batch).GetEntries(); len(entries) > 0 {
 					if err := (*batch).Create(); err != nil {
-						return fmt.Errorf("transform batch[%d] create error: %v", i, err)
+						err = fmt.Errorf("transform batch[%d] create error: %v", i, err)
+						span.RecordError(err)
+						return err
 					}
 					out, err := outFiles.getOutFile(delay, file, ft.ValidateOpts)
 					if err != nil {
+						err = fmt.Errorf("outFiles.getOutFile: %w", err)
+						span.RecordError(err)
 						return err
 					}
 					out.AddBatch(*batch)
@@ -114,7 +124,9 @@ func (ft *FileTransfomer) Transform(ctx context.Context, file *ach.File) error {
 
 	// Save off the entries as requested
 	if err := mirror.saveFiles(ctx); err != nil {
-		return fmt.Errorf("problem saving entries: %v", err)
+		err = fmt.Errorf("problem saving entries: %v", err)
+		span.RecordError(err)
+		return err
 	}
 
 	var outFileCount int
@@ -123,7 +135,9 @@ func (ft *FileTransfomer) Transform(ctx context.Context, file *ach.File) error {
 
 		if out != nil && len(out.Batches) > 0 {
 			if err := out.Create(); err != nil {
-				return fmt.Errorf("transform out create: %v", err)
+				err = fmt.Errorf("transform out create: %v", err)
+				span.RecordError(err)
+				return err
 			}
 			if err := out.Validate(); err == nil {
 				generatedFilePath := filepath.Join(ft.returnPath, generateFilename(out)) // TODO(adam): need to determine return path
@@ -133,10 +147,14 @@ func (ft *FileTransfomer) Transform(ctx context.Context, file *ach.File) error {
 				)
 
 				if err := ft.Writer.WriteFile(generatedFilePath, out, delay); err != nil {
-					return fmt.Errorf("transform write %s: %v", generatedFilePath, err)
+					err = fmt.Errorf("transform write %s: %v", generatedFilePath, err)
+					span.RecordError(err)
+					return err
 				}
 			} else {
-				return fmt.Errorf("transform validate out file: %v", err)
+				err = fmt.Errorf("transform validate out file: %v", err)
+				span.RecordError(err)
+				return err
 			}
 		}
 	}
