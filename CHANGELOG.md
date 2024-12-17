@@ -1,3 +1,16 @@
+## v0.15.1 (Released 2024-12-17)
+
+IMPROVEMENTS
+
+- docs: add not matcher section
+- fix: Match is empty if CompanyIdentification and CompanyEntryDescription are blank
+- response: record errors on spans
+- response: sort entries before final .Create()
+
+BUILD
+
+- fix(deps): update opentelemetry-go monorepo to v1.33.0 (#272)
+
 ## v0.15.0 (Released 2024-12-11)
 
 IMPROVEMENTS
