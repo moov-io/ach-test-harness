@@ -1,10 +1,12 @@
 package response
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"math/rand"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/moov-io/ach"
@@ -99,6 +101,11 @@ func (ft *FileTransfomer) Transform(ctx context.Context, file *ach.File) error {
 		for delay, batchesByCategory := range outBatches {
 			for _, batch := range batchesByCategory {
 				if entries = (*batch).GetEntries(); len(entries) > 0 {
+					// Sort the entries before the final build
+					slices.SortFunc(entries, func(e1, e2 *ach.EntryDetail) int {
+						return cmp.Compare(e1.TraceNumber, e2.TraceNumber)
+					})
+
 					if err := (*batch).Create(); err != nil {
 						return fmt.Errorf("transform batch[%d] create error: %v", i, err)
 					}

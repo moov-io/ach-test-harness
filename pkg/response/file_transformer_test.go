@@ -59,6 +59,9 @@ var (
 			Value: 62_01,
 		},
 	}
+	matchRoutingNumber = service.Match{
+		RoutingNumber: "083000137",
+	}
 
 	actionReturn = service.Action{
 		Return: &service.Return{
@@ -1039,4 +1042,24 @@ func TestFileTransformer_CTX(t *testing.T) {
 		require.NotNil(t, entries[0].Addenda98)
 		require.Equal(t, "C01", entries[0].Addenda98.ChangeCode)
 	})
+}
+
+func TestFileTransform_Sorted(t *testing.T) {
+	resp := service.Response{
+		Match:  matchRoutingNumber,
+		Action: actionReturn,
+	}
+	fileTransformer, _ := testFileTransformer(t, resp)
+
+	// read the file
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "out-of-order.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// transform the file several times making sure we don't error
+	// The code can sometimes reorder entries which causes the transform to fail
+	for i := 0; i < 100; i++ {
+		err := fileTransformer.Transform(context.Background(), achIn)
+		require.NoError(t, err)
+	}
 }
