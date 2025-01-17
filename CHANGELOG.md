@@ -1,3 +1,13 @@
+## v0.16.0 (Released 2025-01-17)
+
+IMPROVEMENTS
+
+- feat: uploaded files which are invalid won't be successfully accepted by ach-test-harness
+
+BUILD
+
+- fix(deps): update module github.com/moov-io/ach to v1.45.3 (#278)
+
 ## v0.15.1 (Released 2024-12-17)
 
 IMPROVEMENTS
