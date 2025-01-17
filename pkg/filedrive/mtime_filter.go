@@ -3,6 +3,8 @@ package filedrive
 import (
 	"time"
 
+	"github.com/moov-io/ach"
+	"github.com/moov-io/base/log"
 	"goftp.io/server/core"
 )
 
@@ -23,6 +25,9 @@ func (mtf MTimeFilter) ListDir(path string, callback func(core.FileInfo) error) 
 
 type Factory struct {
 	DriverFactory core.DriverFactory
+
+	Logger       log.Logger
+	ValidateOpts *ach.ValidateOpts
 }
 
 func (f *Factory) NewDriver() (core.Driver, error) {
@@ -30,7 +35,9 @@ func (f *Factory) NewDriver() (core.Driver, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	achDriver := NewACHDriver(f.Logger, f.ValidateOpts, dd)
 	return MTimeFilter{
-		Driver: dd,
+		Driver: achDriver,
 	}, nil
 }

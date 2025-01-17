@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/moov-io/ach"
 	_ "github.com/moov-io/ach-test-harness"
 	"github.com/moov-io/ach-test-harness/pkg/filedrive"
 	"github.com/moov-io/base/admin"
@@ -27,7 +28,7 @@ func (env *Environment) RunServers(terminationListener chan error) func() {
 
 	var shutdownFTPServer func()
 	if env.Config.Servers.FTP != nil {
-		ftpServer, shutdown := bootFTPServer(terminationListener, env.Logger, env.Config.Servers.FTP, env.Config.responsePaths())
+		ftpServer, shutdown := bootFTPServer(terminationListener, env.Logger, env.Config.Servers.FTP, env.Config.ValidateOpts, env.Config.responsePaths())
 		env.FTPServer = ftpServer
 		shutdownFTPServer = shutdown
 	}
@@ -38,7 +39,7 @@ func (env *Environment) RunServers(terminationListener chan error) func() {
 	}
 }
 
-func bootFTPServer(errs chan<- error, logger log.Logger, cfg *FTPConfig, responsePaths []string) (*ftp.Server, func()) {
+func bootFTPServer(errs chan<- error, logger log.Logger, cfg *FTPConfig, validateOpts *ach.ValidateOpts, responsePaths []string) (*ftp.Server, func()) {
 	// Setup data directory
 	createDataDirectories(errs, logger, cfg)
 
@@ -49,6 +50,8 @@ func bootFTPServer(errs chan<- error, logger log.Logger, cfg *FTPConfig, respons
 	}
 	filteringDriver := &filedrive.Factory{
 		DriverFactory: fileDriverFactory,
+		Logger:        logger,
+		ValidateOpts:  validateOpts,
 	}
 	opts := &ftp.ServerOpts{
 		Factory:  filteringDriver,
