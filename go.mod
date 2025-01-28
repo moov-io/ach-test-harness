@@ -2,13 +2,15 @@
 
 module github.com/moov-io/ach-test-harness
 
-go 1.22.2
+go 1.22.9
+
+toolchain go1.23.5
 
 require (
 	github.com/evanphx/json-patch v5.9.0+incompatible
 	github.com/gorilla/mux v1.8.1
 	github.com/markbates/pkger v0.17.1
-	github.com/moov-io/ach v1.45.3
+	github.com/moov-io/ach v1.45.4
 	github.com/moov-io/base v0.53.0
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/otel v1.34.0
@@ -35,6 +37,7 @@ require (
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/moov-io/iso3166 v0.1.1 // indirect
 	github.com/moov-io/iso4217 v0.3.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
