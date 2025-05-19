@@ -1,3 +1,9 @@
+## v0.16.1 (Released 2025-05-19)
+
+BUILD
+
+- build: update dependencies
+
 ## v0.16.0 (Released 2025-01-17)
 
 IMPROVEMENTS
