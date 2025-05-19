@@ -84,20 +84,20 @@ func bootFTPServer(errs chan<- error, logger log.Logger, cfg *FTPConfig, validat
 
 func createDataDirectories(errs chan<- error, logger log.Logger, cfg *FTPConfig) {
 	// Create the root path
-	if err := os.MkdirAll(cfg.RootPath, 0777); err != nil {
+	if err := os.MkdirAll(cfg.RootPath, 0777); err != nil { //nolint:gosec
 		errs <- logger.Fatal().LogErrorf("problem creating root directory '%s': %v", cfg.RootPath, err).Err()
 	}
 
 	// Create sub-paths
 	path := filepath.Join(cfg.RootPath, cfg.Paths.Files)
 	logger.Info().Logf("creating %s", path)
-	if err := os.MkdirAll(path, 0777); err != nil {
+	if err := os.MkdirAll(path, 0777); err != nil { //nolint:gosec
 		errs <- logger.Fatal().LogErrorf("problem creating files directory: %v", err).Err()
 	}
 
 	path = filepath.Join(cfg.RootPath, cfg.Paths.Return)
 	logger.Info().Logf("creating %s", path)
-	if err := os.MkdirAll(path, 0777); err != nil {
+	if err := os.MkdirAll(path, 0777); err != nil { //nolint:gosec
 		errs <- logger.Fatal().LogErrorf("problem creating return directory: %v", err).Err()
 	}
 }

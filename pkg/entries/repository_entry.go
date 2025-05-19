@@ -16,6 +16,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+//nolint:iface
 type EntryRepository interface {
 	Search(ctx context.Context, opts SearchOptions) ([]*ach.EntryDetail, error)
 }

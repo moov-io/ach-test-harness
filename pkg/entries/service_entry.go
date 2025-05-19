@@ -9,6 +9,7 @@ import (
 	"github.com/moov-io/base"
 )
 
+//nolint:iface
 type EntryService interface {
 	Search(ctx context.Context, ops SearchOptions) ([]*ach.EntryDetail, error)
 }

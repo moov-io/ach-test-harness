@@ -120,6 +120,8 @@ func TestFileTransformer_CopyOnly(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, achIn)
 
+	reduceLineNumbers(achIn)
+
 	// transform the file
 	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
@@ -134,7 +136,10 @@ func TestFileTransformer_CopyOnly(t *testing.T) {
 	fds, err := os.ReadDir(recondir)
 	require.NoError(t, err)
 	require.Len(t, fds, 1)
+
 	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	reduceLineNumbers(read)
+
 	require.Equal(t, achIn.Batches, read.Batches)
 
 	// verify the timestamp on the file is in the past
@@ -151,6 +156,8 @@ func TestFileTransformer_CopyOnlyAndCopyOnly_SingleBatch(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, achIn)
 
+	reduceLineNumbers(achIn)
+
 	// transform the file
 	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
@@ -165,7 +172,10 @@ func TestFileTransformer_CopyOnlyAndCopyOnly_SingleBatch(t *testing.T) {
 	fds, err := os.ReadDir(recondir)
 	require.NoError(t, err)
 	require.Len(t, fds, 1)
+
 	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	reduceLineNumbers(read)
+
 	require.Equal(t, achIn.Batches, read.Batches)
 
 	trace1 := achIn.Batches[0].GetEntries()[0].TraceNumber
@@ -191,6 +201,8 @@ func TestFileTransformer_CopyOnlyAndCopyOnly_MultipleBatches(t *testing.T) {
 	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
+	reduceLineNumbers(achIn)
+
 	// verify no "returned" files created
 	retdir := filepath.Join(dir, "returned")
 	_, err = os.ReadDir(retdir)
@@ -208,6 +220,8 @@ func TestFileTransformer_CopyOnlyAndCopyOnly_MultipleBatches(t *testing.T) {
 
 	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
 	require.Len(t, read.Batches, 2)
+
+	reduceLineNumbers(read)
 	require.Equal(t, achIn.Batches[0], read.Batches[0])
 	require.Equal(t, achIn.Batches[1], read.Batches[1])
 
@@ -217,6 +231,7 @@ func TestFileTransformer_CopyOnlyAndCopyOnly_MultipleBatches(t *testing.T) {
 	require.Less(t, fInfo.ModTime(), time.Now())
 
 	read, _ = ach.ReadFile(filepath.Join(recondir, fds[1].Name())) // ignore the error b/c this file has no header or control record
+	reduceLineNumbers(read)
 	require.Len(t, read.Batches, 1)
 	require.Equal(t, achIn.Batches[2], read.Batches[0])
 
@@ -360,6 +375,8 @@ func TestFileTransformer_ReturnOnlyAndCopyOnly(t *testing.T) {
 	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
+	reduceLineNumbers(achIn)
+
 	// verify the "returned" file created
 	retdir := filepath.Join(dir, "returned")
 	fds, err := os.ReadDir(retdir)
@@ -386,6 +403,8 @@ func TestFileTransformer_ReturnOnlyAndCopyOnly(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, fds, 1)
 	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	reduceLineNumbers(read)
+
 	require.Len(t, read.Batches, 1)
 	require.Len(t, read.Batches[0].GetEntries(), 1)
 	require.Equal(t, achIn.Batches[0].GetEntries()[1], read.Batches[0].GetEntries()[0])
@@ -413,6 +432,8 @@ func TestFileTransformer_CorrectionOnlyAndCopyOnly(t *testing.T) {
 	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
+	reduceLineNumbers(achIn)
+
 	// verify the "returned" file created
 	retdir := filepath.Join(dir, "returned")
 	fds, err := os.ReadDir(retdir)
@@ -437,9 +458,12 @@ func TestFileTransformer_CorrectionOnlyAndCopyOnly(t *testing.T) {
 	fds, err = os.ReadDir(recondir)
 	require.NoError(t, err)
 	require.Len(t, fds, 1)
+
 	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
 	require.Len(t, read.Batches, 1)
 	require.Len(t, read.Batches[0].GetEntries(), 1)
+	reduceLineNumbers(read)
+
 	require.Equal(t, achIn.Batches[0].GetEntries()[0], read.Batches[0].GetEntries()[0])
 
 	// verify the timestamp on the file is in the past
@@ -547,6 +571,8 @@ func TestFileTransformer_DelayReturnOnlyAndCopyOnly(t *testing.T) {
 	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
+	reduceLineNumbers(achIn)
+
 	// verify the "returned" file created
 	retdir := filepath.Join(dir, "returned")
 	fds, err := os.ReadDir(retdir)
@@ -571,7 +597,10 @@ func TestFileTransformer_DelayReturnOnlyAndCopyOnly(t *testing.T) {
 	fds, err = os.ReadDir(recondir)
 	require.NoError(t, err)
 	require.Len(t, fds, 1)
+
 	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	reduceLineNumbers(read)
+
 	require.Len(t, read.Batches, 1)
 	require.Len(t, read.Batches[0].GetEntries(), 1)
 	require.Equal(t, achIn.Batches[0].GetEntries()[0], read.Batches[0].GetEntries()[0])
@@ -599,6 +628,8 @@ func TestFileTransformer_DelayCorrectionOnlyAndCopyOnly(t *testing.T) {
 	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
+	reduceLineNumbers(achIn)
+
 	// verify the "returned" file created
 	retdir := filepath.Join(dir, "returned")
 	fds, err := os.ReadDir(retdir)
@@ -623,9 +654,13 @@ func TestFileTransformer_DelayCorrectionOnlyAndCopyOnly(t *testing.T) {
 	fds, err = os.ReadDir(recondir)
 	require.NoError(t, err)
 	require.Len(t, fds, 1)
+
 	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
 	require.Len(t, read.Batches, 1)
 	require.Len(t, read.Batches[0].GetEntries(), 1)
+
+	reduceLineNumbers(read)
+
 	require.Equal(t, achIn.Batches[0].GetEntries()[1], read.Batches[0].GetEntries()[0])
 
 	// verify the timestamp on the file is in the past
@@ -650,6 +685,8 @@ func TestFileTransformer_CopyAndDelayReturn(t *testing.T) {
 	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
+	reduceLineNumbers(achIn)
+
 	// verify the "returned" file created
 	retdir := filepath.Join(dir, "returned")
 	fds, err := os.ReadDir(retdir)
@@ -674,7 +711,10 @@ func TestFileTransformer_CopyAndDelayReturn(t *testing.T) {
 	fds, err = os.ReadDir(recondir)
 	require.NoError(t, err)
 	require.Len(t, fds, 1)
+
 	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	reduceLineNumbers(read)
+
 	require.Equal(t, achIn.Batches, read.Batches)
 
 	// verify the timestamp on the file is in the past
@@ -699,6 +739,8 @@ func TestFileTransformer_CopyAndDelayCorrection(t *testing.T) {
 	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
 
+	reduceLineNumbers(achIn)
+
 	// verify the "returned" file created
 	retdir := filepath.Join(dir, "returned")
 	fds, err := os.ReadDir(retdir)
@@ -723,7 +765,9 @@ func TestFileTransformer_CopyAndDelayCorrection(t *testing.T) {
 	fds, err = os.ReadDir(recondir)
 	require.NoError(t, err)
 	require.Len(t, fds, 1)
+
 	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	reduceLineNumbers(read)
 	require.Equal(t, achIn.Batches, read.Batches)
 
 	// verify the timestamp on the file is in the past
@@ -747,6 +791,8 @@ func TestFileTransformer_CopyAndDelayReturnAndCopyOnly(t *testing.T) {
 	// transform the file
 	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
+
+	reduceLineNumbers(achIn)
 
 	// verify the "returned" file created
 	retdir := filepath.Join(dir, "returned")
@@ -772,7 +818,10 @@ func TestFileTransformer_CopyAndDelayReturnAndCopyOnly(t *testing.T) {
 	fds, err = os.ReadDir(recondir)
 	require.NoError(t, err)
 	require.Len(t, fds, 1)
+
 	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	reduceLineNumbers(read)
+
 	require.Equal(t, achIn.Batches, read.Batches)
 
 	// verify the timestamp on the file is in the past
@@ -796,6 +845,8 @@ func TestFileTransformer_CopyAndDelayCorrectionAndCopyOnly(t *testing.T) {
 	// transform the file
 	err = fileTransformer.Transform(context.Background(), achIn)
 	require.NoError(t, err)
+
+	reduceLineNumbers(achIn)
 
 	// verify the "returned" file created
 	retdir := filepath.Join(dir, "returned")
@@ -821,7 +872,10 @@ func TestFileTransformer_CopyAndDelayCorrectionAndCopyOnly(t *testing.T) {
 	fds, err = os.ReadDir(recondir)
 	require.NoError(t, err)
 	require.Len(t, fds, 1)
+
 	read, _ := ach.ReadFile(filepath.Join(recondir, fds[0].Name())) // ignore the error b/c this file has no header or control record
+	reduceLineNumbers(read)
+
 	require.Equal(t, achIn.Batches, read.Batches)
 
 	// verify the timestamp on the file is in the past
@@ -1061,5 +1115,17 @@ func TestFileTransform_Sorted(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		err := fileTransformer.Transform(context.Background(), achIn)
 		require.NoError(t, err)
+	}
+}
+
+func reduceLineNumbers(file *ach.File) {
+	for idx := range file.Batches {
+		file.Batches[idx].GetHeader().LineNumber = 1
+		file.Batches[idx].GetControl().LineNumber = 1
+
+		entries := file.Batches[idx].GetEntries()
+		for idx := range entries {
+			entries[idx].LineNumber = 1
+		}
 	}
 }
