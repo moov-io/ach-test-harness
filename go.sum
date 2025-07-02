@@ -66,6 +66,8 @@ github.com/minio/sha256-simd v0.1.1/go.mod h1:B5e1o+1/KgNmWrSQK08Y6Z1Vb5pwIktudl
 github.com/mitchellh/go-homedir v1.1.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
 github.com/moov-io/ach v1.51.0 h1:YeQcdGThImVhw9UTvmP3cc6zpLMKcOt23lMc2C/4wCs=
 github.com/moov-io/ach v1.51.0/go.mod h1:CkyghZB14RLCagR3HERvLGhQ6hrJZPYmUfpHGBBGHws=
+github.com/moov-io/ach v1.52.0 h1:hyMCNvbk5JvFifWFYuzJXPo9/K6ooHPE0m7/MHilIeE=
+github.com/moov-io/ach v1.52.0/go.mod h1:CkyghZB14RLCagR3HERvLGhQ6hrJZPYmUfpHGBBGHws=
 github.com/moov-io/base v0.56.0 h1:zNeviN7lW3hP0lsVeKwLYb8dTxcFvVTPX5xwrelCl8s=
 github.com/moov-io/base v0.56.0/go.mod h1:Aiq0LQFbE1ha+bAOGxDtnu8ZEGzZorcIK/1jALBPk/E=
 github.com/moov-io/iso3166 v0.2.1 h1:kfj6tj6pupSuRB/q8sOSnMtHaAMqZoTx6RRB1Nw/Uzs=
