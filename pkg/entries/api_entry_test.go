@@ -42,6 +42,7 @@ func TestEntryController(t *testing.T) {
         "identificationNumber": "location1234567",
         "individualName": "Best Co. #123456789012",
         "discretionaryData": "S ",
+        "addendaRecordIndicator": 0,
         "traceNumber": "031300010000001",
         "category": "Forward",
         "lineNumber": 3
@@ -56,6 +57,7 @@ func TestEntryController(t *testing.T) {
         "identificationNumber": "Fee123456789012",
         "individualName": "Best Co. #123456789012",
         "discretionaryData": "S ",
+        "addendaRecordIndicator": 0,
         "traceNumber": "031300010000002",
         "category": "Forward",
         "lineNumber": 4
@@ -70,6 +72,7 @@ func TestEntryController(t *testing.T) {
         "identificationNumber": "               ",
         "individualName": "Credit Account 1      ",
         "discretionaryData": "  ",
+        "addendaRecordIndicator": 0,
         "traceNumber": "121042880000002",
         "category": "Forward",
         "lineNumber": 3
