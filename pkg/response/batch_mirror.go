@@ -49,6 +49,12 @@ func (batch *batchMirrorBatch) write(buf *bytes.Buffer) error {
 	buf.WriteString(batch.header.String() + "\n")
 	for _, entry := range batch.entries {
 		buf.WriteString(entry.String() + "\n")
+		if entry.Addenda02 != nil {
+			buf.WriteString(entry.Addenda02.String() + "\n")
+		}
+		for _, addenda := range entry.Addenda05 {
+			buf.WriteString(addenda.String() + "\n")
+		}
 	}
 	control, err := calculateControl(batch.header, batch.entries)
 	if err != nil {
@@ -90,6 +96,7 @@ func (bm *batchMirror) saveEntry(b *ach.Batcher, copy *service.Copy, ed *ach.Ent
 			control: batcher.GetControl(),
 		}
 	}
+
 	// Append this EntryDetail to the batchMirrorBatch's EntryDetails slice for the derived key
 	bm.batches[key][batcher.GetHeader().BatchNumberField()].entries = append(bm.batches[key][batcher.GetHeader().BatchNumberField()].entries, ed)
 }

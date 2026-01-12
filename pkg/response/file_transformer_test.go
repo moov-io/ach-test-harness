@@ -1098,6 +1098,90 @@ func TestFileTransformer_CTX(t *testing.T) {
 	})
 }
 
+func TestFileTransform_Addenda(t *testing.T) {
+	resp := service.Response{
+		Match: service.Match{
+			EntryType: service.EntryTypeDebit,
+		},
+		Action: actionReturn,
+	}
+	fileTransformer, dir := testFileTransformer(t, resp)
+
+	// read the file
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "with-addenda.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	t.Run("return", func(t *testing.T) {
+		// transform
+		err := fileTransformer.Transform(context.Background(), achIn)
+		require.NoError(t, err)
+
+		retdir := filepath.Join(dir, "returned")
+
+		// verify a return was created
+		fds, err := os.ReadDir(retdir)
+		require.NoError(t, err)
+		require.Len(t, fds, 1)
+		found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+		require.NoError(t, err)
+		require.Len(t, found.Batches, 1)
+		entries := found.Batches[0].GetEntries()
+		require.Len(t, entries, 1)
+		require.NotNil(t, entries[0].Addenda99)
+		require.Equal(t, "R03", entries[0].Addenda99.ReturnCode)
+		require.NoError(t, os.Remove(filepath.Join(retdir, fds[0].Name()))) // delete file for next stage
+	})
+
+	// Update response to send a Correction
+	resp.Action = actionCorrection
+	fileTransformer, dir = testFileTransformer(t, resp)
+
+	t.Run("correction", func(t *testing.T) {
+		// transform
+		err := fileTransformer.Transform(context.Background(), achIn)
+		require.NoError(t, err)
+
+		retdir := filepath.Join(dir, "returned")
+
+		// verify a correction was created
+		fds, err := os.ReadDir(retdir)
+		require.NoError(t, err)
+		require.Len(t, fds, 1)
+		found, err := ach.ReadFile(filepath.Join(retdir, fds[0].Name()))
+		require.NoError(t, err)
+		require.Len(t, found.Batches, 1)
+		entries := found.Batches[0].GetEntries()
+		require.Len(t, entries, 1)
+		require.NotNil(t, entries[0].Addenda98)
+		require.Equal(t, "C01", entries[0].Addenda98.ChangeCode)
+	})
+
+	// Update the response to copy
+	fileTransformer, dir = testFileTransformer(t, respCopyDebit)
+
+	t.Run("copy", func(t *testing.T) {
+		// transform
+		err := fileTransformer.Transform(context.Background(), achIn)
+		require.NoError(t, err)
+
+		copydir := filepath.Join(dir, "reconciliation")
+
+		// verify a copy was created
+		fds, err := os.ReadDir(copydir)
+		require.NoError(t, err)
+		require.Len(t, fds, 1)
+		found, err := ach.ReadFile(filepath.Join(copydir, fds[0].Name()))
+		require.ErrorContains(t, err, "none or more than one file headers exists")
+		require.Len(t, found.Batches, 1)
+		entries := found.Batches[0].GetEntries()
+		require.Len(t, entries, 1)
+		require.Len(t, entries[0].Addenda05, 1)
+		addenda := entries[0].Addenda05[0]
+		require.Equal(t, "TRX123123231", addenda.PaymentRelatedInformation)
+	})
+}
+
 func TestFileTransform_Sorted(t *testing.T) {
 	resp := service.Response{
 		Match:  matchRoutingNumber,
