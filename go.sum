@@ -69,10 +69,14 @@ github.com/minio/sha256-simd v0.1.1/go.mod h1:B5e1o+1/KgNmWrSQK08Y6Z1Vb5pwIktudl
 github.com/mitchellh/go-homedir v1.1.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
 github.com/moov-io/ach v1.55.1 h1:i0/FSwAQDyz4EdrHuBGmJqVc6B1ASWhXEMm+7YsTvnA=
 github.com/moov-io/ach v1.55.1/go.mod h1:CDEphsKPIxAbwP4YT00L+g/bLF5pSIRNc/yioKv/WwQ=
+github.com/moov-io/ach v1.55.2 h1:+lYtR8AbmW9i6nTeqXVWp4ptOEXDLTVJarrqWHnDnIs=
+github.com/moov-io/ach v1.55.2/go.mod h1:T1lQoij7KL65i3+PhgLT1S9FK+d6kXpZMHvBTtho/Uw=
 github.com/moov-io/base v0.60.0 h1:1n6fXq9Dr3ahXxwKjXB526oAheRC9q6OKldllzsw1Ag=
 github.com/moov-io/base v0.60.0/go.mod h1:fQAez06Kf0JDpkGzaXGDzWq8fHpVFvWjARjxSGZ05Yg=
 github.com/moov-io/iso3166 v0.3.0 h1:7mnqBDYmvwif4T5soC81mA82ZQGYqzRf7LnQGxb8YC8=
 github.com/moov-io/iso3166 v0.3.0/go.mod h1:2fyJk2mvovjij1ya1/9gSuB2li1ZIm9jB2O/YusZQHQ=
+github.com/moov-io/iso3166 v0.4.0 h1:WtXIptANC16DrHpbSAt4+itFciCCnA+C6eAi9k7HEsA=
+github.com/moov-io/iso3166 v0.4.0/go.mod h1:13ubAoOZNfWzs2fN3x467zg8q982U867Ee+ulqrArlM=
 github.com/moov-io/iso4217 v0.3.2 h1:/PNKwvt0LCaDx3r5cQEjIdX6a7PEELWJ8D5thi2jiHU=
 github.com/moov-io/iso4217 v0.3.2/go.mod h1:IoD1XWQwCZBhFk9YlfQwvRW3TGlk7IoZX9OEe2PG19M=
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq1c1nUAm88MOHcQC9l5mIlSMApZMrHA=
