@@ -11,7 +11,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/markbates/pkger v0.17.1
 	github.com/moov-io/ach v1.56.3
-	github.com/moov-io/base v0.61.0
+	github.com/moov-io/base v0.61.1
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.40.0
 	go.opentelemetry.io/otel/trace v1.40.0
@@ -65,9 +65,9 @@ require (
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409 // indirect
-	google.golang.org/grpc v1.78.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260203192932-546029d2fa20 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260209200024-4cfbd4190f57 // indirect
+	google.golang.org/grpc v1.79.1 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
