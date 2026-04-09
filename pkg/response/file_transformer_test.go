@@ -1182,6 +1182,56 @@ func TestFileTransform_Addenda(t *testing.T) {
 	})
 }
 
+func TestFileTransformer_AddendaCopy_SDSandbox(t *testing.T) {
+	// Test RDFI behavior: entries should be copied to reconciliation WITH addenda records
+	// This test verifies that when acting as an ACH RDFI, addenda records are preserved
+	fileTransformer, dir := testFileTransformer(t, respCopyDebit, respCopyCredit)
+
+	achIn, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "addenda-bugs", "SD-SANDBOX-20260408-160000-sandbox-0.ach"))
+	require.NoError(t, err)
+	require.NotNil(t, achIn)
+
+	// Verify the input file has the expected structure with addenda
+	require.Len(t, achIn.Batches, 2)
+	require.Len(t, achIn.Batches[0].GetEntries(), 1)
+	require.Len(t, achIn.Batches[0].GetEntries()[0].Addenda05, 1) // First entry has addenda
+	require.Len(t, achIn.Batches[1].GetEntries(), 1)
+	require.Len(t, achIn.Batches[1].GetEntries()[0].Addenda05, 0) // Second entry has no addenda
+
+	// Transform the file - this should copy all entries to reconciliation as RDFI
+	err = fileTransformer.Transform(context.Background(), achIn)
+	require.NoError(t, err)
+
+	// Verify the reconciliation files were created
+	recondir := filepath.Join(dir, "reconciliation")
+	fds, err := os.ReadDir(recondir)
+	require.NoError(t, err)
+	require.Len(t, fds, 2) // Should create 2 reconciliation files (one per company ID)
+
+	// Sort files by name for consistent testing
+	sort.Slice(fds, func(i, j int) bool {
+		return fds[i].Name() < fds[j].Name()
+	})
+
+	// Read the reconciliation files
+	read1, err := ach.ReadFile(filepath.Join(recondir, fds[0].Name()))
+	require.ErrorContains(t, err, "none or more than one file headers exists")
+	read2, err := ach.ReadFile(filepath.Join(recondir, fds[1].Name()))
+	require.ErrorContains(t, err, "none or more than one file headers exists")
+
+	// Verify the files have the expected structure
+	require.Len(t, read1.Batches, 1)
+	require.Len(t, read1.Batches[0].GetEntries(), 1)
+
+	require.Len(t, read2.Batches, 1)
+	require.Len(t, read2.Batches[0].GetEntries(), 1)
+
+	// As RDFI, addenda should be copied to reconciliation
+	// Entries in reconciliation should preserve their addenda
+	require.Len(t, read1.Batches[0].GetEntries()[0].Addenda05, 0, "RDFI reconciliation should preserve original addenda state")
+	require.Len(t, read2.Batches[0].GetEntries()[0].Addenda05, 1, "RDFI reconciliation should include addenda")
+}
+
 func TestFileTransform_Sorted(t *testing.T) {
 	resp := service.Response{
 		Match:  matchRoutingNumber,
