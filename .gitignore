@@ -33,6 +33,7 @@ misspell*
 staticcheck*
 coverage.txt
 gitleaks.tar.gz
+.golangci-lint-generated.yml
 
 pkger*
 pkged.go
