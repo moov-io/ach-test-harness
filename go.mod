@@ -4,13 +4,13 @@ module github.com/moov-io/ach-test-harness
 
 go 1.25.0
 
-toolchain go1.26.0
+toolchain go1.26.2
 
 require (
 	github.com/evanphx/json-patch v5.9.11+incompatible
 	github.com/gorilla/mux v1.8.1
 	github.com/markbates/pkger v0.17.1
-	github.com/moov-io/ach v1.56.3
+	github.com/moov-io/ach v1.58.0
 	github.com/moov-io/base v0.61.1
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.40.0
