@@ -6,11 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"goftp.io/server/core"
-	ftp "goftp.io/server/core"
-	"goftp.io/server/driver/file"
-
+	"github.com/moov-io/base/log"
 	"github.com/stretchr/testify/require"
+	"goftp.io/server/v2"
 )
 
 func TestMTimeFilter_ListDir(t *testing.T) {
@@ -38,11 +36,11 @@ func TestMTimeFilter_ListDir(t *testing.T) {
 	require.Equal(t, "second.txt", found[0].Name())
 }
 
-func listFiles(t *testing.T, driver core.Driver, path string) []core.FileInfo {
+func listFiles(t *testing.T, driver server.Driver, path string) []os.FileInfo {
 	t.Helper()
 
-	var found []core.FileInfo
-	err := driver.ListDir(path, func(info core.FileInfo) error {
+	var found []os.FileInfo
+	err := driver.ListDir(nil, path, func(info os.FileInfo) error {
 		found = append(found, info)
 		return nil
 	})
@@ -52,21 +50,12 @@ func listFiles(t *testing.T, driver core.Driver, path string) []core.FileInfo {
 	return found
 }
 
-func setupDriver(t *testing.T, basePath string) core.Driver {
+func setupDriver(t *testing.T, basePath string) server.Driver {
 	t.Helper()
 
-	fileDriverFactory := &file.DriverFactory{
-		RootPath: basePath,
-		Perm:     ftp.NewSimplePerm("user", "group"),
-	}
-	filteringDriver := &Factory{
-		DriverFactory: fileDriverFactory,
-	}
-
-	driver, err := filteringDriver.NewDriver()
+	driver, err := NewDriver(log.NewDefaultLogger(), nil, basePath)
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	return driver
 }

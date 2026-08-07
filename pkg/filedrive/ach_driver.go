@@ -11,18 +11,18 @@ import (
 	"github.com/moov-io/base/telemetry"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"goftp.io/server/core"
+	"goftp.io/server/v2"
 )
 
 // ACHDriver wraps the goftp driver to add additional logic and error checking.
 type ACHDriver struct {
-	core.Driver
+	server.Driver
 
 	logger       log.Logger
 	validateOpts *ach.ValidateOpts
 }
 
-func NewACHDriver(logger log.Logger, validateOpts *ach.ValidateOpts, driver core.Driver) *ACHDriver {
+func NewACHDriver(logger log.Logger, validateOpts *ach.ValidateOpts, driver server.Driver) *ACHDriver {
 	return &ACHDriver{
 		Driver:       driver,
 		logger:       logger,
@@ -31,7 +31,8 @@ func NewACHDriver(logger log.Logger, validateOpts *ach.ValidateOpts, driver core
 }
 
 // PutFile overrides the existing method to prevent erroneous ACH files from being uploaded.
-func (d *ACHDriver) PutFile(path string, r io.Reader, appendData bool) (int64, error) {
+// offset follows goftp.io/server/v2 semantics: -1 overwrites, >= 0 appends/seeks.
+func (d *ACHDriver) PutFile(ctx *server.Context, path string, r io.Reader, offset int64) (int64, error) {
 	_, span := telemetry.StartSpan(context.Background(), "put-file", trace.WithAttributes(
 		attribute.String("ftp.destination", path),
 	))
@@ -62,5 +63,8 @@ func (d *ACHDriver) PutFile(path string, r io.Reader, appendData bool) (int64, e
 	d.logger.Info().Log(fmt.Sprintf("accepting file at %s", path))
 
 	// Call the original PutFile method with a reset reader.
-	return d.Driver.PutFile(path, &buf, appendData)
+	return d.Driver.PutFile(ctx, path, &buf, offset)
 }
+
+// Ensure ACHDriver implements server.Driver (compile-time check).
+var _ server.Driver = (*ACHDriver)(nil)

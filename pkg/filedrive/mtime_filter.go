@@ -1,21 +1,23 @@
 package filedrive
 
 import (
+	"os"
 	"time"
 
 	"github.com/moov-io/ach"
 	"github.com/moov-io/base/log"
-	"goftp.io/server/core"
+	"goftp.io/server/v2"
+	"goftp.io/server/v2/driver/file"
 )
 
 type MTimeFilter struct {
-	core.Driver
+	server.Driver
 }
 
-func (mtf MTimeFilter) ListDir(path string, callback func(core.FileInfo) error) error {
+func (mtf MTimeFilter) ListDir(ctx *server.Context, path string, callback func(os.FileInfo) error) error {
 	now := time.Now()
 
-	return mtf.Driver.ListDir(path, func(info core.FileInfo) error {
+	return mtf.Driver.ListDir(ctx, path, func(info os.FileInfo) error {
 		if info.ModTime().Before(now) {
 			return callback(info)
 		}
@@ -23,21 +25,16 @@ func (mtf MTimeFilter) ListDir(path string, callback func(core.FileInfo) error) 
 	})
 }
 
-type Factory struct {
-	DriverFactory core.DriverFactory
-
-	Logger       log.Logger
-	ValidateOpts *ach.ValidateOpts
-}
-
-func (f *Factory) NewDriver() (core.Driver, error) {
-	dd, err := f.DriverFactory.NewDriver()
+// NewDriver builds the FTP filesystem driver used by the test harness:
+// a file-backed store wrapped with ACH validation and future-mtime filtering.
+func NewDriver(logger log.Logger, validateOpts *ach.ValidateOpts, rootPath string) (server.Driver, error) {
+	base, err := file.NewDriver(rootPath)
 	if err != nil {
 		return nil, err
 	}
-
-	achDriver := NewACHDriver(f.Logger, f.ValidateOpts, dd)
 	return MTimeFilter{
-		Driver: achDriver,
+		Driver: NewACHDriver(logger, validateOpts, base),
 	}, nil
 }
+
+var _ server.Driver = MTimeFilter{}

@@ -12,7 +12,7 @@ import (
 	"github.com/moov-io/ach-test-harness/pkg/service"
 	"github.com/moov-io/base/log"
 
-	ftp "goftp.io/server/core"
+	ftp "goftp.io/server/v2"
 )
 
 type FileWriter interface {
@@ -49,16 +49,17 @@ func (w *FTPFileWriter) WriteFile(filepath string, file *ach.File, futureDated *
 }
 
 func (w *FTPFileWriter) Write(path string, r io.Reader, futureDated *time.Duration) error {
-	driver, err := w.server.Factory.NewDriver()
-	if err != nil {
-		return fmt.Errorf("get driver to write %s: %v", path, err)
+	driver := w.server.Driver
+	if driver == nil {
+		return fmt.Errorf("get driver to write %s: nil driver", path)
 	}
 
 	if err := mkdir(driver, path); err != nil {
 		return fmt.Errorf("mkdir: %s: %v", path, err)
 	}
 
-	if _, err := driver.PutFile(path, r, false); err != nil {
+	// offset -1 overwrites (v2 replaces the old appendData=false flag)
+	if _, err := driver.PutFile(nil, path, r, -1); err != nil {
 		return fmt.Errorf("STOR %s: %v", path, err)
 	}
 
@@ -73,5 +74,5 @@ func (w *FTPFileWriter) Write(path string, r io.Reader, futureDated *time.Durati
 
 func mkdir(driver ftp.Driver, path string) error {
 	dir, _ := filepath.Split(path)
-	return driver.MakeDir(dir)
+	return driver.MakeDir(nil, dir)
 }
