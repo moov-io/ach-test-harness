@@ -15,7 +15,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.45.0
 	go.opentelemetry.io/otel/trace v1.45.0
-	goftp.io/server v0.4.1
+	goftp.io/server/v2 v2.0.3
 	goftp.io/server/v2 v2.0.3
 )
 
