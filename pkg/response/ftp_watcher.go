@@ -10,7 +10,7 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	ftp "goftp.io/server/core"
+	ftp "goftp.io/server/v2"
 )
 
 func Register(
@@ -38,8 +38,8 @@ type FTPWatcher struct {
 	transformer  *FileTransfomer
 }
 
-func (notify *FTPWatcher) AfterFilePut(conn *ftp.Conn, dstPath string, size int64, err error) {
-	ctx, span := telemetry.StartSpan(context.Background(), "after-file-put", trace.WithAttributes(
+func (notify *FTPWatcher) AfterFilePut(ctx *ftp.Context, dstPath string, size int64, err error) {
+	otelCtx, span := telemetry.StartSpan(context.Background(), "after-file-put", trace.WithAttributes(
 		attribute.String("ftp.destination", dstPath),
 		attribute.Int64("ftp.file_size_bytes", size),
 	))
@@ -51,14 +51,16 @@ func (notify *FTPWatcher) AfterFilePut(conn *ftp.Conn, dstPath string, size int6
 		notify.logger.Error().Log(fmt.Sprintf("error with file %s: %v", dstPath, err))
 	}
 
-	// Grab a file descriptor
-	driver, err := conn.ServerOpts().Factory.NewDriver()
-	if err != nil {
-		notify.logger.Error().Log(fmt.Sprintf("ftp: error getting driver for file %s: %v", dstPath, err))
+	// Grab a file descriptor from the server driver
+	driver := ctx.Sess.Server().Driver
+	if driver == nil {
+		notify.logger.Error().Log(fmt.Sprintf("ftp: nil driver for file %s", dstPath))
+		return
 	}
-	_, fd, err := driver.GetFile(dstPath, 0)
+	_, fd, err := driver.GetFile(ctx, dstPath, 0)
 	if err != nil {
 		notify.logger.Error().Log(fmt.Sprintf("ftp: error reading file %s: %v", dstPath, err))
+		return
 	}
 	// Read the file that was uploaded
 	reader := ach.NewReader(fd)
@@ -75,7 +77,7 @@ func (notify *FTPWatcher) AfterFilePut(conn *ftp.Conn, dstPath string, size int6
 		notify.logger.Error().Log(fmt.Sprintf("ftp: error creating file %s: %v", dstPath, err))
 	}
 
-	if err := notify.transformer.Transform(ctx, &file); err != nil {
+	if err := notify.transformer.Transform(otelCtx, &file); err != nil {
 		notify.logger.Error().Log(fmt.Sprintf("ftp: error transforming file %s: %v", dstPath, err))
 	}
 }

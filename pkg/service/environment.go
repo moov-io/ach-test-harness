@@ -13,7 +13,7 @@ import (
 	"github.com/moov-io/base/telemetry"
 
 	"github.com/gorilla/mux"
-	ftp "goftp.io/server/core"
+	ftp "goftp.io/server/v2"
 )
 
 // Environment - Contains everything thats been instantiated for this service.

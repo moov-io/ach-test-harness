@@ -6,15 +6,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"goftp.io/server/driver/file"
+	"goftp.io/server/v2/driver/file"
 )
 
 func TestFileWriter__mkdir(t *testing.T) {
 	dir := t.TempDir()
-	factory := &file.DriverFactory{
-		RootPath: dir,
-	}
-	driver, err := factory.NewDriver()
+	driver, err := file.NewDriver(dir)
 	require.NoError(t, err)
 
 	path := filepath.Join("foo", "Bar", "baz", "example.ach")

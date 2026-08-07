@@ -9,15 +9,15 @@ import (
 
 	"github.com/moov-io/base/log"
 	"github.com/stretchr/testify/require"
-	"goftp.io/server/core"
+	"goftp.io/server/v2"
 )
 
-// MockDriver is a simple mock implementation of core.Driver for testing purposes.
+// MockDriver is a simple mock implementation of server.Driver for testing purposes.
 type MockDriver struct {
-	core.Driver
+	server.Driver
 }
 
-func (m *MockDriver) PutFile(path string, r io.Reader, appendData bool) (int64, error) {
+func (m *MockDriver) PutFile(ctx *server.Context, path string, r io.Reader, offset int64) (int64, error) {
 	// Mock implementation, just return success
 	return 0, nil
 }
@@ -31,7 +31,7 @@ func TestACHDriver_PutFile_InvalidACH(t *testing.T) {
 	invalidACH.WriteString("invalid ACH content")
 
 	// Attempt to upload the invalid ACH file
-	_, err := customDriver.PutFile("invalid.ach", &invalidACH, false)
+	_, err := customDriver.PutFile(nil, "invalid.ach", &invalidACH, -1)
 
 	// Verify that an error is returned
 	require.Error(t, err)
@@ -46,7 +46,7 @@ func TestACHDriver_PutFile(t *testing.T) {
 	defer achFile.Close()
 
 	// Attempt to upload the valid ACH file
-	_, err = customDriver.PutFile("valid.ach", achFile, false)
+	_, err = customDriver.PutFile(nil, "valid.ach", achFile, -1)
 
 	// Verify that no error is returned
 	require.NoError(t, err)

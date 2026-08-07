@@ -15,8 +15,7 @@ import (
 	"github.com/moov-io/base/admin"
 	"github.com/moov-io/base/log"
 
-	ftp "goftp.io/server/core"
-	"goftp.io/server/driver/file"
+	ftp "goftp.io/server/v2"
 )
 
 // RunServers - Boots up all the servers and awaits till they are stopped.
@@ -44,30 +43,32 @@ func bootFTPServer(errs chan<- error, logger log.Logger, cfg *FTPConfig, validat
 	createDataDirectories(errs, logger, cfg)
 
 	// Start the FTP server
-	fileDriverFactory := &file.DriverFactory{
-		RootPath: cfg.RootPath,
-		Perm:     ftp.NewSimplePerm("user", "group"),
+	driver, err := filedrive.NewDriver(logger, validateOpts, cfg.RootPath)
+	if err != nil {
+		errs <- logger.Fatal().LogErrorf("problem creating FTP driver: %v", err).Err()
+		return nil, func() {}
 	}
-	filteringDriver := &filedrive.Factory{
-		DriverFactory: fileDriverFactory,
-		Logger:        logger,
-		ValidateOpts:  validateOpts,
-	}
-	opts := &ftp.ServerOpts{
-		Factory:  filteringDriver,
+
+	opts := &ftp.Options{
+		Driver:   driver,
 		Port:     cfg.Port,
 		Hostname: cfg.Hostname,
 		Auth: &ftp.SimpleAuth{
 			Name:     cfg.Auth.Username,
 			Password: cfg.Auth.Password,
 		},
+		Perm:         ftp.NewSimplePerm("user", "group"),
 		PassivePorts: cfg.PassivePorts,
 		Logger:       &ftp.DiscardLogger{},
 	}
-	server := ftp.NewServer(opts)
+	server, err := ftp.NewServer(opts)
+	if err != nil {
+		errs <- logger.Fatal().LogErrorf("problem creating FTP server: %v", err).Err()
+		return nil, func() {}
+	}
 
 	// Create directories needed for Actions
-	createResponsePaths(errs, logger, server.Factory, responsePaths)
+	createResponsePaths(errs, logger, driver, responsePaths)
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
@@ -102,15 +103,10 @@ func createDataDirectories(errs chan<- error, logger log.Logger, cfg *FTPConfig)
 	}
 }
 
-func createResponsePaths(errs chan<- error, logger log.Logger, fact ftp.DriverFactory, paths []string) {
-	driver, err := fact.NewDriver()
-	if err != nil {
-		errs <- logger.Fatal().LogErrorf("problem creating driver: %v", err).Err()
-		return
-	}
+func createResponsePaths(errs chan<- error, logger log.Logger, driver ftp.Driver, paths []string) {
 	for i := range paths {
 		logger.Info().Logf("creating %s", paths[i])
-		if err := driver.MakeDir(paths[i]); err != nil {
+		if err := driver.MakeDir(nil, paths[i]); err != nil {
 			logger.Warn().Logf("problem creating %s: %v", paths[i], err)
 		}
 	}
