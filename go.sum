@@ -67,8 +67,6 @@ github.com/moov-io/base v0.63.0 h1:J2dGj5z5X2dbLumWkbCCjM6rWycf/Zfdvk31fHJQjZk=
 github.com/moov-io/base v0.63.0/go.mod h1:7lW1P0fiFOrINtS2zoxYtvTgvhdI0EcGSi5J//pIZcY=
 github.com/moov-io/base v0.63.1 h1:Jr/CYxfKugWv0WQmMno57ZUHnenAzHoHJ3stX0SWIMA=
 github.com/moov-io/base v0.63.1/go.mod h1:BYDXx00OEqPZMYQQdxf3x3zXdKCrm7FZvHoIArITjqc=
-github.com/moov-io/base v0.63.2 h1:ZbAr8StvwRphZ46El15bTbnJmDHZcArjOqy/0aqNllU=
-github.com/moov-io/base v0.63.2/go.mod h1:MEqa+7MXLHb1EacH3HZlcirgB8TxLalKvu7j+M7BXok=
 github.com/moov-io/iso3166 v0.4.0 h1:WtXIptANC16DrHpbSAt4+itFciCCnA+C6eAi9k7HEsA=
 github.com/moov-io/iso3166 v0.4.0/go.mod h1:13ubAoOZNfWzs2fN3x467zg8q982U867Ee+ulqrArlM=
 github.com/moov-io/iso4217 v0.4.0 h1:+97e9chdg8Cx3kMLmGmvN64+CtmtodPLfUT2PaCXUUE=
@@ -111,8 +109,6 @@ github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
-github.com/stretchr/testify v1.12.0 h1:K6Mr6jO9JICuend/5xzTM03ydSV3vdNRYAdPSukj8uI=
-github.com/stretchr/testify v1.12.0/go.mod h1:bOYBZb5qJ00vPzWfIqBUZPaxK8jWiXc6d3ErP4Ca9Gw=
 github.com/subosito/gotenv v1.6.0 h1:9NlTDc1FTs4qu0DDq7AEtTPNw6SVm7uBMsUCUjABIf8=
 github.com/subosito/gotenv v1.6.0/go.mod h1:Dk4QP5c2W3ibzajGcXpNraDfq2IrhjMIvMSWPKKo0FU=
 go.opentelemetry.io/auto/sdk v1.2.1 h1:jXsnJ4Lmnqd11kwkBV2LgLoFMZKizbCi5fNZ/ipaZ64=
