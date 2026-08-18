@@ -52,6 +52,12 @@ func TestRepository(t *testing.T) {
 	// expect to get batches from outbound/1.ach
 	require.NoError(t, err)
 	require.Len(t, batches, 1)
+
+	_, err = repo.Search(ctx, SearchOptions{Path: ".."})
+	require.EqualError(t, err, "invalid path")
+
+	_, err = repo.Search(ctx, SearchOptions{Path: "/etc"})
+	require.EqualError(t, err, "invalid path")
 }
 
 func TestRepository__filterBatches(t *testing.T) {

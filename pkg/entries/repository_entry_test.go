@@ -52,6 +52,12 @@ func TestRepository(t *testing.T) {
 	// expect to get entries from outbound/1.ach
 	require.NoError(t, err)
 	require.Len(t, entries, 2)
+
+	_, err = repo.Search(ctx, SearchOptions{Path: ".."})
+	require.EqualError(t, err, "invalid path")
+
+	_, err = repo.Search(ctx, SearchOptions{Path: "/etc"})
+	require.EqualError(t, err, "invalid path")
 }
 
 func TestRepository__filterEntries(t *testing.T) {
