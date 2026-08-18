@@ -74,9 +74,9 @@ func (r *batchRepository) Search(ctx context.Context, opts SearchOptions) ([]ach
 		attribute.Int("search.files_processed", filesProcessed),
 	)
 
-	var walkingPath = r.rootPath
-	if opts.Path != "" {
-		walkingPath = filepath.Join(r.rootPath, opts.Path)
+	walkingPath, err := service.ResolveWalkPath(r.rootPath, opts.Path)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := filepath.WalkDir(walkingPath, search); err != nil {
