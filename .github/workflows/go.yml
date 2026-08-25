@@ -47,12 +47,3 @@ jobs:
     - name: Docker Build
       if: runner.os == 'Linux'
       run: make dev-docker
-
-    - name: Docker Push
-      if: runner.os == 'Linux' && github.repository == 'moov-io'
-      run: |+
-          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-          make dev-push
-      env:
-        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
