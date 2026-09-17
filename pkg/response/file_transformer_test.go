@@ -1007,12 +1007,19 @@ func TestOutBatches_ResponseKinds(t *testing.T) {
 	require.NoError(t, err)
 	correction, err := batches.getOutBatch(nil, outputCOR, file.Header, header, 0)
 	require.NoError(t, err)
+	ack, err := batches.getOutBatch(nil, outputACK, file.Header, header, 0)
+	require.NoError(t, err)
 
 	require.NotSame(t, *original, *correction)
+	require.NotSame(t, *original, *ack)
+	require.NotSame(t, *correction, *ack)
 	require.IsType(t, &ach.BatchCCD{}, *original)
 	require.IsType(t, &ach.BatchCOR{}, *correction)
+	require.IsType(t, &ach.BatchACK{}, *ack)
 	require.Equal(t, header.StandardEntryClassCode, (*original).GetHeader().StandardEntryClassCode)
 	require.Equal(t, ach.COR, (*correction).GetHeader().StandardEntryClassCode)
+	require.Equal(t, ach.ACK, (*ack).GetHeader().StandardEntryClassCode)
+	require.Equal(t, ach.CreditsOnly, (*ack).GetHeader().ServiceClassCode)
 
 	// Interleaved lookups must retain the batch for each response kind.
 	again, err := batches.getOutBatch(nil, outputOriginalSEC, file.Header, header, 0)
@@ -1021,6 +1028,9 @@ func TestOutBatches_ResponseKinds(t *testing.T) {
 	again, err = batches.getOutBatch(nil, outputCOR, file.Header, header, 0)
 	require.NoError(t, err)
 	require.Same(t, correction, again)
+	again, err = batches.getOutBatch(nil, outputACK, file.Header, header, 0)
+	require.NoError(t, err)
+	require.Same(t, ack, again)
 }
 
 func TestOutBatches_DelayGrouping(t *testing.T) {
@@ -1049,7 +1059,7 @@ func TestOutBatches_DelayGrouping(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			batches := outBatches{}
-			for _, kind := range []outputBatchKind{outputOriginalSEC, outputCOR} {
+			for _, kind := range []outputBatchKind{outputOriginalSEC, outputCOR, outputACK} {
 				first, err := batches.getOutBatch(tt.first, kind, file.Header, header, 0)
 				require.NoError(t, err)
 				second, err := batches.getOutBatch(tt.second, kind, file.Header, header, 0)
@@ -1067,8 +1077,10 @@ func TestOutBatches_DelayGrouping(t *testing.T) {
 				require.Len(t, batches, 2)
 			}
 			for _, byKind := range batches {
-				require.Len(t, byKind, 2)
+				require.Len(t, byKind, 3)
 				require.NotSame(t, *byKind[outputOriginalSEC], *byKind[outputCOR])
+				require.NotSame(t, *byKind[outputOriginalSEC], *byKind[outputACK])
+				require.NotSame(t, *byKind[outputCOR], *byKind[outputACK])
 			}
 		})
 	}
@@ -1081,7 +1093,7 @@ func TestOutBatches_DoesNotMutateSourceHeader(t *testing.T) {
 	original := *header
 	batches := outBatches{}
 
-	for _, kind := range []outputBatchKind{outputOriginalSEC, outputCOR} {
+	for _, kind := range []outputBatchKind{outputOriginalSEC, outputCOR, outputACK} {
 		batch, err := batches.getOutBatch(nil, kind, file.Header, *header, 0)
 		require.NoError(t, err)
 		require.NotSame(t, header, (*batch).GetHeader())
@@ -1091,6 +1103,9 @@ func TestOutBatches_DoesNotMutateSourceHeader(t *testing.T) {
 		expected.ODFIIdentification = file.Header.ImmediateDestination
 		if kind == outputCOR {
 			expected.StandardEntryClassCode = ach.COR
+		} else if kind == outputACK {
+			expected.StandardEntryClassCode = ach.ACK
+			expected.ServiceClassCode = ach.CreditsOnly
 		}
 		require.Equal(t, expected, *(*batch).GetHeader())
 	}

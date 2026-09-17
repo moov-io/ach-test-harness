@@ -104,6 +104,22 @@ func (ft *FileTransfomer) Transform(ctx context.Context, file *ach.File) error {
 						return err
 					}
 				}
+			} else {
+				entry, err := acknowledgeCCDEntry(ctx, file.Header, bh, entries[j])
+				if err != nil {
+					err = fmt.Errorf("transform batch[%d] acknowledge entry[%d]: %w", i, j, err)
+					span.RecordError(err)
+					return err
+				}
+				if entry != nil {
+					batch, err := outBatches.getOutBatch(nil, outputACK, file.Header, *bh, i)
+					if err != nil {
+						err = fmt.Errorf("transform batch[%d] acknowledge entry[%d] getOutBatch: %w", i, j, err)
+						span.RecordError(err)
+						return err
+					}
+					(*batch).AddEntry(entry)
+				}
 			}
 		}
 
@@ -204,6 +220,7 @@ type outputBatchKind uint8
 const (
 	outputOriginalSEC outputBatchKind = iota
 	outputCOR
+	outputACK
 )
 
 type outBatches map[*time.Duration]map[outputBatchKind]*ach.Batcher
@@ -217,9 +234,14 @@ func (outBatches outBatches) getOutBatch(delay *time.Duration, kind outputBatchK
 
 	var outBatch = batchesByKind[kind]
 	if outBatch == nil {
-		// When the entry is corrected we need to change the SEC code
-		if kind == outputCOR {
+		switch kind {
+		case outputOriginalSEC:
+			// Preserve the source SEC for existing responses.
+		case outputCOR:
 			bh.StandardEntryClassCode = ach.COR
+		case outputACK:
+			bh.StandardEntryClassCode = ach.ACK
+			bh.ServiceClassCode = ach.CreditsOnly
 		}
 
 		// We need to flip the Origin / Destination values when setting up the out batch
@@ -241,11 +263,18 @@ func generateFilename(file *ach.File) string {
 	if file == nil {
 		return fmt.Sprintf("MISSING_%s_%d.ach", timestamp, rand.Int64())
 	}
+	ackOnly := len(file.Batches) > 0 && len(file.IATBatches) == 0
 	for i := range file.Batches {
 		bh := file.Batches[i].GetHeader()
 		if bh.StandardEntryClassCode == ach.COR {
 			return fmt.Sprintf("CORRECTION_%s_%d.ach", timestamp, rand.Int64())
 		}
+		if bh.StandardEntryClassCode != ach.ACK {
+			ackOnly = false
+		}
+	}
+	if ackOnly {
+		return fmt.Sprintf("ACK_%s_%d.ach", timestamp, rand.Int64())
 	}
 	return fmt.Sprintf("RETURN_%s_%d.ach", timestamp, rand.Int64())
 }
