@@ -58,7 +58,7 @@ func (ft *FileTransfomer) Transform(ctx context.Context, file *ach.File) error {
 
 	for i := range file.Batches {
 
-		// Track ach.Batcher to write based on different delay durations and whether the batch is for NOC
+		// Track ach.Batcher to write based on different delay durations and response kinds
 		var outBatches = outBatches{}
 
 		bh := file.Batches[i].GetHeader()
@@ -79,7 +79,11 @@ func (ft *FileTransfomer) Transform(ctx context.Context, file *ach.File) error {
 				}
 
 				// Get the appropriate ach.Batch object to update
-				batch, err := outBatches.getOutBatch(processAction.Delay, entry.Category, file.Header, *file.Batches[i].GetHeader(), i)
+				kind := outputOriginalSEC
+				if entry.Category == ach.CategoryNOC {
+					kind = outputCOR
+				}
+				batch, err := outBatches.getOutBatch(processAction.Delay, kind, file.Header, *file.Batches[i].GetHeader(), i)
 				if err != nil {
 					err = fmt.Errorf("transform batch[%d] morph entry[%d] getOutBatch error: %w", i, j, err)
 					span.RecordError(err)
@@ -100,12 +104,28 @@ func (ft *FileTransfomer) Transform(ctx context.Context, file *ach.File) error {
 						return err
 					}
 				}
+			} else {
+				entry, err := acknowledgeCCDEntry(ctx, file.Header, bh, entries[j])
+				if err != nil {
+					err = fmt.Errorf("transform batch[%d] acknowledge entry[%d]: %w", i, j, err)
+					span.RecordError(err)
+					return err
+				}
+				if entry != nil {
+					batch, err := outBatches.getOutBatch(nil, outputACK, file.Header, *bh, i)
+					if err != nil {
+						err = fmt.Errorf("transform batch[%d] acknowledge entry[%d] getOutBatch: %w", i, j, err)
+						span.RecordError(err)
+						return err
+					}
+					(*batch).AddEntry(entry)
+				}
 			}
 		}
 
 		// Create our Batch's Control and other fields
-		for delay, batchesByCategory := range outBatches {
-			for _, batch := range batchesByCategory {
+		for delay, batchesByKind := range outBatches {
+			for _, batch := range batchesByKind {
 				if entries = (*batch).GetEntries(); len(entries) > 0 {
 					// Sort the entries before the final build
 					slices.SortFunc(entries, func(e1, e2 *ach.EntryDetail) int {
@@ -195,20 +215,33 @@ func (outFiles outFiles) getOutFile(delay *time.Duration, file *ach.File, opts *
 	return outFile, nil
 }
 
-type outBatches map[*time.Duration]map[bool]*ach.Batcher
+type outputBatchKind uint8
 
-func (outBatches outBatches) getOutBatch(delay *time.Duration, category string, fh ach.FileHeader, bh ach.BatchHeader, i int) (*ach.Batcher, error) {
-	var batchesByCategory = outBatches[delay]
-	if batchesByCategory == nil {
-		batchesByCategory = make(map[bool]*ach.Batcher)
-		outBatches[delay] = batchesByCategory
+const (
+	outputOriginalSEC outputBatchKind = iota
+	outputCOR
+	outputACK
+)
+
+type outBatches map[*time.Duration]map[outputBatchKind]*ach.Batcher
+
+func (outBatches outBatches) getOutBatch(delay *time.Duration, kind outputBatchKind, fh ach.FileHeader, bh ach.BatchHeader, i int) (*ach.Batcher, error) {
+	var batchesByKind = outBatches[delay]
+	if batchesByKind == nil {
+		batchesByKind = make(map[outputBatchKind]*ach.Batcher)
+		outBatches[delay] = batchesByKind
 	}
 
-	var outBatch = batchesByCategory[category == ach.CategoryNOC]
+	var outBatch = batchesByKind[kind]
 	if outBatch == nil {
-		// When the entry is corrected we need to change the SEC code
-		if category == ach.CategoryNOC {
+		switch kind {
+		case outputOriginalSEC:
+			// Preserve the source SEC for existing responses.
+		case outputCOR:
 			bh.StandardEntryClassCode = ach.COR
+		case outputACK:
+			bh.StandardEntryClassCode = ach.ACK
+			bh.ServiceClassCode = ach.CreditsOnly
 		}
 
 		// We need to flip the Origin / Destination values when setting up the out batch
@@ -219,7 +252,7 @@ func (outBatches outBatches) getOutBatch(delay *time.Duration, category string, 
 			return nil, fmt.Errorf("transform batch[%d] problem creating Batch: %v", i, err)
 		}
 		outBatch = &batch
-		batchesByCategory[category == ach.CategoryNOC] = outBatch
+		batchesByKind[kind] = outBatch
 	}
 
 	return outBatch, nil
@@ -230,11 +263,18 @@ func generateFilename(file *ach.File) string {
 	if file == nil {
 		return fmt.Sprintf("MISSING_%s_%d.ach", timestamp, rand.Int64())
 	}
+	ackOnly := len(file.Batches) > 0 && len(file.IATBatches) == 0
 	for i := range file.Batches {
 		bh := file.Batches[i].GetHeader()
 		if bh.StandardEntryClassCode == ach.COR {
 			return fmt.Sprintf("CORRECTION_%s_%d.ach", timestamp, rand.Int64())
 		}
+		if bh.StandardEntryClassCode != ach.ACK {
+			ackOnly = false
+		}
+	}
+	if ackOnly {
+		return fmt.Sprintf("ACK_%s_%d.ach", timestamp, rand.Int64())
 	}
 	return fmt.Sprintf("RETURN_%s_%d.ach", timestamp, rand.Int64())
 }
