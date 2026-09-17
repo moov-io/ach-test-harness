@@ -997,6 +997,105 @@ func TestFileTransformer_DelayCorrectionOnlyAndDelayReturnOnly_differentDelay(t 
 	require.Error(t, err)
 }
 
+func TestOutBatches_ResponseKinds(t *testing.T) {
+	file, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "with-addenda.ach"))
+	require.NoError(t, err)
+	header := *file.Batches[0].GetHeader()
+	batches := outBatches{}
+
+	original, err := batches.getOutBatch(nil, outputOriginalSEC, file.Header, header, 0)
+	require.NoError(t, err)
+	correction, err := batches.getOutBatch(nil, outputCOR, file.Header, header, 0)
+	require.NoError(t, err)
+
+	require.NotSame(t, *original, *correction)
+	require.IsType(t, &ach.BatchCCD{}, *original)
+	require.IsType(t, &ach.BatchCOR{}, *correction)
+	require.Equal(t, header.StandardEntryClassCode, (*original).GetHeader().StandardEntryClassCode)
+	require.Equal(t, ach.COR, (*correction).GetHeader().StandardEntryClassCode)
+
+	// Interleaved lookups must retain the batch for each response kind.
+	again, err := batches.getOutBatch(nil, outputOriginalSEC, file.Header, header, 0)
+	require.NoError(t, err)
+	require.Same(t, original, again)
+	again, err = batches.getOutBatch(nil, outputCOR, file.Header, header, 0)
+	require.NoError(t, err)
+	require.Same(t, correction, again)
+}
+
+func TestOutBatches_DelayGrouping(t *testing.T) {
+	file, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "with-addenda.ach"))
+	require.NoError(t, err)
+	header := *file.Batches[0].GetHeader()
+
+	zeroDelay := time.Duration(0)
+	oneHour := time.Hour
+	anotherHour := time.Hour
+	twoHours := 2 * time.Hour
+
+	tests := []struct {
+		name   string
+		first  *time.Duration
+		second *time.Duration
+		reuse  bool
+	}{
+		{name: "immediate", reuse: true},
+		{name: "same delayed key", first: &oneHour, second: &oneHour, reuse: true},
+		{name: "immediate and delayed", second: &oneHour},
+		{name: "immediate and explicit zero", second: &zeroDelay},
+		{name: "different durations", first: &oneHour, second: &twoHours},
+		{name: "equal durations with different pointers", first: &oneHour, second: &anotherHour},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			batches := outBatches{}
+			for _, kind := range []outputBatchKind{outputOriginalSEC, outputCOR} {
+				first, err := batches.getOutBatch(tt.first, kind, file.Header, header, 0)
+				require.NoError(t, err)
+				second, err := batches.getOutBatch(tt.second, kind, file.Header, header, 0)
+				require.NoError(t, err)
+
+				if tt.reuse {
+					require.Same(t, first, second)
+				} else {
+					require.NotSame(t, *first, *second)
+				}
+			}
+			if tt.reuse {
+				require.Len(t, batches, 1)
+			} else {
+				require.Len(t, batches, 2)
+			}
+			for _, byKind := range batches {
+				require.Len(t, byKind, 2)
+				require.NotSame(t, *byKind[outputOriginalSEC], *byKind[outputCOR])
+			}
+		})
+	}
+}
+
+func TestOutBatches_DoesNotMutateSourceHeader(t *testing.T) {
+	file, err := ach.ReadFile(filepath.Join("..", "..", "testdata", "with-addenda.ach"))
+	require.NoError(t, err)
+	header := file.Batches[0].GetHeader()
+	original := *header
+	batches := outBatches{}
+
+	for _, kind := range []outputBatchKind{outputOriginalSEC, outputCOR} {
+		batch, err := batches.getOutBatch(nil, kind, file.Header, *header, 0)
+		require.NoError(t, err)
+		require.NotSame(t, header, (*batch).GetHeader())
+		require.Equal(t, original, *header)
+
+		expected := original
+		expected.ODFIIdentification = file.Header.ImmediateDestination
+		if kind == outputCOR {
+			expected.StandardEntryClassCode = ach.COR
+		}
+		require.Equal(t, expected, *(*batch).GetHeader())
+	}
+}
+
 func testFileTransformer(t *testing.T, resp ...service.Response) (*FileTransfomer, string) {
 	t.Helper()
 
