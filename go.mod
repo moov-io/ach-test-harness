@@ -10,7 +10,7 @@ require (
 	github.com/evanphx/json-patch v5.9.11+incompatible
 	github.com/gorilla/mux v1.8.1
 	github.com/markbates/pkger v0.17.1
-	github.com/moov-io/ach v1.63.6
+	github.com/moov-io/ach v1.63.7
 	github.com/moov-io/base v0.63.3
 	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/otel v1.46.0
