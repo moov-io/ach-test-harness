@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/moov-io/ach"
+	"github.com/moov-io/base/admin"
 	"github.com/moov-io/base/log"
 	"github.com/moov-io/base/telemetry"
 )
@@ -81,7 +82,8 @@ type Paths struct {
 
 // HTTPConfig configuration for running an http server
 type HTTPConfig struct {
-	Bind BindAddress
+	Bind  BindAddress
+	Pprof *admin.Pprof
 }
 
 // BindAddress specifies where the http server should bind to.
