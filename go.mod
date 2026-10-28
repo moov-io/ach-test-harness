@@ -10,7 +10,7 @@ require (
 	github.com/evanphx/json-patch v5.9.11+incompatible
 	github.com/gorilla/mux v1.8.1
 	github.com/markbates/pkger v0.17.1
-	github.com/moov-io/ach v1.66.0
+	github.com/moov-io/ach v1.67.0
 	github.com/moov-io/base v0.66.0
 	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/otel v1.47.0
@@ -57,7 +57,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.11.1 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/exp v0.0.0-20260908205506-85c1c2202aba // indirect
-	golang.org/x/net v0.61.0 // indirect
+	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
