@@ -44,6 +44,12 @@ jobs:
       env:
         GOLANGCI_LINTERS: gosec
 
+    - name: Smoke test
+      if: runner.os != 'Windows'
+      run: |
+        make build
+        ./scripts/smoke-test.sh bin/ach-test-harness
+
     - name: Docker Build
       if: runner.os == 'Linux'
       run: make dev-docker
