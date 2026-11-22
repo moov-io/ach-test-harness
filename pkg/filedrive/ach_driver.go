@@ -32,7 +32,16 @@ func NewACHDriver(logger log.Logger, validateOpts *ach.ValidateOpts, driver serv
 
 // PutFile overrides the existing method to prevent erroneous ACH files from being uploaded.
 // offset follows goftp.io/server/v2 semantics: -1 overwrites, >= 0 appends/seeks.
+//
+// Uploads from FTP clients always have a session context. The harness writes its
+// own files (returns, corrections and copies) with a nil context, and those writes
+// are not checked. Copied entries are written as batches without a file header or
+// file control record, so they would not pass the check.
 func (d *ACHDriver) PutFile(ctx *server.Context, path string, r io.Reader, offset int64) (int64, error) {
+	if ctx == nil {
+		return d.Driver.PutFile(ctx, path, r, offset)
+	}
+
 	_, span := telemetry.StartSpan(context.Background(), "put-file", trace.WithAttributes(
 		attribute.String("ftp.destination", path),
 	))

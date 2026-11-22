@@ -4,8 +4,10 @@ import (
 	"net"
 	"testing"
 
+	"github.com/moov-io/ach-test-harness/pkg/filedrive"
+	"github.com/moov-io/base/log"
+
 	ftp "goftp.io/server/v2"
-	"goftp.io/server/v2/driver/file"
 )
 
 func fileBackedFtpServer(t *testing.T) (string, *ftp.Server) {
@@ -14,7 +16,8 @@ func fileBackedFtpServer(t *testing.T) (string, *ftp.Server) {
 	dir := t.TempDir()
 	t.Logf("Using %s for temporary FTP directory", dir)
 
-	driver, err := file.NewDriver(dir)
+	// Use the same driver as the harness, so that tests include its checks.
+	driver, err := filedrive.NewDriver(log.NewTestLogger(), nil, dir)
 	if err != nil {
 		t.Fatal(err)
 	}
