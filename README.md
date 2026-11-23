@@ -2,7 +2,7 @@
 [![Moov Banner Logo](https://user-images.githubusercontent.com/20115216/104214617-885b3c80-53ec-11eb-8ce0-9fc745fb5bfc.png)](https://github.com/moov-io)
 
 <p align="center">
-  <a href="https://github.com/moov-io/ach-test-harness/blob/master/docs/">Project Documentation</a>
+  <a href="https://github.com/moov-io/ach-test-harness/blob/master/docs/entry-search.md">Project Documentation</a>
   ·
   <a href="https://moov.io/blog/education/ach-test-harness-guide/">Quickstart Guide</a>
   ·
@@ -20,7 +20,7 @@
 
 # moov-io/ach-test-harness
 
-A configurable FTP/SFTP server and Go library to interactively test ACH scenarios to replicate real world originations, returns, changes, prenotes, and transfers.
+A configurable FTP server and Go library to interactively test ACH scenarios to replicate real world originations, returns, changes, prenotes, and transfers.
 
 If you believe you have identified a security vulnerability please responsibly report the issue as via email to security@moov.io. Please do not post it to a public issue tracker.
 
@@ -30,22 +30,63 @@ This project is used in production at an early stage and might undergo breaking 
 
 ## Getting started
 
-We publish a [public Docker image `moov/ach-test-harness`](https://hub.docker.com/r/moov/ach-test-harness/) from Docker Hub or use this repository. No configuration is required to serve on `:2222` and metrics at `:3333/metrics` in Prometheus format. <!-- We also have Docker images for [OpenShift](https://quay.io/repository/moov/ach-test-harness?tab=tags) published as `quay.io/moov/ach-test-harness`. -->
+We publish a [public Docker image `moov/ach-test-harness`](https://hub.docker.com/r/moov/ach-test-harness/) from Docker Hub or use this repository. No configuration is required to serve FTP on `:2222` and metrics at `:3333/metrics` in Prometheus format. <!-- We also have Docker images for [OpenShift](https://quay.io/repository/moov/ach-test-harness?tab=tags) published as `quay.io/moov/ach-test-harness`. -->
+
+The harness serves FTP only. It has no SFTP server.
 
 ### Docker image
 
-Pull & start the Docker image:
+Start the Docker image with `docker run`. Run this command from a clone of this repository, so that `./examples` is mounted with the example config. To use other versions, see the [tags on Docker Hub](https://hub.docker.com/r/moov/ach-test-harness/tags).
+
 ```
-$ docker-compose up
-harness_1  | ts=2021-03-24T20:36:10Z msg="loading config file" component=Service level=info app=ach-test-harness version=v0.3.0 file=/configs/config.default.yml
-harness_1  | ts=2021-03-24T20:36:10Z msg="Loading APP_CONFIG config file" app=ach-test-harness version=v0.3.0 APP_CONFIG=/examples/config.yml component=Service level=info
-harness_1  | ts=2021-03-24T20:36:10Z msg="loading config file" component=Service level=info app=ach-test-harness version=v0.3.0 APP_CONFIG=/examples/config.yml file=/examples/config.yml
-harness_1  | ts=2021-03-24T20:36:10Z msg="matcher: enable debug logging" level=info app=ach-test-harness version=v0.3.0
-harness_1  | 2021/03/24 20:36:10   Go FTP Server listening on 2222
-harness_1  | ts=2021-03-24T20:36:10Z msg="listening on [::]:3333" level=info app=ach-test-harness version=v0.3.0
+$ docker run -p 2222:2222 -p 3333:3333 -p 30000-30009:30000-30009 \
+    -v $PWD/examples:/examples -e APP_CONFIG=/examples/config.yml \
+    moov/ach-test-harness:latest
 ```
 
-You can then use an FTP client that connects to `localhost:2222` with a username of `admin` and password of `secret`. Upload files to the `outbound/` directory and watch for any responses.
+Without `-v` and `-e APP_CONFIG`, the harness starts with the default config, which has no responses.
+
+### Docker Compose
+
+`docker-compose.yml` in this repository starts the harness with `./examples/config.yml`. Run it from a clone of this repository:
+
+```
+$ docker compose up
+harness-1  | ts=... msg="loading config file" app=ach-test-harness component=Service file=/configs/config.default.yml level=info version=...
+harness-1  | ts=... msg="Loading APP_CONFIG config file" APP_CONFIG=/examples/config.yml app=ach-test-harness component=Service level=info version=...
+harness-1  | ts=... msg="loading config file" APP_CONFIG=/examples/config.yml app=ach-test-harness component=Service file=/examples/config.yml level=info version=...
+harness-1  | ts=... msg="creating data/outbound" app=ach-test-harness level=info version=...
+harness-1  | ts=... msg="creating data/returned" app=ach-test-harness level=info version=...
+harness-1  | ts=... msg="creating /reconciliation/" app=ach-test-harness level=info version=...
+harness-1  | ts=... msg="listening on [::]:3333" app=ach-test-harness level=info version=...
+harness-1  | ts=... msg="matcher: enable debug logging" app=ach-test-harness level=info version=...
+```
+
+If you have the older Compose v1 binary, use `docker-compose up`.
+
+### From source
+
+You need Go 1.26 or newer. `make install` downloads the dependencies into `vendor/`, which `make build` needs.
+
+```
+$ git clone https://github.com/moov-io/ach-test-harness.git
+$ cd ach-test-harness
+$ make install update build
+$ APP_CONFIG=./examples/config.yml ./bin/ach-test-harness
+```
+
+You can also run `go run ./cmd/ach-test-harness` from the repository. The harness writes files under `RootPath` (`./data` in the example config). Run `./bin/ach-test-harness -h` to see the environment variables.
+
+### Use the harness
+
+You can then use an FTP client that connects to `localhost:2222` with a username of `admin` and password of `secret`. Upload files to the `outbound/` directory and watch for any responses in the `returned/` directory. For example, with `curl`:
+
+```
+$ curl -T examples/ppd-debit.ach ftp://admin:secret@localhost:2222/outbound/
+$ curl ftp://admin:secret@localhost:2222/returned/
+```
+
+The admin server on `:3333` serves `/live`, `/ready`, `/metrics` and the [search API](docs/entry-search.md) (`/api/entries` and `/api/batches`).
 
 ### config.yml
 
@@ -162,6 +203,19 @@ action:
     code: <string>
 ```
 
+### Delays
+
+`delay` is a Go duration, for example `"30s"`, `"1m"` or `"12h"`. To test delays quickly, use a short value such as `"1m"`.
+
+- The harness writes a delayed return or correction file to the `Return` path (for example `returned/`) at once, and sets the modification time of the file to the time when the delay ends.
+- FTP directory lists do not show a file until its modification time is in the past.
+- The file is on disk, so a restart does not lose it. When the delay ends, the file shows in the list.
+
+### Return and change codes
+
+- `return.code` is a Nacha return code such as `R01` or `R03`. The harness accepts the codes that [`ach.LookupReturnCode`](https://pkg.go.dev/github.com/moov-io/ach#LookupReturnCode) knows. See [moov-io/ach returns](https://github.com/moov-io/ach/blob/master/docs/returns.md).
+- `correction.code` is a Nacha change code such as `C01`, and `correction.data` is the corrected data that goes in the Addenda98 record (for example the correct account number for `C01`). See [moov-io/ach changes](https://github.com/moov-io/ach/blob/master/docs/changes.md) for the codes and the data format of each code.
+
 ## Examples
 
 ### Return debits between two values
@@ -213,7 +267,7 @@ action:
 
  channel | info
  ------- | -------
-[Project Documentation](docs/README.md) | Our project documentation available online.
+[Entry Search API](docs/entry-search.md) | Search the entries and batches on the FTP server with `/api/entries` and `/api/batches`.
 Twitter [@moov](https://twitter.com/moov)	| You can follow Moov.io's Twitter feed to get updates on our project(s). You can also tweet us questions or just share blogs or stories.
 [GitHub Issue](https://github.com/moov-io/ach-test-harness/issues) | If you are able to reproduce a problem please open a GitHub Issue under the specific project that caused the error.
 [moov-io slack](https://slack.moov.io/) | Join our slack channel (`#ach`) to have an interactive discussion about the development of the project.
@@ -226,7 +280,7 @@ Twitter [@moov](https://twitter.com/moov)	| You can follow Moov.io's Twitter fee
 
 Yes please! Please review our [Contributing guide](CONTRIBUTING.md) and [Code of Conduct](https://github.com/moov-io/ach/blob/master/CODE_OF_CONDUCT.md) to get started! Checkout our [issues for first time contributors](https://github.com/moov-io/ach-test-harness/contribute) for something to help out with.
 
-This project uses [Go Modules](https://github.com/golang/go/wiki/Modules) and uses Go 1.14 or higher. See [Golang's install instructions](https://golang.org/doc/install) for help setting up Go. You can download the source code and we offer [tagged and released versions](https://github.com/moov-io/ach-test-harness/releases/latest) as well. We highly recommend you use a tagged release for production.
+This project uses [Go Modules](https://github.com/golang/go/wiki/Modules) and uses Go 1.26 or higher. See [Golang's install instructions](https://golang.org/doc/install) for help setting up Go. You can download the source code and we offer [tagged and released versions](https://github.com/moov-io/ach-test-harness/releases/latest) as well. We highly recommend you use a tagged release for production.
 
 ### Test coverage
 

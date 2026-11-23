@@ -102,7 +102,7 @@ run: update build
 	./bin/ach-test-harness
 
 docker-run:
-	docker run -v ${PWD}/data:/data -v ${PWD}/configs:/configs --env APP_CONFIG="/configs/config.yml" -it --rm moov/ach-test-harness:${VERSION}
+	docker run -v ${PWD}/data:/data -v ${PWD}/configs:/configs --env APP_CONFIG="/configs/config.docker.yml" -it --rm moov/ach-test-harness:${VERSION}
 
 test:
 	go test -cover github.com/moov-io/ach-test-harness/...
