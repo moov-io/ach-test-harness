@@ -31,7 +31,7 @@ func TestACHDriver_PutFile_InvalidACH(t *testing.T) {
 	invalidACH.WriteString("invalid ACH content")
 
 	// Attempt to upload the invalid ACH file
-	_, err := customDriver.PutFile(nil, "invalid.ach", &invalidACH, -1)
+	_, err := customDriver.PutFile(&server.Context{}, "invalid.ach", &invalidACH, -1)
 
 	// Verify that an error is returned
 	require.Error(t, err)
@@ -46,8 +46,22 @@ func TestACHDriver_PutFile(t *testing.T) {
 	defer achFile.Close()
 
 	// Attempt to upload the valid ACH file
-	_, err = customDriver.PutFile(nil, "valid.ach", achFile, -1)
+	_, err = customDriver.PutFile(&server.Context{}, "valid.ach", achFile, -1)
 
 	// Verify that no error is returned
+	require.NoError(t, err)
+}
+
+func TestACHDriver_PutFile_Internal(t *testing.T) {
+	mockDriver := &MockDriver{}
+	customDriver := NewACHDriver(log.NewDefaultLogger(), nil, mockDriver)
+
+	// The harness writes copied entries as batches without a file header
+	// or file control record. A nil context means the harness writes the
+	// file, so it is not checked.
+	var batchOnly bytes.Buffer
+	batchOnly.WriteString("5225Name on Account                     231380104 PPDREG.SALARY      190816   1121042880000001\n")
+
+	_, err := customDriver.PutFile(nil, "copy.ach", &batchOnly, -1)
 	require.NoError(t, err)
 }

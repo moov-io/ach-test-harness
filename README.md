@@ -127,10 +127,10 @@ ACHTestHarness:
     - match:
         amount:
           value: 12357 # $123.57
-        action:
-          delay: "12h"
-          return:
-            code: "R10"
+      action:
+        delay: "12h"
+        return:
+          code: "R10"
 ```
 
 #### config schema
