@@ -5,6 +5,7 @@ package service_test
 import (
 	"testing"
 
+	achtestharness "github.com/moov-io/ach-test-harness"
 	"github.com/moov-io/ach-test-harness/pkg/service"
 	"github.com/moov-io/base/config"
 	"github.com/moov-io/base/log"
@@ -18,6 +19,6 @@ func Test_ConfigLoading(t *testing.T) {
 	ConfigService := config.NewService(logger)
 
 	gc := &service.GlobalConfig{}
-	err := ConfigService.Load(gc)
+	err := ConfigService.LoadFromFS(gc, achtestharness.ConfigDefaults)
 	require.Nil(t, err)
 }

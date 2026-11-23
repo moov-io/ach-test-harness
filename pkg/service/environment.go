@@ -70,7 +70,7 @@ func LoadConfig(logger log.Logger) (*Config, error) {
 	configService := config.NewService(logger)
 
 	global := &GlobalConfig{}
-	if err := configService.Load(global); err != nil {
+	if err := configService.LoadFromFS(global, achtestharness.ConfigDefaults); err != nil {
 		return nil, err
 	}
 	if err := global.Validate(); err != nil {

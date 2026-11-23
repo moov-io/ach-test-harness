@@ -29,11 +29,11 @@ all: install update build
 
 .PHONY: install
 install:
-	go install github.com/markbates/pkger/cmd/pkger
 	go mod vendor
 
+# The default config is built into the binary with go:embed (see package.go),
+# so update only refreshes the vendor directory.
 update:
-	pkger -include /configs/config.default.yml
 	go mod vendor
 
 build:

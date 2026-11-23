@@ -9,7 +9,6 @@ toolchain go1.27.4
 require (
 	github.com/evanphx/json-patch v5.9.11+incompatible
 	github.com/gorilla/mux v1.8.1
-	github.com/markbates/pkger v0.17.1
 	github.com/moov-io/ach v1.69.0
 	github.com/moov-io/base v0.68.2
 	github.com/stretchr/testify v1.12.1
@@ -32,6 +31,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.31.0 // indirect
 	github.com/igrmk/treemap/v2 v2.0.1 // indirect
+	github.com/markbates/pkger v0.17.1 // indirect
 	github.com/moov-io/iso3166 v0.4.0 // indirect
 	github.com/moov-io/iso4217 v0.4.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect

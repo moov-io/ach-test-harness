@@ -88,6 +88,13 @@ jobs:
     - name: Distribute
       run: make dist
 
+    - name: Smoke test
+      if: runner.os != 'Windows'
+      shell: bash
+      run: |
+        set -euo pipefail
+        ./scripts/smoke-test.sh "$(ls bin/ach-test-harness-*)"
+
     - name: Upload release asset
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
