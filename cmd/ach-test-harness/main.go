@@ -3,6 +3,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"os"
 
 	achtestharness "github.com/moov-io/ach-test-harness"
@@ -13,16 +15,40 @@ import (
 	"github.com/moov-io/base/log"
 )
 
+var (
+	flagVersion = flag.Bool("version", false, "Print the version and exit")
+)
+
 func main() {
-	env := &service.Environment{
-		Logger: log.NewDefaultLogger().
-			Set("app", log.String("ach-test-harness")).
-			Set("version", log.String(achtestharness.Version)),
+	flag.Usage = func() {
+		out := flag.CommandLine.Output()
+		fmt.Fprintf(out, "ach-test-harness %s\n\n", achtestharness.Version)
+		fmt.Fprintf(out, "ach-test-harness is an FTP server that responds to uploaded ACH files with returns and corrections.\n\n")
+		fmt.Fprintf(out, "USAGE\n  ach-test-harness [flags]\n\n")
+		fmt.Fprintf(out, "ENVIRONMENT\n")
+		fmt.Fprintf(out, "  APP_CONFIG          Path to a YAML config file that is merged over the default config\n")
+		fmt.Fprintf(out, "  APP_CONFIG_SECRETS  Path to a second YAML config file, merged after APP_CONFIG\n\n")
+		fmt.Fprintf(out, "FLAGS\n")
+		flag.PrintDefaults()
+	}
+	flag.Parse()
+
+	if *flagVersion {
+		fmt.Println(achtestharness.Version)
+		return
 	}
 
-	env, err := service.NewEnvironment(env)
+	logger := log.NewDefaultLogger().
+		Set("app", log.String("ach-test-harness")).
+		Set("version", log.String(achtestharness.Version))
+
+	env, err := service.NewEnvironment(&service.Environment{
+		Logger: logger,
+	})
 	if err != nil {
-		env.Logger.Fatal().LogErrorf("Error loading up environment: %v", err)
+		// NewEnvironment can return a nil Environment with the error,
+		// so use the logger from above.
+		logger.Fatal().LogErrorf("Error loading up environment: %v", err)
 		os.Exit(1)
 	}
 	defer env.Shutdown()
