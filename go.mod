@@ -9,8 +9,8 @@ toolchain go1.27.4
 require (
 	github.com/evanphx/json-patch v5.9.11+incompatible
 	github.com/gorilla/mux v1.8.1
-	github.com/moov-io/ach v1.69.0
-	github.com/moov-io/base v0.68.2
+	github.com/moov-io/ach v1.69.1
+	github.com/moov-io/base v0.68.3
 	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/otel v1.47.0
 	go.opentelemetry.io/otel/trace v1.47.0
@@ -40,7 +40,7 @@ require (
 	github.com/prometheus/client_model v0.6.3 // indirect
 	github.com/prometheus/common v0.72.0 // indirect
 	github.com/prometheus/procfs v0.22.0 // indirect
-	github.com/rickar/cal/v2 v2.1.32 // indirect
+	github.com/rickar/cal/v2 v2.1.34 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
